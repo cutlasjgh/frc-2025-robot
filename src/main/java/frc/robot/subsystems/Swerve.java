@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import java.io.File;
 import java.util.function.Supplier;
@@ -57,7 +58,7 @@ public class Swerve extends SubsystemBase {
         try {
             swerveDrive = new SwerveParser(new File(Filesystem.getDeployDirectory(), "swerve"))
                     .createSwerveDrive(
-                            RobotConstants.MAX_SPEED,
+                            RobotConstants.MAX_SPEED.in(MetersPerSecond),
                             new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
                                     Rotation2d.fromDegrees(0)));
         } catch (Exception e) {
