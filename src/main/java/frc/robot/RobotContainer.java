@@ -22,7 +22,7 @@ public class RobotContainer {
 
   private final Swerve swerveDrive = Swerve.getInstance();
 
-  private final SwerveInputStream driveDirectAngle = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
+  private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
       () -> driver.getLeftY() * -1,
       () -> driver.getLeftX() * -1)
       .cubeTranslationControllerAxis(true)
@@ -46,7 +46,7 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveDirectAngle);
+    Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     driver.x().whileTrue(Commands.runOnce(swerveDrive::lockWheels, swerveDrive).repeatedly());
