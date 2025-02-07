@@ -34,7 +34,7 @@ public class AlgaArm extends SubsystemBase {
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
-    public void intakeAlaga() {
+    public void intakeAlga() {
         sparkMax.setVoltage(AlgaArmConstants.MOTOR_VOLTAGE);
     }
 
@@ -45,4 +45,4 @@ public class AlgaArm extends SubsystemBase {
     public boolean hasAlga() {
         return false;
     }
-};
+}

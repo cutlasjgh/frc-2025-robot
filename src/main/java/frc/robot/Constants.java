@@ -25,6 +25,7 @@ public final class Constants {
 
         public static final int CAN_ID = 0;
         public static final double MOTOR_VOLTAGE = 6.0;
+        public static final double INCHES_PER_ROTATION = 0.5;
     }
 
     public static final class OIConstants {
@@ -33,5 +34,21 @@ public final class Constants {
 
         public static final int DRIVER_CONTROLLER_PORT = 0;
         public static final double DRIVER_DEADBAND = 0.05;
+    }
+
+    public static final class CoralArmConstants {
+        private CoralArmConstants() {
+        }
+
+        public static final int CAN_ID = 0;
+        public static final double MOTOR_VOLTAGE = 6.0;
+    }
+
+    public static final class ElevatorConstants {
+        private ElevatorConstants() {
+        }
+
+        public static final int CAN_ID = 0;
+        public static final double MOTOR_VOLTAGE = 6.0;
     }
 }

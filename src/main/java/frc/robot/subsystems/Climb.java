@@ -13,9 +13,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Climb extends SubsystemBase {
     private static Climb instance;
     private final SparkMax sparkMax;
-    private final ClimbState state;
+    private final RachetState state;
 
-    private enum ClimbState {
+    private enum RachetState {
         LOCKED,
         UNLOCKED
     }
@@ -33,10 +33,10 @@ public class Climb extends SubsystemBase {
         sparkMaxConfig.idleMode(IdleMode.kBrake);
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
-        state = ClimbState.LOCKED;
+        state = RachetState.LOCKED;
     }
 
-    public ClimbState getState() {
+    public RachetState getState() {
         return state;
     }
 }
