@@ -69,6 +69,9 @@ public final class Constants {
         public static final Angle MAX_ANGLE = Degree.of(10.0);
         public static final PID CORALARM_MOTOR_PID = new PID(0.0, 0.0, 0.0);
         public static final Voltage UNKNOWN_STATE_VOLTAGE = Volt.of(6.0);
+
+        public static final int INTAKE_CAN_ID = 0;
+        public static final Voltage INTAKE_MOTOR_VOLTAGE = Volt.of(6.0);
     }
 
     public static final class ElevatorConstants {
