@@ -20,7 +20,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class CoralArm extends SubsystemBase {
     private static CoralArm instance;
-    private final SparkMax sparkMax;
+    private final SparkMax armSparkMax;
+    private final SparkMax intakeSparkMax;
 
     private CoralArmState state;
 
@@ -40,16 +41,21 @@ public class CoralArm extends SubsystemBase {
     }
     
     public CoralArm() {
-        sparkMax = new SparkMax(CoralArmConstants.ARM_CAN_ID, MotorType.kBrushless);
-        SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
-        sparkMaxConfig.idleMode(IdleMode.kBrake);
+        armSparkMax = new SparkMax(CoralArmConstants.ARM_CAN_ID, MotorType.kBrushless);
+        SparkMaxConfig armSparkMaxConfig = new SparkMaxConfig();
+        armSparkMaxConfig.idleMode(IdleMode.kBrake);
         EncoderConfig encoderConfig = new EncoderConfig();
         encoderConfig.positionConversionFactor(CoralArmConstants.ANGLE_PER_ROTATION.in(Degree));
-        sparkMaxConfig.apply(encoderConfig);
+        armSparkMaxConfig.apply(encoderConfig);
         ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
         closedLoopConfig.pid(CoralArmConstants.CORALARM_MOTOR_PID.p, CoralArmConstants.CORALARM_MOTOR_PID.i, CoralArmConstants.CORALARM_MOTOR_PID.d);
-        sparkMaxConfig.apply(closedLoopConfig);
-        sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        armSparkMaxConfig.apply(closedLoopConfig);
+        armSparkMax.configure(armSparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+
+        intakeSparkMax = new SparkMax(CoralArmConstants.INTAKE_CAN_ID, MotorType.kBrushless);
+        SparkMaxConfig intakeSparkMaxConfig = new SparkMaxConfig();
+        intakeSparkMaxConfig.idleMode(IdleMode.kBrake);
+        intakeSparkMax.configure(intakeSparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
         DigitalInput maxLimitSwitch = new DigitalInput(CoralArmConstants.MAX_LIMIT_SWITCH_CHANNEL);
         DigitalInput minLimitSwitch = new DigitalInput(CoralArmConstants.MIN_LIMIT_SWITCH_CHANNEL);
@@ -79,19 +85,19 @@ public class CoralArm extends SubsystemBase {
 
     private void atMax() {
         state = CoralArmState.KNOWN;
-        sparkMax.getEncoder().setPosition(CoralArmConstants.MAX_ANGLE.in(Degree));
-        sparkMax.getClosedLoopController().setReference(CoralArmConstants.MAX_ANGLE.in(Degree), ControlType.kPosition);
+        armSparkMax.getEncoder().setPosition(CoralArmConstants.MAX_ANGLE.in(Degree));
+        armSparkMax.getClosedLoopController().setReference(CoralArmConstants.MAX_ANGLE.in(Degree), ControlType.kPosition);
     }
 
     private void atMin() {
         state = CoralArmState.KNOWN;
-        sparkMax.getEncoder().setPosition(0);
-        sparkMax.getClosedLoopController().setReference(0, ControlType.kPosition);
+        armSparkMax.getEncoder().setPosition(0);
+        armSparkMax.getClosedLoopController().setReference(0, ControlType.kPosition);
     }
 
     public void zeroIfNeeded() {
         if (state == CoralArmState.UNKNOWN) {
-            sparkMax.setVoltage(CoralArmConstants.UNKNOWN_STATE_VOLTAGE);
+            armSparkMax.setVoltage(CoralArmConstants.UNKNOWN_STATE_VOLTAGE);
         }
     }
 }
