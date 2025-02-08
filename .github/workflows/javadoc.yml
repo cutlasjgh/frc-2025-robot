@@ -1,0 +1,55 @@
+name: Deploy Javadoc to GitHub Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+  # Allows manual triggering
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write # Needed for Javadoc generation and deployment
+  pages: write    # Needed for Pages deployment
+  id-token: write # Needed for Pages deployment
+
+# Cancel any in-progress job or run
+concurrency:
+  group: "pages-${{ github.workflow }}"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # Generate and Deploy Javadoc
+      - uses: MathieuSoysal/Javadoc-publisher.yml@v2.5.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          java-version: 17
+          project: gradle
+          java-distribution: temurin
+          javadoc-source-folder: build/docs/javadoc
+          target-folder: .
+
+      # Upload the Javadoc as a Pages artifact
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/docs/javadoc
+
+      # Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
