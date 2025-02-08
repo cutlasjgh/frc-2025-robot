@@ -13,6 +13,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.ElevatorConstants;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,6 +24,7 @@ public class Elevator extends SubsystemBase {
     private final SparkMax sparkMax;
 
     private ElevatorState state;
+    private ElevatorLevel level;
 
     private final AsynchronousInterrupt topLimitSwitchInterrupt;
     private final AsynchronousInterrupt bottomLimitSwitchInterrupt;
@@ -30,6 +32,18 @@ public class Elevator extends SubsystemBase {
     private enum ElevatorState {
         KNOWN,
         UNKNOWN
+    }
+
+    private enum ElevatorLevel {
+        BOTTOM(Inch.of(0)),
+        TOP(ElevatorConstants.ELEVATOR_HEIGHT),
+        CUSTOM(null);
+
+        public final Distance target;
+
+        private ElevatorLevel(Distance target) {
+            this.target = target;
+        }
     }
 
     public static Elevator getInstance() {
@@ -54,6 +68,7 @@ public class Elevator extends SubsystemBase {
         DigitalInput topLimitSwitch = new DigitalInput(ElevatorConstants.TOP_LIMIT_SWITCH_CHANNEL);
         DigitalInput bottomLimitSwitch = new DigitalInput(ElevatorConstants.BOTTOM_LIMIT_SWITCH_CHANNEL);
 
+        level = ElevatorLevel.CUSTOM;
         state = ElevatorState.UNKNOWN;
         if (bottomLimitSwitch.get()) {
             atBottom();
@@ -80,18 +95,26 @@ public class Elevator extends SubsystemBase {
     private void atTop() {
         state = ElevatorState.KNOWN;
         sparkMax.getEncoder().setPosition(ElevatorConstants.ELEVATOR_HEIGHT.in(Inch));
-        sparkMax.getClosedLoopController().setReference(ElevatorConstants.ELEVATOR_HEIGHT.in(Inch), ControlType.kPosition);
+        setLevel(ElevatorLevel.TOP);
     }
 
     private void atBottom() {
         state = ElevatorState.KNOWN;
         sparkMax.getEncoder().setPosition(0);
-        sparkMax.getClosedLoopController().setReference(0, ControlType.kPosition);
+        setLevel(ElevatorLevel.BOTTOM);
     }
 
     public void zeroIfNeeded() {
         if (state == ElevatorState.UNKNOWN) {
             sparkMax.setVoltage(ElevatorConstants.UNKNOWN_STATE_VOLTAGE);
         }
+    }
+
+    public void setLevel(ElevatorLevel targetLevel) {
+        if (level == targetLevel || state == ElevatorState.UNKNOWN) return;
+
+        if (targetLevel != ElevatorLevel.CUSTOM)
+            sparkMax.getClosedLoopController().setReference(targetLevel.target.in(Inch), ControlType.kPosition);
+        level = targetLevel;
     }
 }
