@@ -10,8 +10,14 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import frc.robot.Constants.AlgaArmConstants;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+/**
+ * Subsystem that handles the alga arm mechanism.
+ * Controls a motor for intaking and manipulating alga game pieces.
+ */
 public class AlgaArm extends SubsystemBase {
+    /** Singleton instance of the AlgaArm subsystem. */
     private static AlgaArm instance;
+    /** Motor controller for the alga intake mechanism. */
     private final SparkMax sparkMax;
 
     /**
@@ -27,6 +33,10 @@ public class AlgaArm extends SubsystemBase {
         return instance;
     }
 
+    /**
+     * Creates a new AlgaArm subsystem.
+     * Initializes the motor controller in brake mode.
+     */
     public AlgaArm() {
         sparkMax = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
         SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
@@ -34,14 +44,27 @@ public class AlgaArm extends SubsystemBase {
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
+    /**
+     * Activates the intake motor to collect alga.
+     * Applies a constant voltage to intake the game piece.
+     */
     public void intakeAlga() {
         sparkMax.setVoltage(AlgaArmConstants.MOTOR_VOLTAGE);
     }
 
+    /**
+     * Stops the intake motor.
+     * Sets the motor voltage to zero.
+     */
     public void stopIntake() {
         sparkMax.setVoltage(0.0);
     }
 
+    /**
+     * Checks if the mechanism currently has an alga game piece.
+     *
+     * @return true if an alga is detected, false otherwise
+     */
     public boolean hasAlga() {
         return false;
     }

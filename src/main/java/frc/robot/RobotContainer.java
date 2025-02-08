@@ -14,11 +14,21 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Swerve;
 import swervelib.SwerveInputStream;
 
+/**
+ * This class is where the bulk of the robot's declarations should be.
+ * It contains subsystems, commands, and button mappings that define the robot's behavior.
+ */
 public class RobotContainer {
+  /** Xbox controller used for driver input. */
   private final CommandXboxController driver = new CommandXboxController(0);
 
+  /** Main drive subsystem for robot movement. */
   private final Swerve swerveDrive = Swerve.getInstance();
 
+  /** 
+   * Input stream for swerve drive control.
+   * Configures how controller inputs are processed and applied to drive commands.
+   */
   private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
       () -> driver.getLeftY() * -1,
       () -> driver.getLeftX() * -1)
@@ -31,6 +41,10 @@ public class RobotContainer {
       .allianceRelativeControl(true)
       .headingWhile(true);
 
+  /**
+   * Creates a new RobotContainer.
+   * The container initializes the subsystems, commands, and button bindings.
+   */
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
     driver.setRumble(RumbleType.kBothRumble, 0.0);
@@ -38,6 +52,14 @@ public class RobotContainer {
     configureBindings();
   }
 
+  /**
+   * Configures button bindings for commands.
+   * Maps controller buttons to specific robot actions:
+   * - Default command: Field oriented drive
+   * - X button: Lock wheels in X pattern
+   * - Start button: Reset odometry
+   * - Back button: Drive to field center
+   */
   private void configureBindings() {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
@@ -50,6 +72,11 @@ public class RobotContainer {
                 Rotation2d.fromDegrees(0))));
   }
 
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
   public Command getAutonomousCommand() {
     return Commands.print("No autonomous command configured");
   }
