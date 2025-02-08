@@ -1,9 +1,11 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Volt;
 
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -60,8 +62,13 @@ public final class Constants {
         private CoralArmConstants() {
         }
 
-        public static final int CAN_ID = 0;
-        public static final Voltage MOTOR_VOLTAGE = Volt.of(6.0);
+        public static final int ARM_CAN_ID = 0;
+        public static final Angle ANGLE_PER_ROTATION = Degree.of(2.25);
+        public static final int MAX_LIMIT_SWITCH_CHANNEL = 0;
+        public static final int MIN_LIMIT_SWITCH_CHANNEL = 1;
+        public static final Angle MAX_ANGLE = Degree.of(10.0);
+        public static final PID CORALARM_MOTOR_PID = new PID(0.0, 0.0, 0.0);
+        public static final Voltage UNKNOWN_STATE_VOLTAGE = Volt.of(6.0);
     }
 
     public static final class ElevatorConstants {

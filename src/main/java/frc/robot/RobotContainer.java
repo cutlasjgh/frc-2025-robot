@@ -2,12 +2,9 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Meter;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.util.PixelFormat;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -38,11 +35,7 @@ public class RobotContainer {
     DriverStation.silenceJoystickConnectionWarning(true);
     driver.setRumble(RumbleType.kBothRumble, 0.0);
 
-    UsbCamera cam = CameraServer.startAutomaticCapture();
-    cam.setVideoMode(PixelFormat.kYUYV, 176, 144, 30);
-
     configureBindings();
-
   }
 
   private void configureBindings() {
