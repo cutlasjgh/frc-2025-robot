@@ -5,10 +5,19 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
- * The VM is configured to automatically run this class, and to call the functions corresponding to
- * each mode, as described in the TimedRobot documentation. If you change the name of this class or
- * the package after creating this project, you must also update the build.gradle file in the
- * project.
+ * Main robot class that manages the robot's lifecycle and operational modes.
+ * This class follows the TimedRobot model, executing code in a timed loop for each robot mode.
+ * 
+ * <p>Features include:
+ * <ul>
+ *   <li>Autonomous command management
+ *   <li>Teleop control initialization
+ *   <li>Test mode handling
+ *   <li>Periodic updates across all modes
+ * </ul>
+ * 
+ * <p>The robot code is organized using WPILib's command-based framework, with subsystems
+ * and commands managed through the RobotContainer class.
  */
 public class Robot extends TimedRobot {
   /** The autonomous command to run. */
@@ -25,9 +34,10 @@ public class Robot extends TimedRobot {
   }
 
   /**
-   * This function is called every 20 ms, no matter the mode.
-   * Use this for items like diagnostics that you want ran during disabled,
-   * autonomous, teleoperated and test.
+   * Periodic function called every 20ms in all robot modes.
+   * Runs the command scheduler to execute ongoing commands and update subsystems.
+   * This method is crucial for continuous robot operation and should not be blocked
+   * or delayed.
    */
   @Override
   public void robotPeriodic() {
@@ -51,7 +61,8 @@ public class Robot extends TimedRobot {
 
   /**
    * Called when autonomous mode is initialized.
-   * Schedules the autonomous command selected by the user.
+   * Retrieves and schedules the selected autonomous command from RobotContainer.
+   * If no command is selected, this method will gracefully handle the null case.
    */
   @Override
   public void autonomousInit() {
@@ -74,7 +85,8 @@ public class Robot extends TimedRobot {
 
   /**
    * Called when operator control is initialized.
-   * Cancels the autonomous command if it's still running.
+   * Cancels any running autonomous command to ensure safe transition to manual control.
+   * This prevents autonomous commands from interfering with driver inputs.
    */
   @Override
   public void teleopInit() {
@@ -95,7 +107,9 @@ public class Robot extends TimedRobot {
 
   /**
    * Called when test mode is initialized.
-   * Cancels all running commands.
+   * Cancels all running commands to ensure a clean slate for testing.
+   * This helps prevent interference from commands that might have been
+   * left running in other modes.
    */
   @Override
   public void testInit() {

@@ -21,15 +21,28 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
- * Subsystem that handles the coral mechanism, including elevator, arm, and intake components.
+ * Controls the Coral mechanism, a multi-joint manipulator consisting of an elevator, arm, and intake.
+ * This subsystem manages coordinated movement between components and provides preset positions
+ * for common operations.
+ * 
+ * <p>Features include:
+ * <ul>
+ *   <li>Position-controlled elevator and arm using encoders and limit switches
+ *   <li>Automatic position detection using limit switches
+ *   <li>Predefined positions for common operations (ground pickup, scoring)
+ *   <li>Safety features including position limits and state validation
+ * </ul>
+ * 
+ * <p>The subsystem uses REV Robotics SparkMax controllers with closed-loop position control
+ * and hardware limit switches for position detection and safety.
  */
 public class CoralHandler extends SubsystemBase {
     private static CoralHandler instance;
     
     /**
-     * Represents a motor-driven subsystem with limit switches and position control.
+     * Represents a PID-controlled subsystem with limit switches and position control.
      */
-    private class MotorSubsystem {
+    private class LimitedPIDSubsystem {
         /** The motor controller. */
         private final SparkMax motor;
         /** Current state of the subsystem. */
@@ -46,12 +59,13 @@ public class CoralHandler extends SubsystemBase {
          *
          * @param canId CAN ID of the motor controller
          * @param conversionFactor Factor to convert motor rotations to position units
+         * @param minPosition Minimum allowed position value
          * @param maxPosition Maximum allowed position value
          * @param pidConstants PID constants for position control
          * @param minLimitChannel DIO channel for minimum position limit switch
          * @param maxLimitChannel DIO channel for maximum position limit switch
          */
-        public MotorSubsystem(int canId, double conversionFactor, double maxPosition, PID pidConstants,
+        public LimitedPIDSubsystem(int canId, double conversionFactor, double minPosition, double maxPosition, PID pidConstants,
                             int minLimitChannel, int maxLimitChannel) {
             this.conversionFactor = conversionFactor;
             this.pidConstants = pidConstants;
@@ -62,12 +76,12 @@ public class CoralHandler extends SubsystemBase {
             limitSwitches = new LimitSwitchPair(
                 minLimitChannel, 
                 maxLimitChannel,
-                () -> setPositionAndTarget(0),
+                () -> setPositionAndTarget(minPosition),
                 () -> setPositionAndTarget(maxPosition)
             );
 
             if (limitSwitches.isAtMin()) {
-                setPositionAndTarget(0);
+                setPositionAndTarget(minPosition);
             } else if (limitSwitches.isAtMax()) {
                 setPositionAndTarget(maxPosition);
             } else {
@@ -125,11 +139,15 @@ public class CoralHandler extends SubsystemBase {
 
         /**
          * Creates a new limit switch pair with callbacks for position limits.
+         * Uses interrupt-based detection for reliable position sensing.
+         * 
+         * <p>The callbacks are triggered on the rising edge of the limit switch signals,
+         * indicating when a position limit is reached.
          *
          * @param minChannel DIO channel for minimum position switch
          * @param maxChannel DIO channel for maximum position switch
-         * @param onMin Callback when minimum position is reached
-         * @param onMax Callback when maximum position is reached
+         * @param onMin Callback executed when minimum position is reached (rising edge)
+         * @param onMax Callback executed when maximum position is reached (rising edge)
          */
         public LimitSwitchPair(int minChannel, int maxChannel, Runnable onMin, Runnable onMax) {
             minSwitch = new DigitalInput(minChannel);
@@ -187,9 +205,9 @@ public class CoralHandler extends SubsystemBase {
     }
 
     /** Elevator subsystem instance. */
-    private final MotorSubsystem elevator;
+    private final LimitedPIDSubsystem elevator;
     /** Arm subsystem instance. */
-    private final MotorSubsystem arm;
+    private final LimitedPIDSubsystem arm;
     /** Intake motor controller. */
     private final SparkMax intakeMotor;
     /** Current position setting. */
@@ -209,18 +227,20 @@ public class CoralHandler extends SubsystemBase {
      * Creates a new CoralHandler, initializing all subsystems.
      */
     public CoralHandler() {
-        elevator = new MotorSubsystem(
+        elevator = new LimitedPIDSubsystem(
             CoralConstants.ELEVATOR_CAN_ID,
             CoralConstants.ELEVATOR_DISTANCE_PER_ROTATION.in(Inch),
+            0,
             CoralConstants.ELEVATOR_HEIGHT.in(Inch),
             CoralConstants.ELEVATOR_PID,
             CoralConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
             CoralConstants.ELEVATOR_TOP_LIMIT_CHANNEL
         );
 
-        arm = new MotorSubsystem(
+        arm = new LimitedPIDSubsystem(
             CoralConstants.ARM_CAN_ID,
             CoralConstants.ARM_ANGLE_PER_ROTATION.in(Degree),
+            CoralConstants.ARM_MIN_ANGLE.in(Degree),
             CoralConstants.ARM_MAX_ANGLE.in(Degree),
             CoralConstants.ARM_PID,
             CoralConstants.ARM_MIN_LIMIT_CHANNEL,
@@ -235,8 +255,13 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Sets both elevator and arm to a predefined position.
+     * Will not execute if either subsystem's position is unknown or if already at target position.
+     * 
+     * <p>For CUSTOM positions, this method will maintain the current position.
+     * For predefined positions, it will move both mechanisms to their respective targets.
      *
-     * @param targetPosition The desired position for both mechanisms
+     * @param targetPosition The desired preset position for both mechanisms
+     * @see HandlerPosition
      */
     public void setPosition(HandlerPosition targetPosition) {
         if (currentPosition == targetPosition || 
@@ -254,6 +279,10 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Applies zeroing voltage to subsystems with unknown positions.
+     * This helps bring mechanisms to their limit switches for position detection.
+     * 
+     * <p>Only applies voltage if a subsystem's position is currently unknown.
+     * Once a limit switch is triggered, the position will be updated automatically.
      */
     public void zeroIfNeeded() {
         elevator.zeroIfNeeded();

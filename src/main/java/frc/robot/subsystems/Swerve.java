@@ -28,6 +28,22 @@ import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
+/**
+ * Manages the robot's swerve drive system, providing control over movement, autonomous path following,
+ * and odometry tracking. This subsystem handles both autonomous and teleoperated drive control,
+ * integrating with PathPlanner for advanced autonomous capabilities.
+ * 
+ * <p>Features include:
+ * <ul>
+ *   <li>Field-oriented drive control
+ *   <li>Autonomous path following and path finding
+ *   <li>Odometry tracking and pose estimation
+ *   <li>Wheel locking for stability
+ * </ul>
+ * 
+ * <p>Uses YAGSL (Yet Another Generic Swerve Library) for underlying swerve drive implementation
+ * and PathPlanner for autonomous navigation.
+ */
 public class Swerve extends SubsystemBase {
     private static Swerve instance;
     private final SwerveDrive swerveDrive;
@@ -122,10 +138,11 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Creates a command to drive the robot in field-oriented mode.
+     * Takes into account the robot's current heading to maintain consistent field-relative movement.
      * 
-     * @param velocity a supplier that provides the desired chassis speeds
-     * @return a command that continuously updates drive output based on supplied
-     *         velocities
+     * @param velocity a supplier that provides the desired chassis speeds in field-oriented coordinates
+     * @return a command that continuously updates drive output based on supplied velocities
+     * @see ChassisSpeeds
      */
     public Command driveFieldOriented(Supplier<ChassisSpeeds> velocity) {
         return run(() -> swerveDrive.driveFieldOriented(velocity.get()));

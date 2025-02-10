@@ -116,7 +116,9 @@ public final class Constants {
         /** DIO channel for minimum angle limit switch. */
         public static final int ARM_MIN_LIMIT_CHANNEL = 3;
         /** Maximum arm angle. */
-        public static final Angle ARM_MAX_ANGLE = Degree.of(10.0);
+        public static final Angle ARM_MAX_ANGLE = Degree.of(150.0);
+        /** Minimum arm angle. */
+        public static final Angle ARM_MIN_ANGLE = Degree.of(-150.0);
         /** PID constants for arm control. */
         public static final PID ARM_PID = new PID(0.0, 0.0, 0.0);
 

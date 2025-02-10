@@ -15,8 +15,20 @@ import frc.robot.subsystems.Swerve;
 import swervelib.SwerveInputStream;
 
 /**
- * This class is where the bulk of the robot's declarations should be.
- * It contains subsystems, commands, and button mappings that define the robot's behavior.
+ * Main robot configuration class that binds controls and commands to subsystems.
+ * This class serves as the robot's command center, managing all subsystem instances
+ * and their associated commands.
+ * 
+ * <p>Features include:
+ * <ul>
+ *   <li>Driver control configuration
+ *   <li>Command button mappings
+ *   <li>Autonomous command selection
+ *   <li>Subsystem instantiation and management
+ * </ul>
+ * 
+ * <p>The class follows a centralized control pattern, with all robot behaviors
+ * defined through command bindings and default commands.
  */
 public class RobotContainer {
   /** Xbox controller used for driver input. */
@@ -42,8 +54,13 @@ public class RobotContainer {
       .headingWhile(true);
 
   /**
-   * Creates a new RobotContainer.
-   * The container initializes the subsystems, commands, and button bindings.
+   * Creates a new RobotContainer and initializes all robot subsystems and commands.
+   * Performs the following setup:
+   * <ul>
+   *   <li>Silences joystick warnings for unplugged controllers
+   *   <li>Disables controller rumble
+   *   <li>Configures button bindings for commands
+   * </ul>
    */
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -55,10 +72,12 @@ public class RobotContainer {
   /**
    * Configures button bindings for commands.
    * Maps controller buttons to specific robot actions:
-   * - Default command: Field oriented drive
-   * - X button: Lock wheels in X pattern
-   * - Start button: Reset odometry
-   * - Back button: Drive to field center
+   * <ul>
+   *   <li>Default command: Field oriented drive using joystick input
+   *   <li>X button: Lock wheels in X pattern for stability
+   *   <li>Start button: Reset odometry to field center
+   *   <li>Back button: Autonomous drive to field center
+   * </ul>
    */
   private void configureBindings() {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
@@ -73,9 +92,11 @@ public class RobotContainer {
   }
 
   /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
+   * Provides the command to run during autonomous mode.
+   * Currently returns a placeholder command that prints a message,
+   * indicating no autonomous routine is configured.
    *
-   * @return the command to run in autonomous
+   * @return the command to run in autonomous mode
    */
   public Command getAutonomousCommand() {
     return Commands.print("No autonomous command configured");
