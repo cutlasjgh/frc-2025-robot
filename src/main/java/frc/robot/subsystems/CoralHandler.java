@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Inch;
 
+import java.util.ArrayList;
+
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -19,6 +21,9 @@ import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 
 /**
  * Controls the Coral mechanism, a multi-joint manipulator consisting of an elevator, arm, and intake.
@@ -183,24 +188,40 @@ public class CoralHandler extends SubsystemBase {
     private enum SubsystemState { KNOWN, UNKNOWN }
 
     /**
-     * Predefined positions for both elevator and arm.
+     * Represents a configuration state of the arm mechanism.
+     */
+    private static class ArmState {
+        public final Distance elevatorHeight;
+        public final Angle armAngle;
+
+        public ArmState(Distance elevatorHeight, Angle armAngle) {
+            this.elevatorHeight = elevatorHeight;
+            this.armAngle = armAngle;
+        }
+
+        /**
+         * @return true if the state is within the physical limits of the mechanism
+         */
+        public boolean isValid() {
+            return elevatorHeight.in(Inch) >= 0 && 
+                   elevatorHeight.lte(CoralConstants.ELEVATOR_HEIGHT) &&
+                   armAngle.gte(CoralConstants.ARM_MIN_ANGLE) &&
+                   armAngle.lte(CoralConstants.ARM_MAX_ANGLE);
+        }
+    }
+
+    /**
+     * Predefined positions for the end effector.
      */
     private enum HandlerPosition {
-        /** Ground pickup position. */
-        GROUND(0, CoralConstants.ARM_MAX_ANGLE.in(Degree)),
-        /** Scoring position. */
-        SCORE(CoralConstants.ELEVATOR_HEIGHT.in(Inch), 0),
-        /** Custom position (not predefined). */
-        CUSTOM(Double.NaN, Double.NaN);
+        GROUND(new Translation2d(CoralConstants.ARM_LENGTH.in(Inch), 0)),
+        SCORE(new Translation2d(0, CoralConstants.ELEVATOR_HEIGHT.in(Inch))),
+        CUSTOM(null);
 
-        /** Target elevator height. */
-        public final double elevatorTarget;
-        /** Target arm angle. */
-        public final double armTarget;
+        public final Translation2d target;
 
-        private HandlerPosition(double elevatorTarget, double armTarget) {
-            this.elevatorTarget = elevatorTarget;
-            this.armTarget = armTarget;
+        private HandlerPosition(Translation2d target) {
+            this.target = target;
         }
     }
 
@@ -212,6 +233,8 @@ public class CoralHandler extends SubsystemBase {
     private final SparkMax intakeMotor;
     /** Current position setting. */
     private HandlerPosition currentPosition = HandlerPosition.CUSTOM;
+    /** Arm length in inches. */
+    private final double armLength;
 
     /**
      * @return Singleton instance of the CoralHandler
@@ -251,30 +274,75 @@ public class CoralHandler extends SubsystemBase {
         SparkMaxConfig intakeConfig = new SparkMaxConfig();
         intakeConfig.idleMode(IdleMode.kBrake);
         intakeMotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+
+        armLength = CoralConstants.ARM_LENGTH.in(Inch);
+    }
+
+    /**
+     * Converts arm state to end effector position.
+     */
+    private Translation2d forwardKinematics(ArmState state) {
+        double radians = Math.toRadians(state.armAngle.in(Degree));
+        double x = armLength * Math.cos(radians);
+        double y = state.elevatorHeight.in(Inch) + armLength * Math.sin(radians);
+        return new Translation2d(x, y);
+    }
+
+    /**
+     * Converts desired end effector position to arm state.
+     * Returns null if position is unreachable.
+     */
+    private ArrayList<ArmState> inverseKinematics(Translation2d target) {
+        ArrayList<Double> heightSolutions = new ArrayList<>();
+        heightSolutions.add(target.getY() + Math.sqrt(Math.pow(armLength, 2) - Math.pow(target.getX(), 2)));
+        heightSolutions.add(target.getY() - Math.sqrt(Math.pow(armLength, 2) - Math.pow(target.getX(), 2)));
+        heightSolutions.removeIf(height -> height < 0 || height > CoralConstants.ELEVATOR_HEIGHT.in(Inch) || Double.isNaN(height));
+
+        ArrayList<ArmState> validSolutions = new ArrayList<>();
+        for (double height : heightSolutions) {
+            double armAngle = Math.toDegrees(Math.atan2(target.getX(), target.getY() - height));
+            if (armAngle >= CoralConstants.ARM_MIN_ANGLE.in(Degree) && armAngle <= CoralConstants.ARM_MAX_ANGLE.in(Degree)) {
+                validSolutions.add(new ArmState(Inch.of(height), Degree.of(armAngle)));
+            }
+        }
+
+        return validSolutions;
     }
 
     /**
      * Sets both elevator and arm to a predefined position.
-     * Will not execute if either subsystem's position is unknown or if already at target position.
-     * 
-     * <p>For CUSTOM positions, this method will maintain the current position.
-     * For predefined positions, it will move both mechanisms to their respective targets.
-     *
-     * @param targetPosition The desired preset position for both mechanisms
-     * @see HandlerPosition
      */
     public void setPosition(HandlerPosition targetPosition) {
         if (currentPosition == targetPosition || 
             elevator.state == SubsystemState.UNKNOWN || 
             arm.state == SubsystemState.UNKNOWN) return;
 
-        if (targetPosition != HandlerPosition.CUSTOM) {
-            elevator.motor.getClosedLoopController().setReference(
-                targetPosition.elevatorTarget, ControlType.kPosition);
-            arm.motor.getClosedLoopController().setReference(
-                targetPosition.armTarget, ControlType.kPosition);
+        if (targetPosition != HandlerPosition.CUSTOM && targetPosition.target != null) {
+            ArrayList<ArmState> solutions = inverseKinematics(targetPosition.target);
+            if (!solutions.isEmpty()) {
+                ArmState solution = solutions.get(0); // Use first solution. This will be improved in the future.
+                elevator.motor.getClosedLoopController().setReference(
+                    solution.elevatorHeight.in(Inch), ControlType.kPosition);
+                arm.motor.getClosedLoopController().setReference(
+                    solution.armAngle.in(Degree), ControlType.kPosition);
+                currentPosition = targetPosition;
+            }
         }
-        currentPosition = targetPosition;
+    }
+
+    /**
+     * Sets the end effector to a custom 2D position.
+     */
+    public void setCustomPosition(Translation2d target) {
+        ArrayList<ArmState> solutions = inverseKinematics(target);
+        if (!solutions.isEmpty()) {
+            ArmState solution = solutions.get(0); // Use first solution. This will be improved in the future.
+            elevator.motor.getClosedLoopController().setReference(
+                solution.elevatorHeight.in(Inch), ControlType.kPosition);
+            arm.motor.getClosedLoopController().setReference(
+                solution.armAngle.in(Degree), ControlType.kPosition);
+            currentPosition = HandlerPosition.CUSTOM;
+        }
     }
 
     /**
