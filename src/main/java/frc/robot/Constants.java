@@ -121,6 +121,8 @@ public final class Constants {
         public static final Angle ARM_MIN_ANGLE = Degree.of(-150.0);
         /** PID constants for arm control. */
         public static final PID ARM_PID = new PID(0.0, 0.0, 0.0);
+        /** Arm length. */
+        public static final Distance ARM_LENGTH = Inch.of(30);
 
         // Intake constants
         /** CAN ID for intake motor. */
