@@ -8,7 +8,10 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.AlgaArmConstants;
+import frc.robot.subsubsytems.LimitSwitch;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * Controls the alga arm mechanism for game piece manipulation.
@@ -29,6 +32,10 @@ public class AlgaArm extends SubsystemBase {
     private static AlgaArm instance;
     /** Motor controller for the alga intake mechanism. */
     private final SparkMax sparkMax;
+    /** Limit switch for detecting alga game pieces. */
+    private final LimitSwitch algaSensor;
+    /** NetworkTable for publishing alga detection state. */
+    private final NetworkTable table;
 
     /**
      * Returns the singleton instance of the AlgaArm subsystem.
@@ -53,15 +60,38 @@ public class AlgaArm extends SubsystemBase {
         SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
         sparkMaxConfig.idleMode(IdleMode.kBrake);
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+
+        algaSensor = new LimitSwitch(
+            AlgaArmConstants.SENSOR_CHANNEL,
+            this::stopIntake,
+            null
+        );
+
+        table = NetworkTableInstance.getDefault().getTable("AlgaArm");
     }
 
     /**
      * Activates the intake motor to collect alga game pieces.
-     * Applies a constant voltage defined in constants to ensure consistent intake behavior.
-     * The motor will continue running until explicitly stopped.
+     * Motor will automatically stop when an alga is detected.
      */
-    public void intakeAlga() {
-        sparkMax.setVoltage(AlgaArmConstants.MOTOR_VOLTAGE);
+    public void startIntake() {
+        if (!hasGamepiece()) {
+            sparkMax.set(AlgaArmConstants.INTAKE_POWER);
+        } else {
+            stopIntake();
+        }
+    }
+
+    /**
+     * Runs the intake in reverse to release the alga.
+     * Continues until alga is no longer detected.
+     */
+    public void dropGamepiece() {
+        if (hasGamepiece()) {
+            sparkMax.set(AlgaArmConstants.OUTTAKE_POWER);
+        } else {
+            stopIntake();
+        }
     }
 
     /**
@@ -69,16 +99,30 @@ public class AlgaArm extends SubsystemBase {
      * Due to brake mode, this will actively hold the game piece in place.
      */
     public void stopIntake() {
-        sparkMax.setVoltage(0.0);
+        sparkMax.stopMotor();
     }
 
     /**
      * Checks if the mechanism currently has an alga game piece.
-     * Implementation pending for game piece detection.
+     * Uses limit switch to detect alga presence.
      *
      * @return true if an alga game piece is detected, false otherwise
      */
-    public boolean hasAlga() {
-        return false;
+    public boolean hasGamepiece() {
+        return algaSensor.get();
+    }
+
+    @Override
+    public void periodic() {
+        // If we have an alga and the motor is running in intake direction, stop it
+        if (hasGamepiece() && sparkMax.get() > 0) {
+            stopIntake();
+        }
+        // If we don't have an alga and the motor is running in outtake direction, stop it
+        if (!hasGamepiece() && sparkMax.get() < 0) {
+            stopIntake();
+        }
+
+        table.getEntry("hasAlga").setBoolean(hasGamepiece());
     }
 }

@@ -6,24 +6,22 @@ import static edu.wpi.first.units.Units.Inch;
 import java.util.ArrayList;
 
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.ClosedLoopConfig;
-import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.CoralConstants;
-import frc.robot.Constants.PID;
-import edu.wpi.first.wpilibj.AsynchronousInterrupt;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.subsubsytems.LimitSwitch;
+import frc.robot.subsubsytems.LimitedPIDSubsystem;
+import frc.robot.subsubsytems.LimitedPIDSubsystem.SubsystemState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * Controls the Coral mechanism, a multi-joint manipulator consisting of an elevator, arm, and intake.
@@ -43,149 +41,6 @@ import edu.wpi.first.units.measure.Distance;
  */
 public class CoralHandler extends SubsystemBase {
     private static CoralHandler instance;
-    
-    /**
-     * Represents a PID-controlled subsystem with limit switches and position control.
-     */
-    private class LimitedPIDSubsystem {
-        /** The motor controller. */
-        private final SparkMax motor;
-        /** Current state of the subsystem. */
-        private SubsystemState state = SubsystemState.UNKNOWN;
-        /** Pair of limit switches for position limits. */
-        private final LimitSwitchPair limitSwitches;
-        /** Conversion factor from motor rotations to position units. */
-        private final double conversionFactor;
-        /** PID constants for position control. */
-        private final PID pidConstants;
-
-        /**
-         * Creates a new motor subsystem with position control and limit switches.
-         *
-         * @param canId CAN ID of the motor controller
-         * @param conversionFactor Factor to convert motor rotations to position units
-         * @param minPosition Minimum allowed position value
-         * @param maxPosition Maximum allowed position value
-         * @param pidConstants PID constants for position control
-         * @param minLimitChannel DIO channel for minimum position limit switch
-         * @param maxLimitChannel DIO channel for maximum position limit switch
-         */
-        public LimitedPIDSubsystem(int canId, double conversionFactor, double minPosition, double maxPosition, PID pidConstants,
-                            int minLimitChannel, int maxLimitChannel) {
-            this.conversionFactor = conversionFactor;
-            this.pidConstants = pidConstants;
-
-            motor = new SparkMax(canId, MotorType.kBrushless);
-            configureMotor();
-
-            limitSwitches = new LimitSwitchPair(
-                minLimitChannel, 
-                maxLimitChannel,
-                () -> setPositionAndTarget(minPosition),
-                () -> setPositionAndTarget(maxPosition)
-            );
-
-            if (limitSwitches.isAtMin()) {
-                setPositionAndTarget(minPosition);
-            } else if (limitSwitches.isAtMax()) {
-                setPositionAndTarget(maxPosition);
-            } else {
-                DriverStation.reportWarning("Position unknown for motor " + canId, false);
-            }
-        }
-
-        /**
-         * Configures the motor with the specified settings.
-         */
-        private void configureMotor() {
-            SparkMaxConfig config = new SparkMaxConfig();
-            config.idleMode(IdleMode.kBrake);
-            
-            EncoderConfig encoderConfig = new EncoderConfig();
-            encoderConfig.positionConversionFactor(conversionFactor);
-            config.apply(encoderConfig);
-            
-            ClosedLoopConfig pidConfig = new ClosedLoopConfig();
-            pidConfig.pid(pidConstants.p, pidConstants.i, pidConstants.d);
-            config.apply(pidConfig);
-            
-            motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-        }
-
-        /**
-         * Sets the current position and target position of the motor.
-         *
-         * @param position The position to set
-         */
-        private void setPositionAndTarget(double position) {
-            state = SubsystemState.KNOWN;
-            motor.getEncoder().setPosition(position);
-            motor.getClosedLoopController().setReference(position, ControlType.kPosition);
-        }
-
-        /**
-         * Applies zeroing voltage if position is unknown.
-         */
-        public void zeroIfNeeded() {
-            if (state == SubsystemState.UNKNOWN) {
-                motor.setVoltage(CoralConstants.UNKNOWN_STATE_VOLTAGE);
-            }
-        }
-    }
-
-    /**
-     * Manages a pair of limit switches with interrupt-based position detection.
-     */
-    private class LimitSwitchPair {
-        private final AsynchronousInterrupt minInterrupt;
-        private final AsynchronousInterrupt maxInterrupt;
-        private final DigitalInput minSwitch;
-        private final DigitalInput maxSwitch;
-
-        /**
-         * Creates a new limit switch pair with callbacks for position limits.
-         * Uses interrupt-based detection for reliable position sensing.
-         * 
-         * <p>The callbacks are triggered on the rising edge of the limit switch signals,
-         * indicating when a position limit is reached.
-         *
-         * @param minChannel DIO channel for minimum position switch
-         * @param maxChannel DIO channel for maximum position switch
-         * @param onMin Callback executed when minimum position is reached (rising edge)
-         * @param onMax Callback executed when maximum position is reached (rising edge)
-         */
-        public LimitSwitchPair(int minChannel, int maxChannel, Runnable onMin, Runnable onMax) {
-            minSwitch = new DigitalInput(minChannel);
-            maxSwitch = new DigitalInput(maxChannel);
-
-            minInterrupt = new AsynchronousInterrupt(minSwitch, (rising, falling) -> {
-                if (rising) onMin.run();
-            });
-            maxInterrupt = new AsynchronousInterrupt(maxSwitch, (rising, falling) -> {
-                if (rising) onMax.run();
-            });
-
-            minInterrupt.enable();
-            maxInterrupt.enable();
-        }
-
-        /**
-         * @return true if at minimum position
-         */
-        public boolean isAtMin() {
-            return minSwitch.get();
-        }
-
-        /**
-         * @return true if at maximum position
-         */
-        public boolean isAtMax() {
-            return maxSwitch.get();
-        }
-    }
-
-    /** State of position knowledge for a subsystem. */
-    private enum SubsystemState { KNOWN, UNKNOWN }
 
     /**
      * Represents a configuration state of the arm mechanism.
@@ -197,16 +52,6 @@ public class CoralHandler extends SubsystemBase {
         public ArmState(Distance elevatorHeight, Angle armAngle) {
             this.elevatorHeight = elevatorHeight;
             this.armAngle = armAngle;
-        }
-
-        /**
-         * @return true if the state is within the physical limits of the mechanism
-         */
-        public boolean isValid() {
-            return elevatorHeight.in(Inch) >= 0 && 
-                   elevatorHeight.lte(CoralConstants.ELEVATOR_HEIGHT) &&
-                   armAngle.gte(CoralConstants.ARM_MIN_ANGLE) &&
-                   armAngle.lte(CoralConstants.ARM_MAX_ANGLE);
         }
     }
 
@@ -235,6 +80,10 @@ public class CoralHandler extends SubsystemBase {
     private HandlerPosition currentPosition = HandlerPosition.CUSTOM;
     /** Arm length in inches. */
     private final double armLength;
+    /** Intake sensor for detecting game pieces. */
+    private final LimitSwitch intakeSensor;
+    /** NetworkTable instance for publishing data. */
+    private final NetworkTable table;
 
     /**
      * @return Singleton instance of the CoralHandler
@@ -257,7 +106,9 @@ public class CoralHandler extends SubsystemBase {
             CoralConstants.ELEVATOR_HEIGHT.in(Inch),
             CoralConstants.ELEVATOR_PID,
             CoralConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
-            CoralConstants.ELEVATOR_TOP_LIMIT_CHANNEL
+            CoralConstants.ELEVATOR_TOP_LIMIT_CHANNEL,
+            CoralConstants.POSITION_TOLERANCE,
+            LimitedPIDSubsystem.ControlMode.POSITION
         );
 
         arm = new LimitedPIDSubsystem(
@@ -267,7 +118,9 @@ public class CoralHandler extends SubsystemBase {
             CoralConstants.ARM_MAX_ANGLE.in(Degree),
             CoralConstants.ARM_PID,
             CoralConstants.ARM_MIN_LIMIT_CHANNEL,
-            CoralConstants.ARM_MAX_LIMIT_CHANNEL
+            CoralConstants.ARM_MAX_LIMIT_CHANNEL,
+            CoralConstants.POSITION_TOLERANCE,
+            LimitedPIDSubsystem.ControlMode.POSITION
         );
 
         intakeMotor = new SparkMax(CoralConstants.INTAKE_CAN_ID, MotorType.kBrushless);
@@ -275,7 +128,14 @@ public class CoralHandler extends SubsystemBase {
         intakeConfig.idleMode(IdleMode.kBrake);
         intakeMotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
+        intakeSensor = new LimitSwitch(
+            CoralConstants.INTAKE_SENSOR_CHANNEL,
+            this::stopIntake,  // Stop intake when coral is detected
+            null              // No action needed on release
+        );
+
         armLength = CoralConstants.ARM_LENGTH.in(Inch);
+        table = NetworkTableInstance.getDefault().getTable("CoralHandler");
     }
 
     /**
@@ -314,17 +174,15 @@ public class CoralHandler extends SubsystemBase {
      */
     public void setPosition(HandlerPosition targetPosition) {
         if (currentPosition == targetPosition || 
-            elevator.state == SubsystemState.UNKNOWN || 
-            arm.state == SubsystemState.UNKNOWN) return;
+            elevator.getState() == SubsystemState.UNKNOWN || 
+            arm.getState() == SubsystemState.UNKNOWN) return;
 
         if (targetPosition != HandlerPosition.CUSTOM && targetPosition.target != null) {
             ArrayList<ArmState> solutions = inverseKinematics(targetPosition.target);
             if (!solutions.isEmpty()) {
-                ArmState solution = solutions.get(0); // Use first solution. This will be improved in the future.
-                elevator.motor.getClosedLoopController().setReference(
-                    solution.elevatorHeight.in(Inch), ControlType.kPosition);
-                arm.motor.getClosedLoopController().setReference(
-                    solution.armAngle.in(Degree), ControlType.kPosition);
+                ArmState solution = solutions.get(0);
+                elevator.set(solution.elevatorHeight.in(Inch));
+                arm.set(solution.armAngle.in(Degree));
                 currentPosition = targetPosition;
             }
         }
@@ -336,11 +194,9 @@ public class CoralHandler extends SubsystemBase {
     public void setCustomPosition(Translation2d target) {
         ArrayList<ArmState> solutions = inverseKinematics(target);
         if (!solutions.isEmpty()) {
-            ArmState solution = solutions.get(0); // Use first solution. This will be improved in the future.
-            elevator.motor.getClosedLoopController().setReference(
-                solution.elevatorHeight.in(Inch), ControlType.kPosition);
-            arm.motor.getClosedLoopController().setReference(
-                solution.armAngle.in(Degree), ControlType.kPosition);
+            ArmState solution = solutions.get(0);
+            elevator.set(solution.elevatorHeight.in(Inch));
+            arm.set(solution.armAngle.in(Degree));
             currentPosition = HandlerPosition.CUSTOM;
         }
     }
@@ -355,5 +211,56 @@ public class CoralHandler extends SubsystemBase {
     public void zeroIfNeeded() {
         elevator.zeroIfNeeded();
         arm.zeroIfNeeded();
+    }
+
+    /**
+     * Activates the intake motor to collect game pieces.
+     * Motor will automatically stop when a coral is detected.
+     */
+    public void intakeCoral() {
+        if (!hasCoral()) {
+            intakeMotor.set(CoralConstants.INTAKE_POWER);
+        } else {
+            stopIntake();
+        }
+    }
+
+    /**
+     * Runs the intake in reverse to release the coral.
+     * Continues until coral is no longer detected.
+     */
+    public void dropCoral() {
+        if (hasCoral()) {
+            intakeMotor.set(CoralConstants.OUTTAKE_POWER);
+        } else {
+            stopIntake();
+        }
+    }
+
+    /**
+     * Stops the intake motor's operation.
+     */
+    public void stopIntake() {
+        intakeMotor.stopMotor();
+    }
+
+    /**
+     * Checks if the mechanism currently has a game piece.
+     * Uses limit switch to detect coral presence.
+     * 
+     * @return true if a coral is detected, false otherwise
+     */
+    public boolean hasCoral() {
+        return intakeSensor.get();
+    }
+
+    @Override
+    public void periodic() {
+        // Automatic stopping now handled by limit switch callback
+        // Only need to stop outtake when coral is released
+        if (!hasCoral() && intakeMotor.get() < 0) {
+            stopIntake();
+        }
+        table.getEntry("hasCoral").setBoolean(hasCoral());
     }
 }

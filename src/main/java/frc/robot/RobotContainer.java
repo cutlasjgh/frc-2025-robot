@@ -11,7 +11,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
-import frc.robot.subsystems.Swerve;
+import frc.robot.commands.*;
+import frc.robot.subsystems.*;
 import swervelib.SwerveInputStream;
 
 /**
@@ -32,7 +33,10 @@ import swervelib.SwerveInputStream;
  */
 public class RobotContainer {
   /** Xbox controller used for driver input. */
-  private final CommandXboxController driver = new CommandXboxController(0);
+  private final CommandXboxController driverController = new CommandXboxController(0);
+
+  /** "Xbox" controller used for operator input. */
+  private final CommandXboxController operatorController = new CommandXboxController(1);
 
   /** Main drive subsystem for robot movement. */
   private final Swerve swerveDrive = Swerve.getInstance();
@@ -42,16 +46,22 @@ public class RobotContainer {
    * Configures how controller inputs are processed and applied to drive commands.
    */
   private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
-      () -> driver.getLeftY() * -1,
-      () -> driver.getLeftX() * -1)
+      () -> driverController.getLeftY() * -1,
+      () -> driverController.getLeftX() * -1)
       .cubeTranslationControllerAxis(true)
       .scaleTranslation(0.5)
       .cubeRotationControllerAxis(true)
-      .withControllerHeadingAxis(() -> driver.getRightX() * -1, () -> driver.getRightY() * -1)
+      .withControllerHeadingAxis(() -> driverController.getRightX() * -1, () -> driverController.getRightY() * -1)
       .cubeRotationControllerAxis(true)
       .deadband(OIConstants.DRIVER_DEADBAND)
       .allianceRelativeControl(true)
       .headingWhile(true);
+
+  /** Alga arm subsystem for handling alga gamepieces. */
+  private final AlgaArm algaArm = AlgaArm.getInstance();
+
+  /** Coral handler subsystem for handling coral gamepieces. */
+  private final CoralHandler coralHandler = CoralHandler.getInstance();
 
   /**
    * Creates a new RobotContainer and initializes all robot subsystems and commands.
@@ -64,7 +74,7 @@ public class RobotContainer {
    */
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
-    driver.setRumble(RumbleType.kBothRumble, 0.0);
+    driverController.setRumble(RumbleType.kBothRumble, 0.0);
 
     configureBindings();
   }
@@ -83,12 +93,22 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
-    driver.x().whileTrue(Commands.runOnce(swerveDrive::lockWheels, swerveDrive).repeatedly());
-    driver.start().onTrue(Commands.runOnce(swerveDrive::resetOdometry, swerveDrive));
-    driver.back().whileTrue(
+    driverController.back().whileTrue(
         swerveDrive.driveToPose(
             new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
                 Rotation2d.fromDegrees(0))));
+
+    // A button: Intake/Drop Alga
+    operatorController.a().onTrue(algaArm.hasGamepiece() ? 
+        new DropAlgaCommand() : 
+        new IntakeAlgaCommand()
+    );
+
+    // B button: Intake/Drop Coral
+    operatorController.b().onTrue(coralHandler.hasCoral() ? 
+        new DropCoralCommand() : 
+        new IntakeCoralCommand()
+    );
   }
 
   /**

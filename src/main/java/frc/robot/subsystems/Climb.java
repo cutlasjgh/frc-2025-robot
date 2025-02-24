@@ -9,6 +9,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.ClimbConstants;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsubsytems.LimitSwitchPair;
 
 /**
  * Controls the robot's climbing mechanism for end-game scoring.
@@ -32,6 +33,8 @@ public class Climb extends SubsystemBase {
     private final SparkMax sparkMax;
     /** Current state of the ratchet mechanism. */
     private final RachetState state;
+    /** Limit switches for the climbing mechanism. */
+    private final LimitSwitchPair limitSwitches;
 
     /**
      * Represents the possible states of the ratchet mechanism.
@@ -68,7 +71,14 @@ public class Climb extends SubsystemBase {
         sparkMaxConfig.idleMode(IdleMode.kBrake);
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
-        state = RachetState.LOCKED;
+        state = RachetState.LOCKED; // We don't have control to release this yet
+
+        limitSwitches = new LimitSwitchPair(
+            ClimbConstants.BOTTOM_LIMIT_CHANNEL,
+            ClimbConstants.TOP_LIMIT_CHANNEL,
+            () -> stop(), // Stop when bottom limit is hit
+            () -> stop()  // Stop when top limit is hit
+        );
     }
 
     /**
@@ -79,5 +89,35 @@ public class Climb extends SubsystemBase {
      */
     public RachetState getState() {
         return state;
+    }
+
+    /**
+     * Sets the climb motor to move upward at the configured power.
+     */
+    public void climb() {
+        if (!limitSwitches.isAtMax()) {
+            sparkMax.set(ClimbConstants.CLIMB_POWER);
+        }
+    }
+
+    /**
+     * Stops the climb motor.
+     */
+    public void stop() {
+        sparkMax.stopMotor();
+    }
+
+    /**
+     * @return true if the climber is at its maximum height
+     */
+    public boolean isAtTop() {
+        return limitSwitches.isAtMax();
+    }
+
+    /**
+     * @return true if the climber is at its minimum height
+     */
+    public boolean isAtBottom() {
+        return limitSwitches.isAtMin();
     }
 }

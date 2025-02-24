@@ -60,7 +60,9 @@ public final class Constants {
         }
 
         public static final int CAN_ID = 0;
-        public static final Voltage MOTOR_VOLTAGE = Volt.of(6.0);
+        public static final int SENSOR_CHANNEL = 7;
+        public static final double INTAKE_POWER = 0.5;
+        public static final double OUTTAKE_POWER = -0.5;
     }
 
     /**
@@ -72,6 +74,9 @@ public final class Constants {
 
         public static final int CAN_ID = 0;
         public static final Voltage MOTOR_VOLTAGE = Volt.of(6.0);
+        public static final int BOTTOM_LIMIT_CHANNEL = 4;
+        public static final int TOP_LIMIT_CHANNEL = 5;
+        public static final double CLIMB_POWER = 0.5;
     }
 
     /**
@@ -127,11 +132,17 @@ public final class Constants {
         // Intake constants
         /** CAN ID for intake motor. */
         public static final int INTAKE_CAN_ID = 2;
-        /** Operating voltage for intake motor. */
-        public static final Voltage INTAKE_MOTOR_VOLTAGE = Volt.of(6.0);
+        /** DIO channel for coral detection limit switch. */
+        public static final int INTAKE_SENSOR_CHANNEL = 6;
+        /** Intake motor power (-1.0 to 1.0). */
+        public static final double INTAKE_POWER = 0.5;
+        /** Outtake motor power (-1.0 to 1.0). */
+        public static final double OUTTAKE_POWER = -0.5;
 
         // Shared constants
-        /** Voltage applied when zeroing unknown positions. */
-        public static final Voltage UNKNOWN_STATE_VOLTAGE = Volt.of(6.0);
+        /** Power applied when zeroing unknown positions (-1.0 to 1.0). */
+        public static final double UNKNOWN_STATE_POWER = 0.1;
+        /** Maximum allowed offset when hitting limit switches. */
+        public static final double POSITION_TOLERANCE = 1.0;
     }
 }
