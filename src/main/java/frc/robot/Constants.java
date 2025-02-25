@@ -77,6 +77,7 @@ public final class Constants {
         public static final int BOTTOM_LIMIT_CHANNEL = 4;
         public static final int TOP_LIMIT_CHANNEL = 5;
         public static final double CLIMB_POWER = 0.5;
+        public static final boolean IS_INVERTED = true;
     }
 
     /**

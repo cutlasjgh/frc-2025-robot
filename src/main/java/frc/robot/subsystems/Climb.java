@@ -69,6 +69,7 @@ public class Climb extends SubsystemBase {
         sparkMax = new SparkMax(ClimbConstants.CAN_ID, MotorType.kBrushless);
         SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
         sparkMaxConfig.idleMode(IdleMode.kBrake);
+        sparkMaxConfig.inverted(ClimbConstants.IS_INVERTED);
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
         state = RachetState.LOCKED; // We don't have control to release this yet
