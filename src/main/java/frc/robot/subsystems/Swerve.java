@@ -137,7 +137,12 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Creates a command to drive the robot in field-oriented mode.
-     * Takes into account the robot's current heading to maintain consistent field-relative movement.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * Swerve.getInstance().driveFieldOriented(() -> new ChassisSpeeds(1.0, 0.0, 0.5));
+     * }
+     * </pre>
      * 
      * @param velocity a supplier that provides the desired chassis speeds in field-oriented coordinates
      * @return a command that continuously updates drive output based on supplied velocities
@@ -150,6 +155,12 @@ public class Swerve extends SubsystemBase {
     /**
      * Locks the swerve modules in an X pattern to prevent the robot from moving.
      * Useful for maintaining position or preparing for disable.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * Swerve.getInstance().lockWheels();
+     * }
+     * </pre>
      */
     public void lockWheels() {
         swerveDrive.lockPose();
@@ -158,6 +169,12 @@ public class Swerve extends SubsystemBase {
     /**
      * Resets the robot's odometry to the center of the field (8.774m, 4.026m, 0°).
      * This is typically used at the start of autonomous routines.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * Swerve.getInstance().resetOdometry();
+     * }
+     * </pre>
      */
     public void resetOdometry() {
         swerveDrive.resetOdometry(new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
@@ -166,6 +183,12 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Retrieves the current estimated pose of the robot on the field.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * Pose2d currentPose = Swerve.getInstance().getPose();
+     * }
+     * </pre>
      * 
      * @return the current Pose2d representing the robot's position and rotation
      */
@@ -175,6 +198,12 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Resets the robot's odometry to a specific pose.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * Swerve.getInstance().resetOdometry(new Pose2d(new Translation2d(8.0, 4.0), Rotation2d.fromDegrees(90)));
+     * }
+     * </pre>
      * 
      * @param pose the Pose2d to set as the robot's current position and rotation
      */
@@ -184,6 +213,12 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Gets the current velocity of the robot.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * ChassisSpeeds speeds = Swerve.getInstance().getRobotVelocity();
+     * }
+     * </pre>
      * 
      * @return the ChassisSpeeds representing the robot's current velocity
      */
@@ -193,6 +228,12 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Gets the underlying SwerveDrive object.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * SwerveDrive drive = Swerve.getInstance().getSwerveDrive();
+     * }
+     * </pre>
      * 
      * @return the SwerveDrive instance used by this subsystem
      */
@@ -203,6 +244,12 @@ public class Swerve extends SubsystemBase {
     /**
      * Creates a command to autonomously drive the robot to a specific pose using
      * PathPlanner.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * Command autoDrive = Swerve.getInstance().driveToPose(new Pose2d(new Translation2d(6.0, 3.0), Rotation2d.fromDegrees(45)));
+     * }
+     * </pre>
      * 
      * @param pose the target Pose2d to drive to
      * @return a Command that will drive the robot to the specified pose

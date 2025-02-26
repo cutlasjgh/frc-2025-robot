@@ -218,6 +218,12 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Sets both elevator and arm to a predefined position.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * CoralHandler.getInstance().setPosition(CoralHandler.HandlerPosition.SCORE);
+     * }
+     * </pre>
      */
     public void setPosition(HandlerPosition targetPosition) {
         if (currentPosition == targetPosition || 
@@ -237,6 +243,12 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Sets the end effector to a custom 2D position.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * CoralHandler.getInstance().setCustomPosition(new Translation2d(15.0, 20.0));
+     * }
+     * </pre>
      */
     public void setCustomPosition(Translation2d target) {
         ArrayList<ArmState> solutions = inverseKinematics(target);
@@ -254,6 +266,12 @@ public class CoralHandler extends SubsystemBase {
      * 
      * <p>Only applies voltage if a subsystem's position is currently unknown.
      * Once a limit switch is triggered, the position will be updated automatically.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * CoralHandler.getInstance().zeroIfNeeded();
+     * }
+     * </pre>
      */
     public void zeroIfNeeded() {
         elevator.zeroIfNeeded();
@@ -262,6 +280,12 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Activates the intake motor to collect game pieces.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * CoralHandler.getInstance().intakeCoral();
+     * }
+     * </pre>
      */
     public void intakeCoral() {
         intakeMotor.set(CoralConstants.INTAKE_POWER);
@@ -270,6 +294,12 @@ public class CoralHandler extends SubsystemBase {
     /**
      * Runs the intake in reverse to release the coral.
      * Continues until coral is no longer detected.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * CoralHandler.getInstance().dropCoral();
+     * }
+     * </pre>
      */
     public void dropCoral() {
         intakeMotor.set(CoralConstants.OUTTAKE_POWER);
@@ -277,6 +307,12 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Stops the intake motor's operation.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * CoralHandler.getInstance().stopIntake();
+     * }
+     * </pre>
      */
     public void stopIntake() {
         intakeMotor.stopMotor();
@@ -287,6 +323,12 @@ public class CoralHandler extends SubsystemBase {
      * Uses CANifier input to detect coral presence.
      * 
      * @return true if a coral is detected, false otherwise
+     * <p>Example:
+     * <pre>
+     * {@code
+     * boolean detected = CoralHandler.getInstance().hasCoral();
+     * }
+     * </pre>
      */
     public boolean hasCoral() {
         return !canifier.getGeneralInput(CoralConstants.INTAKE_SENSOR_PIN);

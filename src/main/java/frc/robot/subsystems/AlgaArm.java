@@ -89,31 +89,51 @@ public class AlgaArm extends SubsystemBase {
 
     /**
      * Activates the intake motor to collect alga game pieces.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * AlgaArm.getInstance().startIntake();
+     * }
+     * </pre>
      */
     public void startIntake() {
         sparkMax.set(AlgaArmConstants.INTAKE_POWER);
     }
 
     /**
-     * Runs the intake in reverse to release the alga.
+     * Runs the motor in reverse to release the alga.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * AlgaArm.getInstance().dropGamepiece();
+     * }
+     * </pre>
      */
     public void dropGamepiece() {
         sparkMax.set(AlgaArmConstants.OUTTAKE_POWER);
     }
 
     /**
-     * Stops the intake motor's operation.
-     * Due to brake mode, this will actively hold the game piece in place.
+     * Stops the intake motor.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * AlgaArm.getInstance().stopIntake();
+     * }
+     * </pre>
      */
     public void stopIntake() {
         sparkMax.stopMotor();
     }
 
     /**
-     * Checks if the mechanism currently has an alga game piece.
-     * Uses limit switch to detect alga presence.
-     *
-     * @return true if an alga game piece is detected, false otherwise
+     * Checks if the alga game piece is detected.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * boolean hasPiece = AlgaArm.getInstance().hasGamepiece();
+     * }
+     * </pre>
      */
     public boolean hasGamepiece() {
         return algaSensor.getBoolean(); // Use getBoolean() for primitive return
