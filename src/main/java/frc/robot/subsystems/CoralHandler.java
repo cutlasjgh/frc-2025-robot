@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Inch;
 
 import java.util.ArrayList;
 
+import com.ctre.phoenix.CANifier;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -80,10 +81,10 @@ public class CoralHandler extends SubsystemBase {
     private HandlerPosition currentPosition = HandlerPosition.CUSTOM;
     /** Arm length in inches. */
     private final double armLength;
-    /** Intake sensor for detecting game pieces. */
-    private final LimitSwitch intakeSensor;
     /** NetworkTable instance for publishing data. */
     private final NetworkTable table;
+
+    private final CANifier canifier;
 
     /**
      * @return Singleton instance of the CoralHandler
@@ -99,14 +100,17 @@ public class CoralHandler extends SubsystemBase {
      * Creates a new CoralHandler, initializing all subsystems.
      */
     public CoralHandler() {
+        canifier = new CANifier(CoralConstants.CANIFIER_ID);
+        canifier.configFactoryDefault();
+
         elevator = new LimitedPIDSubsystem(
             CoralConstants.ELEVATOR_CAN_ID,
             CoralConstants.ELEVATOR_DISTANCE_PER_ROTATION.in(Inch),
             0,
             CoralConstants.ELEVATOR_HEIGHT.in(Inch),
             CoralConstants.ELEVATOR_PID,
-            CoralConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
-            CoralConstants.ELEVATOR_TOP_LIMIT_CHANNEL,
+            () -> !canifier.getGeneralInput(CoralConstants.ELEVATOR_BOTTOM_LIMIT_PIN),
+            () -> !canifier.getGeneralInput(CoralConstants.ELEVATOR_TOP_LIMIT_PIN),
             CoralConstants.POSITION_TOLERANCE,
             LimitedPIDSubsystem.ControlMode.POSITION
         );
@@ -117,8 +121,8 @@ public class CoralHandler extends SubsystemBase {
             CoralConstants.ARM_MIN_ANGLE.in(Degree),
             CoralConstants.ARM_MAX_ANGLE.in(Degree),
             CoralConstants.ARM_PID,
-            CoralConstants.ARM_MIN_LIMIT_CHANNEL,
-            CoralConstants.ARM_MAX_LIMIT_CHANNEL,
+            () -> !canifier.getGeneralInput(CoralConstants.ARM_MIN_LIMIT_PIN),
+            () -> !canifier.getGeneralInput(CoralConstants.ARM_MAX_LIMIT_PIN),
             CoralConstants.POSITION_TOLERANCE,
             LimitedPIDSubsystem.ControlMode.POSITION
         );
@@ -127,12 +131,6 @@ public class CoralHandler extends SubsystemBase {
         SparkMaxConfig intakeConfig = new SparkMaxConfig();
         intakeConfig.idleMode(IdleMode.kBrake);
         intakeMotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-
-        intakeSensor = new LimitSwitch(
-            CoralConstants.INTAKE_SENSOR_CHANNEL,
-            this::stopIntake,  // Stop intake when coral is detected
-            null              // No action needed on release
-        );
 
         armLength = CoralConstants.ARM_LENGTH.in(Inch);
         table = NetworkTableInstance.getDefault().getTable("CoralHandler");
@@ -215,14 +213,9 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Activates the intake motor to collect game pieces.
-     * Motor will automatically stop when a coral is detected.
      */
     public void intakeCoral() {
-        if (!hasCoral()) {
-            intakeMotor.set(CoralConstants.INTAKE_POWER);
-        } else {
-            stopIntake();
-        }
+        intakeMotor.set(CoralConstants.INTAKE_POWER);
     }
 
     /**
@@ -230,11 +223,7 @@ public class CoralHandler extends SubsystemBase {
      * Continues until coral is no longer detected.
      */
     public void dropCoral() {
-        if (hasCoral()) {
-            intakeMotor.set(CoralConstants.OUTTAKE_POWER);
-        } else {
-            stopIntake();
-        }
+        intakeMotor.set(CoralConstants.OUTTAKE_POWER);
     }
 
     /**
@@ -246,19 +235,19 @@ public class CoralHandler extends SubsystemBase {
 
     /**
      * Checks if the mechanism currently has a game piece.
-     * Uses limit switch to detect coral presence.
+     * Uses CANifier input to detect coral presence.
      * 
      * @return true if a coral is detected, false otherwise
      */
     public boolean hasCoral() {
-        return intakeSensor.get();
+        return !canifier.getGeneralInput(CoralConstants.INTAKE_SENSOR_PIN);
     }
 
     @Override
     public void periodic() {
-        // Automatic stopping now handled by limit switch callback
-        // Only need to stop outtake when coral is released
-        if (!hasCoral() && intakeMotor.get() < 0) {
+        // Check motor direction and coral state for stopping
+        if ((hasCoral() && intakeMotor.get() > 0) || 
+            (!hasCoral() && intakeMotor.get() < 0)) {
             stopIntake();
         }
         table.getEntry("hasCoral").setBoolean(hasCoral());

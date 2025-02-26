@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Volt;
 
+import com.ctre.phoenix.CANifier;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -103,10 +105,10 @@ public final class Constants {
         public static final int ELEVATOR_CAN_ID = 0;
         /** Distance traveled per motor rotation. */
         public static final Distance ELEVATOR_DISTANCE_PER_ROTATION = Inch.of(0.5);
-        /** DIO channel for top limit switch. */
-        public static final int ELEVATOR_TOP_LIMIT_CHANNEL = 0;
-        /** DIO channel for bottom limit switch. */
-        public static final int ELEVATOR_BOTTOM_LIMIT_CHANNEL = 1;
+        /** CANifier pin for elevator top limit */
+        public static final CANifier.GeneralPin ELEVATOR_TOP_LIMIT_PIN = CANifier.GeneralPin.SCL;
+        /** CANifier pin for elevator bottom limit */
+        public static final CANifier.GeneralPin ELEVATOR_BOTTOM_LIMIT_PIN = CANifier.GeneralPin.SDA;
         /** Maximum elevator height. */
         public static final Distance ELEVATOR_HEIGHT = Inch.of(10.0);
         /** PID constants for elevator control. */
@@ -117,10 +119,10 @@ public final class Constants {
         public static final int ARM_CAN_ID = 1;
         /** Angle traveled per motor rotation. */
         public static final Angle ARM_ANGLE_PER_ROTATION = Degree.of(2.25);
-        /** DIO channel for maximum angle limit switch. */
-        public static final int ARM_MAX_LIMIT_CHANNEL = 2;
-        /** DIO channel for minimum angle limit switch. */
-        public static final int ARM_MIN_LIMIT_CHANNEL = 3;
+        /** CANifier pin for arm maximum angle limit */
+        public static final CANifier.GeneralPin ARM_MAX_LIMIT_PIN = CANifier.GeneralPin.LIMF;
+        /** CANifier pin for arm minimum angle limit */
+        public static final CANifier.GeneralPin ARM_MIN_LIMIT_PIN = CANifier.GeneralPin.LIMR;
         /** Maximum arm angle. */
         public static final Angle ARM_MAX_ANGLE = Degree.of(150.0);
         /** Minimum arm angle. */
@@ -133,14 +135,16 @@ public final class Constants {
         // Intake constants
         /** CAN ID for intake motor. */
         public static final int INTAKE_CAN_ID = 2;
-        /** DIO channel for coral detection limit switch. */
-        public static final int INTAKE_SENSOR_CHANNEL = 6;
+        /** CANifier pin for coral detection */
+        public static final CANifier.GeneralPin INTAKE_SENSOR_PIN = CANifier.GeneralPin.SPI_CS;
         /** Intake motor power (-1.0 to 1.0). */
         public static final double INTAKE_POWER = 0.5;
         /** Outtake motor power (-1.0 to 1.0). */
         public static final double OUTTAKE_POWER = -0.5;
 
         // Shared constants
+        /** CANifier ID */
+        public static final int CANIFIER_ID = 0;
         /** Power applied when zeroing unknown positions (-1.0 to 1.0). */
         public static final double UNKNOWN_STATE_POWER = 0.1;
         /** Maximum allowed offset when hitting limit switches. */

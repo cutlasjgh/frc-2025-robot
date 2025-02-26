@@ -63,8 +63,24 @@ public class AlgaArm extends SubsystemBase {
 
         algaSensor = new LimitSwitch(
             AlgaArmConstants.SENSOR_CHANNEL,
-            this::stopIntake,
-            null
+            () -> {  // Hardware interrupt callback for alga detection
+                /* Stops intake motor immediately when alga is detected during intake.
+                 * Using hardware interrupts for fastest possible response time.
+                 * Only stops if motor is running in intake direction (positive power).
+                 */
+                if (sparkMax.get() > 0) {
+                    stopIntake();
+                }
+            },
+            () -> {  // Hardware interrupt callback for alga release
+                /* Stops outtake motor immediately when alga is released during outtake.
+                 * Using hardware interrupts for fastest possible response time.
+                 * Only stops if motor is running in outtake direction (negative power).
+                 */
+                if (sparkMax.get() < 0) {
+                    stopIntake();
+                }
+            }
         );
 
         table = NetworkTableInstance.getDefault().getTable("AlgaArm");
@@ -72,26 +88,16 @@ public class AlgaArm extends SubsystemBase {
 
     /**
      * Activates the intake motor to collect alga game pieces.
-     * Motor will automatically stop when an alga is detected.
      */
     public void startIntake() {
-        if (!hasGamepiece()) {
-            sparkMax.set(AlgaArmConstants.INTAKE_POWER);
-        } else {
-            stopIntake();
-        }
+        sparkMax.set(AlgaArmConstants.INTAKE_POWER);
     }
 
     /**
      * Runs the intake in reverse to release the alga.
-     * Continues until alga is no longer detected.
      */
     public void dropGamepiece() {
-        if (hasGamepiece()) {
-            sparkMax.set(AlgaArmConstants.OUTTAKE_POWER);
-        } else {
-            stopIntake();
-        }
+        sparkMax.set(AlgaArmConstants.OUTTAKE_POWER);
     }
 
     /**
@@ -114,15 +120,6 @@ public class AlgaArm extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // If we have an alga and the motor is running in intake direction, stop it
-        if (hasGamepiece() && sparkMax.get() > 0) {
-            stopIntake();
-        }
-        // If we don't have an alga and the motor is running in outtake direction, stop it
-        if (!hasGamepiece() && sparkMax.get() < 0) {
-            stopIntake();
-        }
-
         table.getEntry("hasAlga").setBoolean(hasGamepiece());
     }
 }
