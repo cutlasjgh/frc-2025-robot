@@ -105,10 +105,10 @@ public final class Constants {
         public static final int ELEVATOR_CAN_ID = 0;
         /** Distance traveled per motor rotation. */
         public static final Distance ELEVATOR_DISTANCE_PER_ROTATION = Inch.of(0.5);
+        /** DIO channel for elevator bottom limit switch */
+        public static final int ELEVATOR_BOTTOM_LIMIT_CHANNEL = 0;
         /** CANifier pin for elevator top limit */
         public static final CANifier.GeneralPin ELEVATOR_TOP_LIMIT_PIN = CANifier.GeneralPin.SCL;
-        /** CANifier pin for elevator bottom limit */
-        public static final CANifier.GeneralPin ELEVATOR_BOTTOM_LIMIT_PIN = CANifier.GeneralPin.SDA;
         /** Maximum elevator height. */
         public static final Distance ELEVATOR_HEIGHT = Inch.of(10.0);
         /** PID constants for elevator control. */

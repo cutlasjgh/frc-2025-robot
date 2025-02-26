@@ -16,14 +16,41 @@ import frc.robot.Constants.CoralConstants;
 import frc.robot.Constants.PID;
 
 /**
- * Represents a PID-controlled subsystem with limit switches and position
- * control.
+ * Represents a PID-controlled subsystem with limit switches and position control.
+ *
+ * <p>Example usage:
+ * <pre>
+ * {@code
+ * // Assume minSwitch and maxSwitch are created previously:
+ * LimitSwitch minSwitch = LimitSwitch.createDIO(0, 
+ *         () -> System.out.println("Min limit triggered"), null);
+ * LimitSwitch maxSwitch = LimitSwitch.createDIO(1, 
+ *         () -> System.out.println("Max limit triggered"), null);
+ * 
+ * // Create the limited PID subsystem:
+ * LimitedPIDSubsystem subsystem = new LimitedPIDSubsystem(
+ *         10,            // CAN ID
+ *         1.0,           // conversionFactor
+ *         0.0,           // minPosition
+ *         100.0,         // maxPosition
+ *         new PID(0.1, 0.0, 0.0), // PID constants
+ *         minSwitch,     // min limit switch
+ *         maxSwitch,     // max limit switch
+ *         5.0,           // tolerance
+ *         LimitedPIDSubsystem.ControlMode.POSITION);
+ * }
+ * </pre>
  */
 public class LimitedPIDSubsystem {
     /** Control mode for the subsystem. */
     public enum ControlMode {
         POSITION,
         VELOCITY
+    }
+
+    /** State of position knowledge for a subsystem. */
+    public enum SubsystemState {
+        KNOWN, UNKNOWN
     }
 
     /** The motor controller. */
@@ -45,26 +72,23 @@ public class LimitedPIDSubsystem {
     /** Control mode for the subsystem. */
     private final ControlMode controlMode;
 
-    /** State of position knowledge for a subsystem. */
-    public enum SubsystemState {
-        KNOWN, UNKNOWN
-    }
-
     /**
-     * Creates a new motor subsystem with position/velocity control and limit switches.
+     * Creates a new motor subsystem with position/velocity control and pre-created limit switches.
+     * This is the only supported constructor as it promotes cleaner code organization.
      *
-     * @param canId            CAN ID of the motor controller
+     * @param canId The CAN ID of the motor controller
      * @param conversionFactor Factor to convert motor rotations to position/velocity units
-     * @param minPosition      Minimum allowed position value
-     * @param maxPosition      Maximum allowed position value
-     * @param pidConstants     PID constants for control
-     * @param minLimitChannel  DIO channel for minimum position limit switch
-     * @param maxLimitChannel  DIO channel for maximum position limit switch
-     * @param tolerance        Tolerance for position offset
-     * @param controlMode      Whether to use position or velocity control
+     * @param minPosition Minimum allowed position value
+     * @param maxPosition Maximum allowed position value
+     * @param pidConstants PID constants for control
+     * @param minLimitSwitch Pre-created limit switch for minimum position
+     * @param maxLimitSwitch Pre-created limit switch for maximum position
+     * @param tolerance Tolerance for position offset
+     * @param controlMode Whether to use position or velocity control
      */
     public LimitedPIDSubsystem(int canId, double conversionFactor, double minPosition, double maxPosition,
-            PID pidConstants, int minLimitChannel, int maxLimitChannel, double tolerance, ControlMode controlMode) {
+            PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch, 
+            double tolerance, ControlMode controlMode) {
         this.conversionFactor = conversionFactor;
         this.pidConstants = pidConstants;
         this.minPosition = minPosition;
@@ -75,18 +99,30 @@ public class LimitedPIDSubsystem {
         motor = new SparkMax(canId, MotorType.kBrushless);
         configureMotor();
 
-        limitSwitches = new LimitSwitchPair(
-                minLimitChannel,
-                maxLimitChannel,
-                () -> handleMinLimit(),
-                () -> handleMaxLimit());
+        // Configure limit switch callbacks
+        minLimitSwitch = LimitSwitch.addCallback(minLimitSwitch, () -> handleMinLimit(), null);
+        maxLimitSwitch = LimitSwitch.addCallback(maxLimitSwitch, () -> handleMaxLimit(), null);
 
+        // Create limit switch pair using the switches
+        limitSwitches = new LimitSwitchPair(
+                minLimitSwitch::getBoolean,
+                maxLimitSwitch::getBoolean,
+                null,  // Callbacks already set on the switches
+                null); // Callbacks already set on the switches
+
+        initializePosition();
+    }
+
+    /**
+     * Initializes the position of the mechanism based on limit switches.
+     */
+    private void initializePosition() {
         if (limitSwitches.isAtMin()) {
             setPositionAndTarget(minPosition);
         } else if (limitSwitches.isAtMax()) {
             setPositionAndTarget(maxPosition);
         } else {
-            DriverStation.reportWarning("Position unknown for motor " + canId, false);
+            DriverStation.reportWarning("Position unknown for motor " + motor.getDeviceId(), false);
         }
     }
 
@@ -137,7 +173,7 @@ public class LimitedPIDSubsystem {
             );
         }
         motor.getEncoder().setPosition(minPosition);
-        setPosition(minPosition);
+        set(minPosition);
         state = SubsystemState.KNOWN;
     }
 
@@ -155,7 +191,7 @@ public class LimitedPIDSubsystem {
             );
         }
         motor.getEncoder().setPosition(maxPosition);
-        setPosition(maxPosition);
+        set(maxPosition);
         state = SubsystemState.KNOWN;
     }
 
@@ -204,17 +240,6 @@ public class LimitedPIDSubsystem {
                 motor.getClosedLoopController().setReference(value, ControlType.kVelocity);
             }
         }
-    }
-
-    /**
-     * @deprecated Use set() instead
-     */
-    @Deprecated
-    public void setPosition(double position) {
-        if (controlMode != ControlMode.POSITION) {
-            throw new UnsupportedOperationException("Subsystem is in velocity control mode");
-        }
-        set(position);
     }
 
     /**

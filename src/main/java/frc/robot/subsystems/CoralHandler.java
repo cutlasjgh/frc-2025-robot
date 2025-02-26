@@ -12,9 +12,9 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import frc.robot.subsubsytems.LimitSwitch;
 
 import frc.robot.Constants.CoralConstants;
-import frc.robot.subsubsytems.LimitSwitch;
 import frc.robot.subsubsytems.LimitedPIDSubsystem;
 import frc.robot.subsubsytems.LimitedPIDSubsystem.SubsystemState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -100,40 +100,89 @@ public class CoralHandler extends SubsystemBase {
      * Creates a new CoralHandler, initializing all subsystems.
      */
     public CoralHandler() {
+        // Initialize CANifier
         canifier = new CANifier(CoralConstants.CANIFIER_ID);
         canifier.configFactoryDefault();
 
-        elevator = new LimitedPIDSubsystem(
+        // Initialize elevator with mixed limit switch types (DIO for min, CANifier for max)
+        elevator = createElevatorSubsystem();
+        
+        // Initialize arm with CANifier limit switches
+        arm = createArmSubsystem();
+
+        // Initialize intake motor
+        intakeMotor = createIntakeMotor();
+
+        armLength = CoralConstants.ARM_LENGTH.in(Inch);
+        table = NetworkTableInstance.getDefault().getTable("CoralHandler");
+    }
+    
+    /**
+     * Creates and configures the elevator subsystem.
+     */
+    private LimitedPIDSubsystem createElevatorSubsystem() {
+        // Create limit switches first
+        LimitSwitch minLimitSwitch = LimitSwitch.createDIO(
+            CoralConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
+            null, null);
+        
+        LimitSwitch maxLimitSwitch = LimitSwitch.createCANifier(
+            canifier,
+            CoralConstants.ELEVATOR_TOP_LIMIT_PIN,
+            null, null);
+            
+        // Then pass them to the subsystem constructor
+        return new LimitedPIDSubsystem(
             CoralConstants.ELEVATOR_CAN_ID,
             CoralConstants.ELEVATOR_DISTANCE_PER_ROTATION.in(Inch),
             0,
             CoralConstants.ELEVATOR_HEIGHT.in(Inch),
             CoralConstants.ELEVATOR_PID,
-            () -> !canifier.getGeneralInput(CoralConstants.ELEVATOR_BOTTOM_LIMIT_PIN),
-            () -> !canifier.getGeneralInput(CoralConstants.ELEVATOR_TOP_LIMIT_PIN),
+            minLimitSwitch,
+            maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPIDSubsystem.ControlMode.POSITION
         );
-
-        arm = new LimitedPIDSubsystem(
+    }
+    
+    /**
+     * Creates and configures the arm subsystem.
+     */
+    private LimitedPIDSubsystem createArmSubsystem() {
+        // Create limit switches first
+        LimitSwitch minLimitSwitch = LimitSwitch.createCANifier(
+            canifier,
+            CoralConstants.ARM_MIN_LIMIT_PIN,
+            null, null);
+            
+        LimitSwitch maxLimitSwitch = LimitSwitch.createCANifier(
+            canifier,
+            CoralConstants.ARM_MAX_LIMIT_PIN,
+            null, null);
+            
+        // Then pass them to the subsystem constructor
+        return new LimitedPIDSubsystem(
             CoralConstants.ARM_CAN_ID,
             CoralConstants.ARM_ANGLE_PER_ROTATION.in(Degree),
             CoralConstants.ARM_MIN_ANGLE.in(Degree),
             CoralConstants.ARM_MAX_ANGLE.in(Degree),
             CoralConstants.ARM_PID,
-            () -> !canifier.getGeneralInput(CoralConstants.ARM_MIN_LIMIT_PIN),
-            () -> !canifier.getGeneralInput(CoralConstants.ARM_MAX_LIMIT_PIN),
+            minLimitSwitch,
+            maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPIDSubsystem.ControlMode.POSITION
         );
-
-        intakeMotor = new SparkMax(CoralConstants.INTAKE_CAN_ID, MotorType.kBrushless);
-        SparkMaxConfig intakeConfig = new SparkMaxConfig();
-        intakeConfig.idleMode(IdleMode.kBrake);
-        intakeMotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-
-        armLength = CoralConstants.ARM_LENGTH.in(Inch);
-        table = NetworkTableInstance.getDefault().getTable("CoralHandler");
+    }
+    
+    /**
+     * Creates and configures the intake motor.
+     */
+    private SparkMax createIntakeMotor() {
+        SparkMax motor = new SparkMax(CoralConstants.INTAKE_CAN_ID, MotorType.kBrushless);
+        SparkMaxConfig config = new SparkMaxConfig();
+        config.idleMode(IdleMode.kBrake);
+        motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        return motor;
     }
 
     /**
@@ -245,11 +294,34 @@ public class CoralHandler extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Check motor direction and coral state for stopping
-        if ((hasCoral() && intakeMotor.get() > 0) || 
-            (!hasCoral() && intakeMotor.get() < 0)) {
+        handleIntakeStateLogic();
+        publishTelemetry();
+    }
+    
+    /**
+     * Handles the auto-stopping logic for the intake motor based on coral detection.
+     */
+    private void handleIntakeStateLogic() {
+        boolean hasCoralNow = hasCoral();
+        double motorPower = intakeMotor.get();
+        
+        // Stop intake if coral is detected during intake
+        boolean shouldStopIntake = (hasCoralNow && motorPower > 0);
+        
+        // Stop outtake if coral is no longer detected during outtake
+        boolean shouldStopOuttake = (!hasCoralNow && motorPower < 0);
+        
+        if (shouldStopIntake || shouldStopOuttake) {
             stopIntake();
         }
+    }
+    
+    /**
+     * Publishes telemetry data to NetworkTables.
+     */
+    private void publishTelemetry() {
         table.getEntry("hasCoral").setBoolean(hasCoral());
+        table.getEntry("elevatorHeight").setDouble(elevator.getPosition());
+        table.getEntry("armAngle").setDouble(arm.getPosition());
     }
 }

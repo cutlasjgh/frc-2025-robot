@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsubsytems.LimitSwitch;
 
 /**
  * Main robot class that manages the robot's lifecycle and operational modes.
@@ -42,6 +43,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    LimitSwitch.updatePolledSwitches();
   }
 
   /** Called once when the robot is disabled. */

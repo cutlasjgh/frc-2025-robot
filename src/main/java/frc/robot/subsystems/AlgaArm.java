@@ -61,7 +61,8 @@ public class AlgaArm extends SubsystemBase {
         sparkMaxConfig.idleMode(IdleMode.kBrake);
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
-        algaSensor = new LimitSwitch(
+        // Update to use factory method for DIO limit switch
+        algaSensor = LimitSwitch.createDIO(
             AlgaArmConstants.SENSOR_CHANNEL,
             () -> {  // Hardware interrupt callback for alga detection
                 /* Stops intake motor immediately when alga is detected during intake.
@@ -115,7 +116,7 @@ public class AlgaArm extends SubsystemBase {
      * @return true if an alga game piece is detected, false otherwise
      */
     public boolean hasGamepiece() {
-        return algaSensor.get();
+        return algaSensor.getBoolean(); // Use getBoolean() for primitive return
     }
 
     @Override

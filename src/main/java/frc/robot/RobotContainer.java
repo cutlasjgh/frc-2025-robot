@@ -75,6 +75,7 @@ public class RobotContainer {
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
     driverController.setRumble(RumbleType.kBothRumble, 0.0);
+    operatorController.setRumble(RumbleType.kBothRumble, 0.0);
 
     configureBindings();
   }
