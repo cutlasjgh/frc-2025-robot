@@ -76,14 +76,30 @@ public class LimitSwitchPair {
     }
 
     /**
-     * @return true if min limit is triggered
+     * Returns true if the minimum limit switch is triggered.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * if(pair.isAtMin()){
+     *     // handle min limit event
+     * }
+     * }
+     * </pre>
      */
     public boolean isAtMin() {
         return minLimitSupplier.get();
     }
 
     /**
-     * @return true if max limit is triggered
+     * Returns true if the maximum limit switch is triggered.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * if(pair.isAtMax()){
+     *     // handle max limit event
+     * }
+     * }
+     * </pre>
      */
     public boolean isAtMax() {
         return maxLimitSupplier.get();

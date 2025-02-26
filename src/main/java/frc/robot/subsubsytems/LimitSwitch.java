@@ -174,41 +174,47 @@ public class LimitSwitch implements Supplier<Boolean> {
     }
     
     /**
-     * Creates a new limit switch with DIO backend.
-     * 
-     * @param channel DIO channel for the switch
-     * @param onPress Callback executed when switch is pressed
-     * @param onRelease Callback executed when switch is released
-     * @return A new LimitSwitch instance
+     * Creates a new limit switch using a DIO channel.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * LimitSwitch dioSwitch = LimitSwitch.createDIO(2,
+     *         () -> System.out.println("Pressed"),
+     *         () -> System.out.println("Released"));
+     * }
+     * </pre>
      */
     public static LimitSwitch createDIO(int channel, Runnable onPress, Runnable onRelease) {
         return new LimitSwitch(new DIOBackend(channel), onPress, onRelease);
     }
-    
+
     /**
-     * Creates a new limit switch with CANifier backend.
-     * 
-     * @param canifier CANifier device
-     * @param pin GeneralPin to use for this limit switch
-     * @param onPress Callback executed when switch is pressed
-     * @param onRelease Callback executed when switch is released
-     * @return A new LimitSwitch instance
+     * Creates a new limit switch using a CANifier.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * CANifier canifier = new CANifier(1);
+     * LimitSwitch canSwitch = LimitSwitch.createCANifier(canifier, CANifier.GeneralPin.kB,
+     *         () -> System.out.println("Pressed"),
+     *         () -> System.out.println("Released"));
+     * }
+     * </pre>
      */
     public static LimitSwitch createCANifier(CANifier canifier, CANifier.GeneralPin pin, 
             Runnable onPress, Runnable onRelease) {
         return new LimitSwitch(new CANifierBackend(canifier, pin), onPress, onRelease);
     }
-    
+
     /**
-     * Creates the appropriate limit switch type based on the specified enum.
-     * 
-     * @param type Type of limit switch to create
-     * @param dioChannel DIO channel if using DIO type (ignored for CANifier)
-     * @param canifier CANifier instance if using CANifier type (ignored for DIO)
-     * @param pin GeneralPin to use if using CANifier type (ignored for DIO)
-     * @param onPress Callback executed when switch is pressed
-     * @param onRelease Callback executed when switch is released
-     * @return A new LimitSwitch instance
+     * Creates a limit switch based on the specified type.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * LimitSwitch ls = LimitSwitch.create(LimitSwitch.LimitSwitchType.DIO, 2, null, null,
+     *         () -> System.out.println("Pressed"),
+     *         () -> System.out.println("Released"));
+     * }
+     * </pre>
      */
     public static LimitSwitch create(LimitSwitchType type, int dioChannel, CANifier canifier, 
             CANifier.GeneralPin pin, Runnable onPress, Runnable onRelease) {
@@ -221,14 +227,18 @@ public class LimitSwitch implements Supplier<Boolean> {
                 throw new IllegalArgumentException("Unknown limit switch type: " + type);
         }
     }
-    
+
     /**
-     * Creates a new limit switch with the appropriate backend based on type.
-     * This is the recommended factory method for creating limit switches.
-     * 
-     * @param type The type of limit switch to create (DIO or CANIFIER)
-     * @param config Configuration object containing all parameters for any type
-     * @return A new LimitSwitch instance
+     * Creates a limit switch using a configuration object.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * LimitSwitchConfig config = LimitSwitchConfig.dio(2, 
+     *         () -> System.out.println("Pressed"), 
+     *         () -> System.out.println("Released"));
+     * LimitSwitch ls = LimitSwitch.create(config);
+     * }
+     * </pre>
      */
     public static LimitSwitch create(LimitSwitchConfig config) {
         return switch (config.type) {
@@ -298,8 +308,12 @@ public class LimitSwitch implements Supplier<Boolean> {
     
     /**
      * Gets the current state of the limit switch.
-     * 
-     * @return true if switch is pressed
+     * <p>Example:
+     * <pre>
+     * {@code
+     * boolean pressed = ls.get();
+     * }
+     * </pre>
      */
     @Override
     public Boolean get() {
@@ -308,8 +322,12 @@ public class LimitSwitch implements Supplier<Boolean> {
     
     /**
      * Gets the current state as a primitive boolean.
-     * 
-     * @return true if switch is pressed
+     * <p>Example:
+     * <pre>
+     * {@code
+     * boolean pressed = ls.getBoolean();
+     * }
+     * </pre>
      */
     public boolean getBoolean() {
         return backend.get();
@@ -317,15 +335,25 @@ public class LimitSwitch implements Supplier<Boolean> {
     
     /**
      * Gets the type of this limit switch.
-     * 
-     * @return The LimitSwitchType enum value
+     * <p>Example:
+     * <pre>
+     * {@code
+     * LimitSwitchType type = ls.getType();
+     * }
+     * </pre>
      */
     public LimitSwitchType getType() {
         return backend.getType();
     }
     
     /**
-     * Updates all polling-based limit switches. Call from robot periodic method.
+     * Polls and updates all limit switches that require periodic polling.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * LimitSwitch.updatePolledSwitches();
+     * }
+     * </pre>
      */
     public static void updatePolledSwitches() {
         for (LimitSwitchBackend backend : polledBackends) {
@@ -334,13 +362,15 @@ public class LimitSwitch implements Supplier<Boolean> {
     }
 
     /**
-     * Adds callbacks to an existing limit switch.
-     * Creates a new switch with the same backend but with the specified callbacks.
-     * 
-     * @param existingSwitch The existing limit switch
-     * @param onPress Callback to execute when pressed
-     * @param onRelease Callback to execute when released
-     * @return A new limit switch with the same backend but with the specified callbacks
+     * Returns a new limit switch with additional callbacks.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * LimitSwitch newSwitch = LimitSwitch.addCallback(existingSwitch,
+     *         () -> System.out.println("New pressed callback"),
+     *         () -> System.out.println("New released callback"));
+     * }
+     * </pre>
      */
     public static LimitSwitch addCallback(LimitSwitch existingSwitch, Runnable onPress, Runnable onRelease) {
         if (existingSwitch.getType() == LimitSwitchType.DIO) {

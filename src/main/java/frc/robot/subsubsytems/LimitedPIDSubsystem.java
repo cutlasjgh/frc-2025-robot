@@ -196,7 +196,13 @@ public class LimitedPIDSubsystem {
     }
 
     /**
-     * Applies zeroing power if position is unknown.
+     * Applies zeroing power if the subsystem's position is unknown.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * subsystem.zeroIfNeeded();
+     * }
+     * </pre>
      */
     public void zeroIfNeeded() {
         if (state == SubsystemState.UNKNOWN) {
@@ -205,14 +211,27 @@ public class LimitedPIDSubsystem {
     }
 
     /**
-     * Gets the current state of the subsystem.
+     * Returns the current position knowledge state of the subsystem.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * SubsystemState state = subsystem.getState();
+     * }
+     * </pre>
      */
     public SubsystemState getState() {
         return state;
     }
 
     /**
-     * Gets the current position of the mechanism.
+     * Returns the current position of the mechanism.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * double pos = subsystem.getPosition();
+     * }
+     * </pre>
+     * 
      * @return current position in mechanism units
      */
     public double getPosition() {
@@ -220,9 +239,14 @@ public class LimitedPIDSubsystem {
     }
 
     /**
-     * Sets the target value (position or velocity) of the mechanism.
-     * For position control, value is clamped to valid range.
-     * For velocity control, value is zeroed at limits.
+     * Sets the target (position or velocity) of the mechanism.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * subsystem.set(50.0);
+     * }
+     * </pre>
+     * 
      * @param value target value in mechanism units
      */
     public void set(double value) {
@@ -232,7 +256,6 @@ public class LimitedPIDSubsystem {
                 ControlType.kPosition
             );
         } else {
-            // For velocity, zero at limits to prevent overrun
             if ((limitSwitches.isAtMin() && value < 0) || 
                 (limitSwitches.isAtMax() && value > 0)) {
                 motor.getClosedLoopController().setReference(0, ControlType.kVelocity);
@@ -243,8 +266,15 @@ public class LimitedPIDSubsystem {
     }
 
     /**
-     * Gets the motor controller for this subsystem.
-     * @return the SparkMax motor controller
+     * Returns the underlying SparkMax motor controller.
+     * <p>Example:
+     * <pre>
+     * {@code
+     * SparkMax motor = subsystem.getMotor();
+     * }
+     * </pre>
+     * 
+     * @return the motor controller
      */
     public SparkMax getMotor() {
         return motor;
