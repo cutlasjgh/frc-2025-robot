@@ -1,10 +1,6 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Meter;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,6 +10,7 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.commands.*;
 import frc.robot.subsystems.*;
 import swervelib.SwerveInputStream;
+import frc.robot.commands.PickupAndDeployCoralCommand;
 
 /**
  * Main robot configuration class that binds controls and commands to subsystems.
@@ -110,6 +107,9 @@ public class RobotContainer {
     //     new DropCoralCommand() : 
     //     new IntakeCoralCommand()
     // );
+
+    // Drive to pickup point while manipulating coral mechanism when driver holds A.
+    // driverController.a().whileTrue(new PickupAndDeployCoralCommand());
   }
 
   /**

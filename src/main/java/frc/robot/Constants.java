@@ -11,6 +11,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 /**
  * Constants used throughout the robot code.
@@ -149,5 +151,23 @@ public final class Constants {
         public static final double UNKNOWN_STATE_POWER = 0.1;
         /** Maximum allowed offset when hitting limit switches. */
         public static final double POSITION_TOLERANCE = 1.0;
+    }
+
+    /**
+     * Constants for pickup and coral side points.
+     */
+    public static final class PickupPoints {
+        private PickupPoints() {}
+        public static final Pose2d[] PICKUP_POINTS = new Pose2d[]{
+            new Pose2d(1.0, 2.0, new Rotation2d(0)),
+            new Pose2d(3.0, 4.0, new Rotation2d(0))
+            // ...add more as needed...
+        };
+
+        public static final Pose2d[] CORAL_SIDE_POINTS = new Pose2d[]{
+            new Pose2d(5.0, 6.0, new Rotation2d(0)),
+            new Pose2d(7.0, 8.0, new Rotation2d(0))
+            // ...add more as needed...
+        };
     }
 }
