@@ -85,6 +85,7 @@ public class Swerve extends SubsystemBase {
         swerveDrive.setAngularVelocityCompensation(true, true, 0.1);
         swerveDrive.setCosineCompensator(!SwerveDriveTelemetry.isSimulation);
         swerveDrive.setModuleEncoderAutoSynchronize(true, 1);
+        swerveDrive.useExternalFeedbackSensor();
 
         setupPathPlanner();
     }

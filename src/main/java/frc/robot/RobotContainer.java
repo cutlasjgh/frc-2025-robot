@@ -57,11 +57,11 @@ public class RobotContainer {
       .allianceRelativeControl(true)
       .headingWhile(true);
 
-  /** Alga arm subsystem for handling alga gamepieces. */
-  private final AlgaArm algaArm = AlgaArm.getInstance();
+  // /** Alga arm subsystem for handling alga gamepieces. */
+  // private final AlgaArm algaArm = AlgaArm.getInstance();
 
-  /** Coral handler subsystem for handling coral gamepieces. */
-  private final CoralHandler coralHandler = CoralHandler.getInstance();
+  // /** Coral handler subsystem for handling coral gamepieces. */
+  // private final CoralHandler coralHandler = CoralHandler.getInstance();
 
   /**
    * Creates a new RobotContainer and initializes all robot subsystems and commands.
@@ -94,22 +94,22 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
-    driverController.back().whileTrue(
-        swerveDrive.driveToPose(
-            new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
-                Rotation2d.fromDegrees(0))));
+    // driverController.back().whileTrue(
+    //     swerveDrive.driveToPose(
+    //         new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
+    //             Rotation2d.fromDegrees(0))));
 
-    // A button: Intake/Drop Alga
-    operatorController.a().onTrue(algaArm.hasGamepiece() ? 
-        new DropAlgaCommand() : 
-        new IntakeAlgaCommand()
-    );
+    // // A button: Intake/Drop Alga
+    // operatorController.a().onTrue(algaArm.hasGamepiece() ? 
+    //     new DropAlgaCommand() : 
+    //     new IntakeAlgaCommand()
+    // );
 
-    // B button: Intake/Drop Coral
-    operatorController.b().onTrue(coralHandler.hasCoral() ? 
-        new DropCoralCommand() : 
-        new IntakeCoralCommand()
-    );
+    // // B button: Intake/Drop Coral
+    // operatorController.b().onTrue(coralHandler.hasCoral() ? 
+    //     new DropCoralCommand() : 
+    //     new IntakeCoralCommand()
+    // );
   }
 
   /**
