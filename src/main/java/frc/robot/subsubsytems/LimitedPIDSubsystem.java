@@ -71,6 +71,12 @@ public class LimitedPIDSubsystem {
     private final double tolerance;
     /** Control mode for the subsystem. */
     private final ControlMode controlMode;
+    /** Whether the motor direction is inverted */
+    private final boolean isInverted;
+    /** Power to apply when zeroing the mechanism */
+    private final double zeroingPower;
+    /** Whether initialization is complete */
+    private boolean initializationComplete = false;
 
     /**
      * Creates a new motor subsystem with position/velocity control and pre-created limit switches.
@@ -89,12 +95,59 @@ public class LimitedPIDSubsystem {
     public LimitedPIDSubsystem(int canId, double conversionFactor, double minPosition, double maxPosition,
             PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch, 
             double tolerance, ControlMode controlMode) {
+        this(canId, conversionFactor, minPosition, maxPosition, pidConstants, 
+             minLimitSwitch, maxLimitSwitch, tolerance, controlMode, false);
+    }
+    
+    /**
+     * Creates a new motor subsystem with position/velocity control, pre-created limit switches, 
+     * and motor inversion setting.
+     *
+     * @param canId The CAN ID of the motor controller
+     * @param conversionFactor Factor to convert motor rotations to position/velocity units
+     * @param minPosition Minimum allowed position value
+     * @param maxPosition Maximum allowed position value
+     * @param pidConstants PID constants for control
+     * @param minLimitSwitch Pre-created limit switch for minimum position
+     * @param maxLimitSwitch Pre-created limit switch for maximum position
+     * @param tolerance Tolerance for position offset
+     * @param controlMode Whether to use position or velocity control
+     * @param isInverted Whether to invert the motor direction
+     */
+    public LimitedPIDSubsystem(int canId, double conversionFactor, double minPosition, double maxPosition,
+            PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch, 
+            double tolerance, ControlMode controlMode, boolean isInverted) {
+        this(canId, conversionFactor, minPosition, maxPosition, pidConstants, 
+             minLimitSwitch, maxLimitSwitch, tolerance, controlMode, isInverted, 0.1);
+    }
+    
+    /**
+     * Creates a new motor subsystem with position/velocity control, pre-created limit switches, 
+     * motor inversion setting, and custom zeroing power.
+     *
+     * @param canId The CAN ID of the motor controller
+     * @param conversionFactor Factor to convert motor rotations to position/velocity units
+     * @param minPosition Minimum allowed position value
+     * @param maxPosition Maximum allowed position value
+     * @param pidConstants PID constants for control
+     * @param minLimitSwitch Pre-created limit switch for minimum position
+     * @param maxLimitSwitch Pre-created limit switch for maximum position
+     * @param tolerance Tolerance for position offset
+     * @param controlMode Whether to use position or velocity control
+     * @param isInverted Whether to invert the motor direction
+     * @param zeroingPower Power to apply when zeroing the mechanism
+     */
+    public LimitedPIDSubsystem(int canId, double conversionFactor, double minPosition, double maxPosition,
+            PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch, 
+            double tolerance, ControlMode controlMode, boolean isInverted, double zeroingPower) {
         this.conversionFactor = conversionFactor;
         this.pidConstants = pidConstants;
         this.minPosition = minPosition;
         this.maxPosition = maxPosition;
         this.tolerance = tolerance;
         this.controlMode = controlMode;
+        this.isInverted = isInverted;
+        this.zeroingPower = zeroingPower;
 
         motor = new SparkMax(canId, MotorType.kBrushless);
         configureMotor();
@@ -124,6 +177,7 @@ public class LimitedPIDSubsystem {
         } else {
             DriverStation.reportWarning("Position unknown for motor " + motor.getDeviceId(), false);
         }
+        initializationComplete = true;
     }
 
     /**
@@ -132,6 +186,7 @@ public class LimitedPIDSubsystem {
     private void configureMotor() {
         SparkMaxConfig config = new SparkMaxConfig();
         config.idleMode(IdleMode.kBrake);
+        config.inverted(isInverted);
 
         EncoderConfig encoderConfig = new EncoderConfig();
         encoderConfig.positionConversionFactor(conversionFactor);
@@ -163,6 +218,8 @@ public class LimitedPIDSubsystem {
      * Handles when minimum limit switch is triggered.
      */
     private void handleMinLimit() {
+        if (!initializationComplete) return;
+
         motor.stopMotor();
         double currentPosition = motor.getEncoder().getPosition();
         double offset = Math.abs(minPosition - currentPosition);
@@ -181,6 +238,7 @@ public class LimitedPIDSubsystem {
      * Handles when maximum limit switch is triggered.
      */
     private void handleMaxLimit() {
+        if (!initializationComplete) return;
         motor.stopMotor();
         double currentPosition = motor.getEncoder().getPosition();
         double offset = Math.abs(maxPosition - currentPosition);
@@ -206,7 +264,7 @@ public class LimitedPIDSubsystem {
      */
     public void zeroIfNeeded() {
         if (state == SubsystemState.UNKNOWN) {
-            motor.set(CoralConstants.UNKNOWN_STATE_POWER);
+            motor.set(zeroingPower);
         }
     }
 
@@ -278,5 +336,23 @@ public class LimitedPIDSubsystem {
      */
     public SparkMax getMotor() {
         return motor;
+    }
+
+    /**
+     * Returns whether the minimum limit switch is currently triggered.
+     * 
+     * @return true if at minimum limit, false otherwise
+     */
+    public boolean isAtMinLimit() {
+        return limitSwitches.isAtMin();
+    }
+    
+    /**
+     * Returns whether the maximum limit switch is currently triggered.
+     * 
+     * @return true if at maximum limit, false otherwise
+     */
+    public boolean isAtMaxLimit() {
+        return limitSwitches.isAtMax();
     }
 }

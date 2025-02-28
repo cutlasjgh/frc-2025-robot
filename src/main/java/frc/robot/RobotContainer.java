@@ -57,8 +57,11 @@ public class RobotContainer {
   // /** Alga arm subsystem for handling alga gamepieces. */
   // private final AlgaArm algaArm = AlgaArm.getInstance();
 
-  // /** Coral handler subsystem for handling coral gamepieces. */
-  // private final CoralHandler coralHandler = CoralHandler.getInstance();
+  /** Coral handler subsystem for handling coral gamepieces. */
+  private final CoralHandler coralHandler = CoralHandler.getInstance();
+
+  /** Track the currently scheduled coral command, if any */
+  private Command coralCommand = null;
 
   /**
    * Creates a new RobotContainer and initializes all robot subsystems and commands.
@@ -102,11 +105,24 @@ public class RobotContainer {
     //     new IntakeAlgaCommand()
     // );
 
-    // // B button: Intake/Drop Coral
-    // operatorController.b().onTrue(coralHandler.hasCoral() ? 
-    //     new DropCoralCommand() : 
-    //     new IntakeCoralCommand()
-    // );
+    // B button: Toggle the coral command (cancel running command on re-press)
+    operatorController.b().onTrue(Commands.runOnce(() -> {
+      if (coralCommand != null && coralCommand.isScheduled()) {
+        coralCommand.cancel();
+        coralCommand = null;
+      } else {
+        // Check the current state at press time
+        if (coralHandler.hasCoral()) {
+          coralCommand = new DropCoralCommand();
+        } else {
+          coralCommand = new IntakeCoralCommand();
+        }
+        coralCommand.schedule();
+      }
+    }));
+
+    // Start button: Zero Coral mechanism if needed
+    operatorController.y().onTrue(Commands.runOnce(() -> coralHandler.zeroIfNeeded()));
 
     // Drive to pickup point while manipulating coral mechanism when driver holds A.
     // driverController.a().whileTrue(new PickupAndDeployCoralCommand());

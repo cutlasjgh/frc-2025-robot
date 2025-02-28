@@ -141,7 +141,9 @@ public class CoralHandler extends SubsystemBase {
             minLimitSwitch,
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
-            LimitedPIDSubsystem.ControlMode.POSITION
+            LimitedPIDSubsystem.ControlMode.POSITION,
+            CoralConstants.ELEVATOR_INVERTED,
+            CoralConstants.ELEVATOR_ZEROING_POWER
         );
     }
     
@@ -170,7 +172,9 @@ public class CoralHandler extends SubsystemBase {
             minLimitSwitch,
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
-            LimitedPIDSubsystem.ControlMode.POSITION
+            LimitedPIDSubsystem.ControlMode.POSITION,
+            CoralConstants.ARM_INVERTED,
+            CoralConstants.ARM_ZEROING_POWER
         );
     }
     
@@ -181,6 +185,7 @@ public class CoralHandler extends SubsystemBase {
         SparkMax motor = new SparkMax(CoralConstants.INTAKE_CAN_ID, MotorType.kBrushless);
         SparkMaxConfig config = new SparkMaxConfig();
         config.idleMode(IdleMode.kBrake);
+        config.inverted(CoralConstants.INTAKE_INVERTED);
         motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         return motor;
     }
@@ -365,5 +370,13 @@ public class CoralHandler extends SubsystemBase {
         table.getEntry("hasCoral").setBoolean(hasCoral());
         table.getEntry("elevatorHeight").setDouble(elevator.getPosition());
         table.getEntry("armAngle").setDouble(arm.getPosition());
+        table.getEntry("elevatorState").setString(elevator.getState().toString());
+        table.getEntry("armState").setString(arm.getState().toString());
+        
+        // Add limit switch states to telemetry
+        table.getEntry("elevatorMinLimit").setBoolean(elevator.isAtMinLimit());
+        table.getEntry("elevatorMaxLimit").setBoolean(elevator.isAtMaxLimit());
+        table.getEntry("armMinLimit").setBoolean(arm.isAtMinLimit());
+        table.getEntry("armMaxLimit").setBoolean(arm.isAtMaxLimit());
     }
 }

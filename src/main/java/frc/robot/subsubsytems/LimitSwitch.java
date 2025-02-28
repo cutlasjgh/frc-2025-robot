@@ -6,7 +6,9 @@ import edu.wpi.first.wpilibj.AsynchronousInterrupt;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -40,6 +42,9 @@ public class LimitSwitch implements Supplier<Boolean> {
         CANIFIER
     }
     
+    // Static cache of DigitalInput objects to prevent duplicates
+    private static final Map<Integer, DigitalInput> dioCache = new HashMap<>();
+    
     /**
      * Interface for different limit switch hardware implementations.
      */
@@ -66,9 +71,20 @@ public class LimitSwitch implements Supplier<Boolean> {
     private static class DIOBackend implements LimitSwitchBackend {
         private final DigitalInput digitalInput;
         private AsynchronousInterrupt interrupt;
+        private final int channel;
+        private List<Runnable> onRisingCallbacks = new ArrayList<>();
+        private List<Runnable> onFallingCallbacks = new ArrayList<>();
         
         public DIOBackend(int channel) {
-            digitalInput = new DigitalInput(channel);
+            this.channel = channel;
+            
+            // Check if we already have a DigitalInput for this channel
+            if (dioCache.containsKey(channel)) {
+                digitalInput = dioCache.get(channel);
+            } else {
+                digitalInput = new DigitalInput(channel);
+                dioCache.put(channel, digitalInput);
+            }
         }
         
         @Override
@@ -83,15 +99,33 @@ public class LimitSwitch implements Supplier<Boolean> {
         
         @Override
         public void setupInterrupts(Runnable onRising, Runnable onFalling) {
+            if (onRising != null) onRisingCallbacks.add(onRising);
+            if (onFalling != null) onFallingCallbacks.add(onFalling);
+            
+            // Remove existing interrupt if there is one
+            if (interrupt != null) {
+                interrupt.disable();
+                interrupt.close();
+            }
+            
+            // Create new interrupt that calls all callbacks
             interrupt = new AsynchronousInterrupt(digitalInput, (rising, falling) -> {
-                if (rising && onRising != null) {
-                    onRising.run();
+                if (rising) {
+                    for (Runnable callback : onRisingCallbacks) {
+                        callback.run();
+                    }
                 }
-                if (falling && onFalling != null) {
-                    onFalling.run();
+                if (falling) {
+                    for (Runnable callback : onFallingCallbacks) {
+                        callback.run();
+                    }
                 }
             });
             interrupt.enable();
+        }
+        
+        public int getChannel() {
+            return channel;
         }
         
         @Override
@@ -112,8 +146,8 @@ public class LimitSwitch implements Supplier<Boolean> {
         private final CANifier canifier;
         private final CANifier.GeneralPin pin;
         private boolean lastState = false;
-        private Runnable onRising = null;
-        private Runnable onFalling = null;
+        private List<Runnable> onRisingCallbacks = new ArrayList<>();
+        private List<Runnable> onFallingCallbacks = new ArrayList<>();
         
         public CANifierBackend(CANifier canifier, CANifier.GeneralPin pin) {
             this.canifier = canifier;
@@ -123,7 +157,8 @@ public class LimitSwitch implements Supplier<Boolean> {
         
         @Override
         public boolean get() {
-            return !canifier.getGeneralInput(pin); // Assuming active low
+            // Note: Already inverted correctly
+            return !canifier.getGeneralInput(pin); // Active low
         }
         
         @Override
@@ -133,21 +168,33 @@ public class LimitSwitch implements Supplier<Boolean> {
         
         @Override
         public void setupInterrupts(Runnable onRising, Runnable onFalling) {
-            this.onRising = onRising;
-            this.onFalling = onFalling;
+            if (onRising != null) onRisingCallbacks.add(onRising);
+            if (onFalling != null) onFallingCallbacks.add(onFalling);
         }
         
         @Override
         public void update() {
             boolean currentState = get();
             if (currentState != lastState) {
-                if (currentState && onRising != null) {
-                    onRising.run();
-                } else if (!currentState && onFalling != null) {
-                    onFalling.run();
+                if (currentState) {
+                    for (Runnable callback : onRisingCallbacks) {
+                        callback.run();
+                    }
+                } else {
+                    for (Runnable callback : onFallingCallbacks) {
+                        callback.run();
+                    }
                 }
                 lastState = currentState;
             }
+        }
+        
+        public CANifier getCanifier() {
+            return canifier;
+        }
+        
+        public CANifier.GeneralPin getPin() {
+            return pin;
         }
         
         @Override
@@ -362,48 +409,64 @@ public class LimitSwitch implements Supplier<Boolean> {
     }
 
     /**
-     * Returns a new limit switch with additional callbacks.
+     * Adds callbacks to an existing limit switch without creating a new DigitalInput.
      * <p>Example:
      * <pre>
      * {@code
-     * LimitSwitch newSwitch = LimitSwitch.addCallback(existingSwitch,
+     * LimitSwitch existingSwitch = LimitSwitch.createDIO(2, null, null);
+     * existingSwitch.addCallbacks(
      *         () -> System.out.println("New pressed callback"),
      *         () -> System.out.println("New released callback"));
      * }
      * </pre>
+     * 
+     * @param onPress Callback to run when switch is pressed
+     * @param onRelease Callback to run when switch is released
+     * @return this switch instance for method chaining
+     */
+    public LimitSwitch addCallbacks(Runnable onPress, Runnable onRelease) {
+        backend.setupInterrupts(onPress, onRelease);
+        return this;
+    }
+
+    /**
+     * Returns a new limit switch with additional callbacks.
+     * <p>This method reuses the existing DigitalInput if possible to avoid resource conflicts.
      */
     public static LimitSwitch addCallback(LimitSwitch existingSwitch, Runnable onPress, Runnable onRelease) {
-        if (existingSwitch.getType() == LimitSwitchType.DIO) {
-            // Create a new DIO switch with the same channel but with callbacks
-            return createDIO(
-                getDIOChannelFromSwitch(existingSwitch), 
-                onPress, 
-                onRelease
-            );
-        } else {
-            // Create a new CANifier switch with the same pin but with callbacks
-            return createCANifier(
-                getCANifierFromSwitch(existingSwitch),
-                getPinFromSwitch(existingSwitch),
-                onPress,
-                onRelease
-            );
+        return existingSwitch.addCallbacks(onPress, onRelease);
+    }
+    
+    /**
+     * Gets the DIO channel if this is a DIO switch.
+     * @return the DIO channel, or -1 if not a DIO switch
+     */
+    public int getDIOChannel() {
+        if (backend instanceof DIOBackend) {
+            return ((DIOBackend) backend).getChannel();
         }
+        return -1;
     }
     
-    // Helper methods for accessing private fields (would need to be implemented)
-    private static int getDIOChannelFromSwitch(LimitSwitch sw) {
-        // This would access a getter or field we'd need to add
-        return 0; // Placeholder
+    /**
+     * Gets the CANifier if this is a CANifier switch.
+     * @return the CANifier, or null if not a CANifier switch
+     */
+    public CANifier getCANifier() {
+        if (backend instanceof CANifierBackend) {
+            return ((CANifierBackend) backend).getCanifier();
+        }
+        return null;
     }
     
-    private static CANifier getCANifierFromSwitch(LimitSwitch sw) {
-        // This would access a getter or field we'd need to add
-        return null; // Placeholder
-    }
-    
-    private static CANifier.GeneralPin getPinFromSwitch(LimitSwitch sw) {
-        // This would access a getter or field we'd need to add
-        return null; // Placeholder
+    /**
+     * Gets the CANifier pin if this is a CANifier switch.
+     * @return the pin, or null if not a CANifier switch
+     */
+    public CANifier.GeneralPin getPin() {
+        if (backend instanceof CANifierBackend) {
+            return ((CANifierBackend) backend).getPin();
+        }
+        return null;
     }
 }
