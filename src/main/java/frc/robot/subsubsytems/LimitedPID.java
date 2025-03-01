@@ -43,7 +43,7 @@ import frc.robot.Constants.PID;
  * }
  * </pre>
  */
-public class LimitedPIDSubsystem {
+public class LimitedPID {
     /** Control mode for the subsystem. */
     public enum ControlMode {
         POSITION,
@@ -95,7 +95,7 @@ public class LimitedPIDSubsystem {
      * @param controlMode      Whether to use position or velocity control
      * @param isInverted       Whether to invert the motor direction
      */
-    public LimitedPIDSubsystem(int canId, double conversionFactor, double minPosition, double maxPosition,
+    public LimitedPID(int canId, double conversionFactor, double minPosition, double maxPosition,
             PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch,
             double tolerance, ControlMode controlMode, boolean isInverted) {
         this.conversionFactor = conversionFactor;

@@ -13,7 +13,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import frc.robot.subsubsytems.LimitSwitch;
 
 import frc.robot.Constants.CoralConstants;
-import frc.robot.subsubsytems.LimitedPIDSubsystem;
+import frc.robot.subsubsytems.LimitedPID;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -72,9 +72,9 @@ public class CoralHandler extends SubsystemBase {
     }
 
     /** Elevator subsystem instance. */
-    private final LimitedPIDSubsystem elevator;
+    private final LimitedPID elevator;
     /** Arm subsystem instance. */
-    private final LimitedPIDSubsystem arm;
+    private final LimitedPID arm;
     /** Intake motor controller. */
     private final SparkMax intakeMotor;
     /** Current position setting. */
@@ -117,7 +117,7 @@ public class CoralHandler extends SubsystemBase {
     /**
      * Creates and configures the elevator subsystem.
      */
-    private LimitedPIDSubsystem createElevatorSubsystem() {
+    private LimitedPID createElevatorSubsystem() {
         // Create limit switches first
         LimitSwitch minLimitSwitch = LimitSwitch.createDIO(
             CoralConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
@@ -129,7 +129,7 @@ public class CoralHandler extends SubsystemBase {
             null, null);
             
         // Then pass them to the subsystem constructor
-        return new LimitedPIDSubsystem(
+        return new LimitedPID(
             CoralConstants.ELEVATOR_CAN_ID,
             CoralConstants.ELEVATOR_DISTANCE_PER_ROTATION.in(Inch),
             0,
@@ -138,7 +138,7 @@ public class CoralHandler extends SubsystemBase {
             minLimitSwitch,
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
-            LimitedPIDSubsystem.ControlMode.POSITION,
+            LimitedPID.ControlMode.POSITION,
             CoralConstants.ELEVATOR_INVERTED
         );
     }
@@ -146,7 +146,7 @@ public class CoralHandler extends SubsystemBase {
     /**
      * Creates and configures the arm subsystem.
      */
-    private LimitedPIDSubsystem createArmSubsystem() {
+    private LimitedPID createArmSubsystem() {
         // Create limit switches first
         LimitSwitch minLimitSwitch = LimitSwitch.createCANifier(
             canifier,
@@ -159,7 +159,7 @@ public class CoralHandler extends SubsystemBase {
             null, null);
             
         // Then pass them to the subsystem constructor
-        return new LimitedPIDSubsystem(
+        return new LimitedPID(
             CoralConstants.ARM_CAN_ID,
             CoralConstants.ARM_ANGLE_PER_ROTATION.in(Degree),
             CoralConstants.ARM_MIN_ANGLE.in(Degree),
@@ -168,7 +168,7 @@ public class CoralHandler extends SubsystemBase {
             minLimitSwitch,
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
-            LimitedPIDSubsystem.ControlMode.POSITION,
+            LimitedPID.ControlMode.POSITION,
             CoralConstants.ARM_INVERTED
         );
     }
@@ -188,11 +188,11 @@ public class CoralHandler extends SubsystemBase {
     // Remove setPosition and setCustomPosition methods.
     // Instead, provide basic getter methods for elevator, arm, and current side.
     
-    public LimitedPIDSubsystem getElevator() {
+    public LimitedPID getElevator() {
         return elevator;
     }
     
-    public LimitedPIDSubsystem getArm() {
+    public LimitedPID getArm() {
         return arm;
     }
     
