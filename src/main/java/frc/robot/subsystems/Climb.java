@@ -10,6 +10,8 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import frc.robot.Constants.ClimbConstants;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsubsytems.LimitSwitchPair;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * Controls the robot's climbing mechanism for end-game scoring.
@@ -35,6 +37,8 @@ public class Climb extends SubsystemBase {
     private final RachetState state;
     /** Limit switches for the climbing mechanism. */
     private final LimitSwitchPair limitSwitches;
+    /** NetworkTable for telemetry publishing. */
+    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Climb");
 
     /**
      * Represents the possible states of the ratchet mechanism.
@@ -96,7 +100,7 @@ public class Climb extends SubsystemBase {
      * Sets the climb motor to move upward at the configured power.
      */
     public void climb() {
-        if (!limitSwitches.isAtMax()) {
+        if (isAtBottom()) {
             sparkMax.set(ClimbConstants.CLIMB_POWER);
         }
     }
@@ -120,5 +124,19 @@ public class Climb extends SubsystemBase {
      */
     public boolean isAtBottom() {
         return limitSwitches.isAtMin();
+    }
+
+    /**
+     * Runs the climber motor at the specified power.
+     * @param power value between -1.0 and 1.0
+     */
+    public void runClimber() {
+        sparkMax.set(ClimbConstants.CLIMB_POWER);
+    }
+
+    @Override
+    public void periodic() {
+        table.getEntry("climbTopLimit").setBoolean(isAtTop());
+        table.getEntry("climbBottomLimit").setBoolean(isAtBottom());
     }
 }

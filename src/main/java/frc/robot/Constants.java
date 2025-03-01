@@ -3,14 +3,12 @@ package frc.robot;
 import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Volt;
 
 import com.ctre.phoenix.CANifier;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
@@ -63,10 +61,11 @@ public final class Constants {
         private AlgaArmConstants() {
         }
 
-        public static final int CAN_ID = 0;
+        public static final int CAN_ID = 19;
         public static final int SENSOR_CHANNEL = 7;
         public static final double INTAKE_POWER = 0.5;
-        public static final double OUTTAKE_POWER = -0.5;
+        public static final double OUTTAKE_POWER = -1.0;
+        public static final boolean ALGA_INVERTED = false;
     }
 
     /**
@@ -76,12 +75,11 @@ public final class Constants {
         private ClimbConstants() {
         }
 
-        public static final int CAN_ID = 0;
-        public static final Voltage MOTOR_VOLTAGE = Volt.of(6.0);
-        public static final int BOTTOM_LIMIT_CHANNEL = 4;
-        public static final int TOP_LIMIT_CHANNEL = 5;
-        public static final double CLIMB_POWER = 0.5;
-        public static final boolean IS_INVERTED = true;
+        public static final int CAN_ID = 14;
+        public static final int BOTTOM_LIMIT_CHANNEL = 9;
+        public static final int TOP_LIMIT_CHANNEL = 8;
+        public static final double CLIMB_POWER = -0.7;
+        public static final boolean IS_INVERTED = false;
     }
 
     /**
@@ -112,9 +110,9 @@ public final class Constants {
         /** CANifier pin for elevator top limit */
         public static final CANifier.GeneralPin ELEVATOR_TOP_LIMIT_PIN = CANifier.GeneralPin.SPI_CLK_PWM0P;
         /** Maximum elevator height. */
-        public static final Distance ELEVATOR_HEIGHT = Inch.of(10.0);
+        public static final Distance ELEVATOR_HEIGHT = Inch.of(15.5);
         /** PID constants for elevator control. */
-        public static final PID ELEVATOR_PID = new PID(0.0, 0.0, 0.0);
+        public static final PID ELEVATOR_PID = new PID(0.1, 0.0, 0.0);
         /** Whether elevator motor is inverted */
         public static final boolean ELEVATOR_INVERTED = true;
         /** Power to use when zeroing elevator */
@@ -130,17 +128,17 @@ public final class Constants {
         /** CANifier pin for arm minimum angle limit */
         public static final CANifier.GeneralPin ARM_MIN_LIMIT_PIN = CANifier.GeneralPin.SPI_MOSI_PWM1P;
         /** Maximum arm angle. */
-        public static final Angle ARM_MAX_ANGLE = Degree.of(150.0);
+        public static final Angle ARM_MAX_ANGLE = Degree.of(125.0);
         /** Minimum arm angle. */
-        public static final Angle ARM_MIN_ANGLE = Degree.of(-150.0);
+        public static final Angle ARM_MIN_ANGLE = Degree.of(-125.0);
         /** PID constants for arm control. */
-        public static final PID ARM_PID = new PID(0.0, 0.0, 0.0);
+        public static final PID ARM_PID = new PID(0.01, 0.0, 0.0);
         /** Arm length. */
         public static final Distance ARM_LENGTH = Inch.of(30);
         /** Whether arm motor is inverted */
-        public static final boolean ARM_INVERTED = true;
+        public static final boolean ARM_INVERTED = false;
         /** Power to use when zeroing arm */
-        public static final double ARM_ZEROING_POWER = -0.15;
+        public static final double ARM_ZEROING_POWER = 0.15;
 
         // Intake constants
         /** CAN ID for intake motor. */
@@ -161,6 +159,11 @@ public final class Constants {
         public static final double UNKNOWN_STATE_POWER = 0.1;
         /** Maximum allowed offset when hitting limit switches. */
         public static final double POSITION_TOLERANCE = 1.0;
+
+        // Add safe transition constants:
+        public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(13.5);
+        public static final double INTERMEDIATE_ARM_FRONT_ANGLE = 45.0; // degrees
+        public static final double INTERMEDIATE_ARM_BACK_ANGLE = -45.0; // degrees
     }
 
     /**

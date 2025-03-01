@@ -59,6 +59,8 @@ public class AlgaArm extends SubsystemBase {
         sparkMax = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
         SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
         sparkMaxConfig.idleMode(IdleMode.kBrake);
+        // Apply invert option from constants
+        sparkMaxConfig.inverted(AlgaArmConstants.ALGA_INVERTED);
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
         // Update to use factory method for DIO limit switch

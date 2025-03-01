@@ -1,16 +1,12 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.PickupPoints;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.CoralHandler;
-import frc.robot.subsubsytems.LimitSwitch;
-import java.util.function.BooleanSupplier;
 
 public class PickupAndDeployCoralCommand extends SequentialCommandGroup {
 

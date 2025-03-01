@@ -3,8 +3,6 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Inch;
 
-import java.util.ArrayList;
-
 import com.ctre.phoenix.CANifier;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -16,9 +14,7 @@ import frc.robot.subsubsytems.LimitSwitch;
 
 import frc.robot.Constants.CoralConstants;
 import frc.robot.subsubsytems.LimitedPIDSubsystem;
-import frc.robot.subsubsytems.LimitedPIDSubsystem.SubsystemState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.networktables.NetworkTable;
@@ -43,31 +39,35 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 public class CoralHandler extends SubsystemBase {
     private static CoralHandler instance;
 
-    /**
-     * Represents a configuration state of the arm mechanism.
-     */
-    private static class ArmState {
-        public final Distance elevatorHeight;
-        public final Angle armAngle;
-
-        public ArmState(Distance elevatorHeight, Angle armAngle) {
-            this.elevatorHeight = elevatorHeight;
-            this.armAngle = armAngle;
-        }
+    // Add new enum Side
+    public enum Side {
+        FRONT,
+        BACK
     }
 
     /**
      * Predefined positions for the end effector.
      */
-    private enum HandlerPosition {
-        GROUND(new Translation2d(CoralConstants.ARM_LENGTH.in(Inch), 0)),
-        SCORE(new Translation2d(0, CoralConstants.ELEVATOR_HEIGHT.in(Inch))),
-        CUSTOM(null);
+    // Updated HandlerPosition enum with only ZERO and CUSTOM
+    public enum HandlerPosition {
+        ZERO(CoralConstants.ARM_MAX_ANGLE, Inch.of(0.0)),
+        TEST1(Degree.of(90), Inch.of(5.0)),
+        TEST2(Degree.of(-90), Inch.of(5.0)),
+        CUSTOM(null, null);
 
-        public final Translation2d target;
+        public final Angle armAngle;
+        public final Distance elevatorHeight;
+        public final Side side;
 
-        private HandlerPosition(Translation2d target) {
-            this.target = target;
+        private HandlerPosition(Angle armAngle, Distance elevatorHeight) {
+            this.armAngle = armAngle;
+            this.elevatorHeight = elevatorHeight;
+            // If armAngle is null, default side to FRONT; otherwise infer from value.
+            if (armAngle != null) {
+                this.side = (armAngle.in(Degree) > 0) ? Side.FRONT : Side.BACK;
+            } else {
+                this.side = Side.FRONT;
+            }
         }
     }
 
@@ -79,8 +79,6 @@ public class CoralHandler extends SubsystemBase {
     private final SparkMax intakeMotor;
     /** Current position setting. */
     private HandlerPosition currentPosition = HandlerPosition.CUSTOM;
-    /** Arm length in inches. */
-    private final double armLength;
     /** NetworkTable instance for publishing data. */
     private final NetworkTable table;
 
@@ -113,7 +111,6 @@ public class CoralHandler extends SubsystemBase {
         // Initialize intake motor
         intakeMotor = createIntakeMotor();
 
-        armLength = CoralConstants.ARM_LENGTH.in(Inch);
         table = NetworkTableInstance.getDefault().getTable("CoralHandler");
     }
     
@@ -190,79 +187,26 @@ public class CoralHandler extends SubsystemBase {
         return motor;
     }
 
-    /**
-     * Converts arm state to end effector position.
-     */
-    private Translation2d forwardKinematics(ArmState state) {
-        double radians = Math.toRadians(state.armAngle.in(Degree));
-        double x = armLength * Math.cos(radians);
-        double y = state.elevatorHeight.in(Inch) + armLength * Math.sin(radians);
-        return new Translation2d(x, y);
+    // Remove setPosition and setCustomPosition methods.
+    // Instead, provide basic getter methods for elevator, arm, and current side.
+    
+    public LimitedPIDSubsystem getElevator() {
+        return elevator;
+    }
+    
+    public LimitedPIDSubsystem getArm() {
+        return arm;
+    }
+    
+    // Expose current side based on motor position; positive indicates FRONT, negative indicates BACK.
+    public Side getCurrentSide() {
+        double armPos = getArm().getPosition();
+        return (armPos >= 0) ? Side.FRONT : Side.BACK;
     }
 
-    /**
-     * Converts desired end effector position to arm state.
-     * Returns null if position is unreachable.
-     */
-    private ArrayList<ArmState> inverseKinematics(Translation2d target) {
-        ArrayList<Double> heightSolutions = new ArrayList<>();
-        heightSolutions.add(target.getY() + Math.sqrt(Math.pow(armLength, 2) - Math.pow(target.getX(), 2)));
-        heightSolutions.add(target.getY() - Math.sqrt(Math.pow(armLength, 2) - Math.pow(target.getX(), 2)));
-        heightSolutions.removeIf(height -> height < 0 || height > CoralConstants.ELEVATOR_HEIGHT.in(Inch) || Double.isNaN(height));
-
-        ArrayList<ArmState> validSolutions = new ArrayList<>();
-        for (double height : heightSolutions) {
-            double armAngle = Math.toDegrees(Math.atan2(target.getX(), target.getY() - height));
-            if (armAngle >= CoralConstants.ARM_MIN_ANGLE.in(Degree) && armAngle <= CoralConstants.ARM_MAX_ANGLE.in(Degree)) {
-                validSolutions.add(new ArmState(Inch.of(height), Degree.of(armAngle)));
-            }
-        }
-
-        return validSolutions;
-    }
-
-    /**
-     * Sets both elevator and arm to a predefined position.
-     * <p>Example:
-     * <pre>
-     * {@code
-     * CoralHandler.getInstance().setPosition(CoralHandler.HandlerPosition.SCORE);
-     * }
-     * </pre>
-     */
-    public void setPosition(HandlerPosition targetPosition) {
-        if (currentPosition == targetPosition || 
-            elevator.getState() == SubsystemState.UNKNOWN || 
-            arm.getState() == SubsystemState.UNKNOWN) return;
-
-        if (targetPosition != HandlerPosition.CUSTOM && targetPosition.target != null) {
-            ArrayList<ArmState> solutions = inverseKinematics(targetPosition.target);
-            if (!solutions.isEmpty()) {
-                ArmState solution = solutions.get(0);
-                elevator.set(solution.elevatorHeight.in(Inch));
-                arm.set(solution.armAngle.in(Degree));
-                currentPosition = targetPosition;
-            }
-        }
-    }
-
-    /**
-     * Sets the end effector to a custom 2D position.
-     * <p>Example:
-     * <pre>
-     * {@code
-     * CoralHandler.getInstance().setCustomPosition(new Translation2d(15.0, 20.0));
-     * }
-     * </pre>
-     */
-    public void setCustomPosition(Translation2d target) {
-        ArrayList<ArmState> solutions = inverseKinematics(target);
-        if (!solutions.isEmpty()) {
-            ArmState solution = solutions.get(0);
-            elevator.set(solution.elevatorHeight.in(Inch));
-            arm.set(solution.armAngle.in(Degree));
-            currentPosition = HandlerPosition.CUSTOM;
-        }
+    // Add public setter method for current position
+    public void setCurrentPosition(HandlerPosition newPos) {
+        currentPosition = newPos;
     }
 
     /**

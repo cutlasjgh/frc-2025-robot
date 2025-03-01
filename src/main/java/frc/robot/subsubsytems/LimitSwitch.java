@@ -89,7 +89,7 @@ public class LimitSwitch implements Supplier<Boolean> {
         
         @Override
         public boolean get() {
-            return digitalInput.get();
+            return !digitalInput.get(); // Invert the raw reading for DIO
         }
         
         @Override
@@ -110,13 +110,13 @@ public class LimitSwitch implements Supplier<Boolean> {
             
             // Create new interrupt that calls all callbacks
             interrupt = new AsynchronousInterrupt(digitalInput, (rising, falling) -> {
-                if (rising) {
-                    for (Runnable callback : onRisingCallbacks) {
+                if (falling) { // Falling edge indicates switch is triggered
+                    for (Runnable callback : onFallingCallbacks) {
                         callback.run();
                     }
                 }
-                if (falling) {
-                    for (Runnable callback : onFallingCallbacks) {
+                if (rising) { // Rising edge indicates switch is cleared
+                    for (Runnable callback : onRisingCallbacks) {
                         callback.run();
                     }
                 }
@@ -205,6 +205,9 @@ public class LimitSwitch implements Supplier<Boolean> {
     
     private final LimitSwitchBackend backend;
     private static final List<LimitSwitchBackend> polledBackends = new ArrayList<>();
+    private boolean previousState;
+    private Runnable risingCallback;
+    private Runnable fallingCallback;
     
     /**
      * Private constructor used by factory methods.
@@ -218,6 +221,9 @@ public class LimitSwitch implements Supplier<Boolean> {
             backend.setupInterrupts(onPress, onRelease);
             polledBackends.add(backend);
         }
+        this.risingCallback = onPress;
+        this.fallingCallback = onRelease;
+        previousState = get();
     }
     
     /**
