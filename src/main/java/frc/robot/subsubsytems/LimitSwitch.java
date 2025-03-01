@@ -77,14 +77,8 @@ public class LimitSwitch implements Supplier<Boolean> {
         
         public DIOBackend(int channel) {
             this.channel = channel;
-            
-            // Check if we already have a DigitalInput for this channel
-            if (dioCache.containsKey(channel)) {
-                digitalInput = dioCache.get(channel);
-            } else {
-                digitalInput = new DigitalInput(channel);
-                dioCache.put(channel, digitalInput);
-            }
+            // Replace manual cache lookup with computeIfAbsent
+            digitalInput = dioCache.computeIfAbsent(channel, DigitalInput::new);
         }
         
         @Override
@@ -206,8 +200,6 @@ public class LimitSwitch implements Supplier<Boolean> {
     private final LimitSwitchBackend backend;
     private static final List<LimitSwitchBackend> polledBackends = new ArrayList<>();
     private boolean previousState;
-    private Runnable risingCallback;
-    private Runnable fallingCallback;
     
     /**
      * Private constructor used by factory methods.
@@ -221,8 +213,6 @@ public class LimitSwitch implements Supplier<Boolean> {
             backend.setupInterrupts(onPress, onRelease);
             polledBackends.add(backend);
         }
-        this.risingCallback = onPress;
-        this.fallingCallback = onRelease;
         previousState = get();
     }
     

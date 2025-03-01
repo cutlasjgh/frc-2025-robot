@@ -7,8 +7,6 @@ import frc.robot.Constants.CoralConstants;
 import frc.robot.subsystems.CoralHandler;
 import frc.robot.subsystems.CoralHandler.HandlerPosition;
 
-import static edu.wpi.first.units.Units.Degree;
-
 public class ZeroCoralCommand extends SequentialCommandGroup {
     /**
      * Constructs a command to zero the coral mechanism:
