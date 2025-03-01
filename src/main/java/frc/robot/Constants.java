@@ -116,7 +116,7 @@ public final class Constants {
         /** Whether elevator motor is inverted */
         public static final boolean ELEVATOR_INVERTED = true;
         /** Power to use when zeroing elevator */
-        public static final double ELEVATOR_ZEROING_POWER = -0.15;
+        public static final double ELEVATOR_ZEROING_POWER = 0.15;
 
         // Arm constants
         /** CAN ID for arm motor. */

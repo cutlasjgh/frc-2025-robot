@@ -147,7 +147,7 @@ public class RobotContainer {
     }));
 
     // Start button: Zero Coral mechanism if needed
-    operatorController.y().onTrue(Commands.runOnce(() -> coralHandler.zeroIfNeeded()));
+    operatorController.y().onTrue(new ZeroCoralCommand(coralHandler));
 
     // X button: Run climb mechanism at 70% power while held
     driverController.x().whileTrue(new RunClimbCommand(climb));

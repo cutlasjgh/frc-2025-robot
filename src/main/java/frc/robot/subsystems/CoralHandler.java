@@ -139,8 +139,7 @@ public class CoralHandler extends SubsystemBase {
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPIDSubsystem.ControlMode.POSITION,
-            CoralConstants.ELEVATOR_INVERTED,
-            CoralConstants.ELEVATOR_ZEROING_POWER
+            CoralConstants.ELEVATOR_INVERTED
         );
     }
     
@@ -170,8 +169,7 @@ public class CoralHandler extends SubsystemBase {
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPIDSubsystem.ControlMode.POSITION,
-            CoralConstants.ARM_INVERTED,
-            CoralConstants.ARM_ZEROING_POWER
+            CoralConstants.ARM_INVERTED
         );
     }
     
@@ -207,24 +205,6 @@ public class CoralHandler extends SubsystemBase {
     // Add public setter method for current position
     public void setCurrentPosition(HandlerPosition newPos) {
         currentPosition = newPos;
-    }
-
-    /**
-     * Applies zeroing voltage to subsystems with unknown positions.
-     * This helps bring mechanisms to their limit switches for position detection.
-     * 
-     * <p>Only applies voltage if a subsystem's position is currently unknown.
-     * Once a limit switch is triggered, the position will be updated automatically.
-     * <p>Example:
-     * <pre>
-     * {@code
-     * CoralHandler.getInstance().zeroIfNeeded();
-     * }
-     * </pre>
-     */
-    public void zeroIfNeeded() {
-        elevator.zeroIfNeeded();
-        arm.zeroIfNeeded();
     }
 
     /**
