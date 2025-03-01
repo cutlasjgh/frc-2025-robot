@@ -22,31 +22,54 @@ public class SetCoralPosition extends SequentialCommandGroup {
         addCommands(new InstantCommand(() -> coralHandler.setCurrentPosition(HandlerPosition.CUSTOM), coralHandler));
         
         boolean switchingSides = coralHandler.getCurrentSide() != targetPosition.side;
+        System.out.println("Switching sides: " + switchingSides);
+        System.out.println("Current side: " + coralHandler.getCurrentSide());
+        System.out.println("Target side: " + targetPosition.side);
         
         if (switchingSides) {
             double safeElevator = CoralConstants.SAFE_ELEVATOR_HEIGHT.in(Inch);
+            boolean alreadyAbove = coralHandler.getElevator().getPosition() > safeElevator;
             // Determine flipped intermediate arm angle for over-the-top switch.
             double flippedArm = (coralHandler.getCurrentSide() == CoralHandler.Side.FRONT) ?
                 CoralConstants.INTERMEDIATE_ARM_BACK_ANGLE :
                 CoralConstants.INTERMEDIATE_ARM_FRONT_ANGLE;
-            addCommands(
-                // 1. Command intermediate setpoints for switching over the top.
-                new InstantCommand(() -> {
-                    coralHandler.getElevator().set(safeElevator);
-                    coralHandler.getArm().set(flippedArm);
-                }, coralHandler),
-                // 2. Wait until the intermediate positions are reached.
-                new WaitUntilCommand(() -> {
-                    double elevError = Math.abs(coralHandler.getElevator().getPosition() - safeElevator);
-                    double armError = Math.abs(coralHandler.getArm().getPosition() - flippedArm);
-                    return elevError < 1.0 && armError < 5.0;
-                }),
-                // 3. Command the final target positions.
-                new InstantCommand(() -> {
-                    coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
-                    coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
-                }, coralHandler)
-            );
+            
+            if (alreadyAbove) {
+                addCommands(
+                    // Only adjust the arm first.
+                    new InstantCommand(() -> {
+                        coralHandler.getArm().set(flippedArm);
+                    }, coralHandler),
+                    new WaitUntilCommand(() -> {
+                        double armError = Math.abs(coralHandler.getArm().getPosition() - flippedArm);
+                        return armError < 5.0;
+                    }),
+                    // Then lower elevator and set final arm position.
+                    new InstantCommand(() -> {
+                        coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
+                        coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
+                    }, coralHandler)
+                );
+            } else {
+                addCommands(
+                    // 1. Command intermediate setpoints for switching over the top.
+                    new InstantCommand(() -> {
+                        coralHandler.getElevator().set(safeElevator);
+                        coralHandler.getArm().set(flippedArm);
+                    }, coralHandler),
+                    // 2. Wait until the intermediate positions are reached.
+                    new WaitUntilCommand(() -> {
+                        double elevError = Math.abs(coralHandler.getElevator().getPosition() - safeElevator);
+                        double armError = Math.abs(coralHandler.getArm().getPosition() - flippedArm);
+                        return elevError < 1.0 && armError < 5.0;
+                    }),
+                    // 3. Command the final target positions.
+                    new InstantCommand(() -> {
+                        coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
+                        coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
+                    }, coralHandler)
+                );
+            }
         } else {
             // No side switch: command target positions immediately.
             addCommands(new InstantCommand(() -> {
