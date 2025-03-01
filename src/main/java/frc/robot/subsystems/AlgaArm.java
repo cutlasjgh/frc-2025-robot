@@ -138,7 +138,7 @@ public class AlgaArm extends SubsystemBase {
      * </pre>
      */
     public boolean hasGamepiece() {
-        return algaSensor.getBoolean(); // Use getBoolean() for primitive return
+        return algaSensor.getBoolean();
     }
 
     @Override

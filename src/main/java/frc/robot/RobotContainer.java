@@ -159,7 +159,7 @@ public class RobotContainer {
     operatorController.povLeft().onTrue(
         new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.TEST1));
     // D-Pad binding: operator dpad down -> go to ZERO position
-    operatorController.povDown().onTrue(
+    operatorController.back().onTrue(
         new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.ZERO));
   }
 
