@@ -31,46 +31,32 @@ public class SetCoralPosition extends SequentialCommandGroup {
         if (switchingSides) {
             double safeElevator = CoralConstants.SAFE_ELEVATOR_HEIGHT.in(Inch);
             boolean alreadyAbove = coralHandler.getElevator().getPosition() > safeElevator;
-            double thisSideAngle = coralHandler.isFront()
-                    ? CoralConstants.INTERMEDIATE_ARM_FRONT_ANGLE
-                    : CoralConstants.INTERMEDIATE_ARM_BACK_ANGLE;
-
-            double otherSideAngle = coralHandler.isFront()
-                    ? CoralConstants.INTERMEDIATE_ARM_BACK_ANGLE
-                    : CoralConstants.INTERMEDIATE_ARM_FRONT_ANGLE;
-
-            // Step 1: If not already above safe height, move elevator up and arm to this side position
+            
+            // Safety first: If not already above safe height, raise elevator before arm movement
             if (!alreadyAbove) {
                 addCommands(
-                    new InstantCommand(() -> {
-                        coralHandler.getElevator().set(safeElevator);
-                        coralHandler.getArm().set(thisSideAngle);
-                    }, coralHandler),
+                    new InstantCommand(() -> coralHandler.getElevator().set(safeElevator), coralHandler),
+                    // Only wait for elevator to reach safe height before allowing arm to cross midpoint
                     new WaitUntilCommand(() -> {
                         double elevError = Math.abs(coralHandler.getElevator().getPosition() - safeElevator);
-                        double armError = Math.abs(coralHandler.getArm().getPosition() - thisSideAngle);
-                        return elevError < 1.0 && armError < 5.0;
+                        return elevError < 1.0;
                     })
                 );
             }
             
-            // Step 2: Move arm to other side
-            addCommands(
-                new InstantCommand(() -> {
-                    coralHandler.getArm().set(otherSideAngle);
-                }, coralHandler),
-                new WaitUntilCommand(() -> {
-                    double armError = Math.abs(coralHandler.getArm().getPosition() - otherSideAngle);
-                    return armError < 5.0;
-                })
-            );
+            // Now we can directly set final position - arm will move continuously through the midpoint
+            // but only after the elevator is at a safe height
+            addCommands(new InstantCommand(() -> {
+                coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
+                coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
+            }, coralHandler));
+        } else {
+            // No side switch: command target positions immediately
+            addCommands(new InstantCommand(() -> {
+                coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
+                coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
+            }, coralHandler));
         }
-
-        // No side switch: command target positions immediately.
-        addCommands(new InstantCommand(() -> {
-            coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
-            coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
-        }, coralHandler));
 
         // Wait until final target positions are reached.
         addCommands(new WaitUntilCommand(() -> {

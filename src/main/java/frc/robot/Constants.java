@@ -119,6 +119,10 @@ public final class Constants {
         public static final double ELEVATOR_ZEROING_POWER_UP = 0.15;
         /** Power to use when zeroing elevator down */
         public static final double ELEVATOR_ZEROING_POWER_DOWN = -0.15;
+        /** Ramp rate for elevator motor (seconds from 0 to full throttle) */
+        public static final double ELEVATOR_RAMP_RATE = 0.25;
+        /** Current limit for elevator motor in amps */
+        public static final int ELEVATOR_CURRENT_LIMIT = 30;
 
         // Arm constants
         /** CAN ID for arm motor. */
@@ -141,6 +145,10 @@ public final class Constants {
         public static final boolean ARM_INVERTED = false;
         /** Power to use when zeroing arm */
         public static final double ARM_ZEROING_POWER = 0.15;
+        /** Ramp rate for arm motor (seconds from 0 to full throttle) */
+        public static final double ARM_RAMP_RATE = 0.3;
+        /** Current limit for arm motor in amps */
+        public static final int ARM_CURRENT_LIMIT = 20;
 
         // Intake constants
         /** CAN ID for intake motor. */

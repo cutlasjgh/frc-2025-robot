@@ -199,7 +199,6 @@ public class LimitSwitch implements Supplier<Boolean> {
     
     private final LimitSwitchBackend backend;
     private static final List<LimitSwitchBackend> polledBackends = new ArrayList<>();
-    private boolean previousState;
     
     /**
      * Private constructor used by factory methods.
@@ -213,7 +212,6 @@ public class LimitSwitch implements Supplier<Boolean> {
             backend.setupInterrupts(onPress, onRelease);
             polledBackends.add(backend);
         }
-        previousState = get();
     }
     
     /**

@@ -122,7 +122,7 @@ public class CoralHandler extends SubsystemBase {
             CoralConstants.ELEVATOR_TOP_LIMIT_PIN,
             null, null);
             
-        // Then pass them to the subsystem constructor
+        // Then pass them to the subsystem constructor with additional parameters
         return new LimitedPID(
             CoralConstants.ELEVATOR_CAN_ID,
             CoralConstants.ELEVATOR_DISTANCE_PER_ROTATION.in(Inch),
@@ -133,7 +133,9 @@ public class CoralHandler extends SubsystemBase {
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPID.ControlMode.POSITION,
-            CoralConstants.ELEVATOR_INVERTED
+            CoralConstants.ELEVATOR_INVERTED,
+            CoralConstants.ELEVATOR_RAMP_RATE,
+            CoralConstants.ELEVATOR_CURRENT_LIMIT
         );
     }
     
@@ -152,7 +154,7 @@ public class CoralHandler extends SubsystemBase {
             CoralConstants.ARM_MAX_LIMIT_PIN,
             null, null);
             
-        // Then pass them to the subsystem constructor
+        // Then pass them to the subsystem constructor with additional parameters
         return new LimitedPID(
             CoralConstants.ARM_CAN_ID,
             CoralConstants.ARM_ANGLE_PER_ROTATION.in(Degree),
@@ -163,7 +165,9 @@ public class CoralHandler extends SubsystemBase {
             maxLimitSwitch,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPID.ControlMode.POSITION,
-            CoralConstants.ARM_INVERTED
+            CoralConstants.ARM_INVERTED,
+            CoralConstants.ARM_RAMP_RATE,
+            CoralConstants.ARM_CURRENT_LIMIT
         );
     }
     

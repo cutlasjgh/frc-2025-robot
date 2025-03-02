@@ -77,6 +77,10 @@ public class LimitedPID {
     private final boolean isInverted;
     /** Whether initialization is complete */
     private boolean initializationComplete = false;
+    /** Ramp rate in seconds from 0 to full throttle */
+    private final double rampRate;
+    /** Maximum current limit in amps */
+    private final int currentLimit;
 
     /**
      * Creates a new motor subsystem with position/velocity control, pre-created
@@ -94,10 +98,13 @@ public class LimitedPID {
      * @param tolerance        Tolerance for position offset
      * @param controlMode      Whether to use position or velocity control
      * @param isInverted       Whether to invert the motor direction
+     * @param rampRate         Ramp rate in seconds from 0 to full throttle
+     * @param currentLimit     Maximum current limit in amps
      */
     public LimitedPID(int canId, double conversionFactor, double minPosition, double maxPosition,
             PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch,
-            double tolerance, ControlMode controlMode, boolean isInverted) {
+            double tolerance, ControlMode controlMode, boolean isInverted,
+            double rampRate, int currentLimit) {
         this.conversionFactor = conversionFactor;
         this.pidConstants = pidConstants;
         this.minPosition = minPosition;
@@ -105,6 +112,8 @@ public class LimitedPID {
         this.tolerance = tolerance;
         this.controlMode = controlMode;
         this.isInverted = isInverted;
+        this.rampRate = rampRate;
+        this.currentLimit = currentLimit;
 
         motor = new SparkMax(canId, MotorType.kBrushless);
         configureMotor();
@@ -117,6 +126,30 @@ public class LimitedPID {
                 this::handleMaxLimit);
 
         initializePosition();
+    }
+
+    /**
+     * Creates a new motor subsystem with position/velocity control without ramp rate
+     * and current limit settings (backwards compatibility).
+     *
+     * @param canId            The CAN ID of the motor controller
+     * @param conversionFactor Factor to convert motor rotations to
+     *                         position/velocity units
+     * @param minPosition      Minimum allowed position value
+     * @param maxPosition      Maximum allowed position value
+     * @param pidConstants     PID constants for control
+     * @param minLimitSwitch   Pre-created limit switch for minimum position
+     * @param maxLimitSwitch   Pre-created limit switch for maximum position
+     * @param tolerance        Tolerance for position offset
+     * @param controlMode      Whether to use position or velocity control
+     * @param isInverted       Whether to invert the motor direction
+     */
+    public LimitedPID(int canId, double conversionFactor, double minPosition, double maxPosition,
+            PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch,
+            double tolerance, ControlMode controlMode, boolean isInverted) {
+        this(canId, conversionFactor, minPosition, maxPosition, pidConstants, 
+             minLimitSwitch, maxLimitSwitch, tolerance, controlMode, isInverted,
+             0.0, 40); // Default: no ramp rate, 40A current limit
     }
 
     /**
@@ -140,6 +173,9 @@ public class LimitedPID {
         SparkMaxConfig config = new SparkMaxConfig();
         config.idleMode(IdleMode.kBrake);
         config.inverted(isInverted);
+        config.closedLoopRampRate(rampRate);
+        config.openLoopRampRate(rampRate);
+        config.smartCurrentLimit(currentLimit);
 
         EncoderConfig encoderConfig = new EncoderConfig();
         encoderConfig.positionConversionFactor(conversionFactor);
