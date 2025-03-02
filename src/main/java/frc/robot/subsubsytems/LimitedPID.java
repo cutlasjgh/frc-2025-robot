@@ -109,16 +109,12 @@ public class LimitedPID {
         motor = new SparkMax(canId, MotorType.kBrushless);
         configureMotor();
 
-        // Configure limit switch callbacks with exit callbacks added
-        minLimitSwitch = LimitSwitch.addCallback(minLimitSwitch, () -> handleMinLimit(), () -> exitMinLimit());
-        maxLimitSwitch = LimitSwitch.addCallback(maxLimitSwitch, () -> handleMaxLimit(), () -> exitMaxLimit());
-
-        // Create limit switch pair using the switches
+        // Create limit switch pair using the switches with handlers
         limitSwitches = new LimitSwitchPair(
                 minLimitSwitch::getBoolean,
                 maxLimitSwitch::getBoolean,
-                null, // Callbacks already set on the switches
-                null); // Callbacks already set on the switches
+                this::handleMinLimit,
+                this::handleMaxLimit);
 
         initializePosition();
     }
@@ -151,6 +147,7 @@ public class LimitedPID {
 
         ClosedLoopConfig pidConfig = new ClosedLoopConfig();
         pidConfig.pid(pidConstants.p, pidConstants.i, pidConstants.d);
+        pidConfig.outputRange(-0.75, 0.75);
         config.apply(pidConfig);
 
         motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -208,18 +205,6 @@ public class LimitedPID {
         motor.getEncoder().setPosition(maxPosition);
         set(maxPosition);
         state = SubsystemState.KNOWN;
-    }
-
-    // New method to handle exit from min limit switch condition.
-    private void exitMinLimit() {
-        // Set control reference to the current position when exiting min limit.
-        set(motor.getEncoder().getPosition());
-    }
-
-    // New method to handle exit from max limit switch condition.
-    private void exitMaxLimit() {
-        // Set control reference to the current position when exiting max limit.
-        set(motor.getEncoder().getPosition());
     }
 
     /**

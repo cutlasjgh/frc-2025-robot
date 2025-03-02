@@ -39,35 +39,29 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 public class CoralHandler extends SubsystemBase {
     private static CoralHandler instance;
 
-    // Add new enum Side
-    public enum Side {
-        FRONT,
-        BACK
-    }
-
     /**
      * Predefined positions for the end effector.
      */
     // Updated HandlerPosition enum with only ZERO and CUSTOM
     public enum HandlerPosition {
         ZERO(CoralConstants.ARM_MAX_ANGLE, Inch.of(0.0)),
-        TEST1(Degree.of(90), Inch.of(5.0)),
-        TEST2(Degree.of(-90), Inch.of(5.0)),
+        INTAKE(Degree.of(70), Inch.of(0.0)),
+        LOW(Degree.of(-90), Inch.of(5.0)),
+        MID(Degree.of(-35), Inch.of(0.0)),
+        HIGH(Degree.of(-35), Inch.of(15.0)),
+        CLIMB(Degree.of(-90), Inch.of(13.5)),
         CUSTOM(null, null);
 
         public final Angle armAngle;
         public final Distance elevatorHeight;
-        public final Side side;
 
         private HandlerPosition(Angle armAngle, Distance elevatorHeight) {
             this.armAngle = armAngle;
             this.elevatorHeight = elevatorHeight;
-            // If armAngle is null, default side to FRONT; otherwise infer from value.
-            if (armAngle != null) {
-                this.side = (armAngle.in(Degree) > 0) ? Side.FRONT : Side.BACK;
-            } else {
-                this.side = Side.FRONT;
-            }
+        }
+
+        public boolean isFront() {
+            return armAngle.in(Degree) > 0;
         }
     }
 
@@ -184,9 +178,6 @@ public class CoralHandler extends SubsystemBase {
         motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         return motor;
     }
-
-    // Remove setPosition and setCustomPosition methods.
-    // Instead, provide basic getter methods for elevator, arm, and current side.
     
     public LimitedPID getElevator() {
         return elevator;
@@ -197,9 +188,8 @@ public class CoralHandler extends SubsystemBase {
     }
     
     // Expose current side based on motor position; positive indicates FRONT, negative indicates BACK.
-    public Side getCurrentSide() {
-        double armPos = getArm().getPosition();
-        return (armPos >= 0) ? Side.FRONT : Side.BACK;
+    public boolean isFront() {
+        return getArm().getPosition() > 0;
     }
 
     // Add public setter method for current position
@@ -263,6 +253,10 @@ public class CoralHandler extends SubsystemBase {
         return !canifier.getGeneralInput(CoralConstants.INTAKE_SENSOR_PIN);
     }
 
+    public HandlerPosition getPosition() {
+        return currentPosition;
+    }
+
     @Override
     public void periodic() {
         handleIntakeStateLogic();
@@ -302,5 +296,9 @@ public class CoralHandler extends SubsystemBase {
         table.getEntry("elevatorMaxLimit").setBoolean(elevator.isAtMaxLimit());
         table.getEntry("armMinLimit").setBoolean(arm.isAtMinLimit());
         table.getEntry("armMaxLimit").setBoolean(arm.isAtMaxLimit());
+
+        // Add current position to telemetry
+        table.getEntry("currentPosition").setString(currentPosition.toString());
+        table.getEntry("currentlyInFront").setBoolean(isFront());
     }
 }

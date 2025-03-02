@@ -103,17 +103,6 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
-    // driverController.back().whileTrue(
-    // swerveDrive.driveToPose(
-    // new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
-    // Rotation2d.fromDegrees(0))));
-
-    // // A button: Intake/Drop Alga
-    // operatorController.a().onTrue(algaArm.hasGamepiece() ?
-    // new DropAlgaCommand() :
-    // new IntakeAlgaCommand()
-    // );
-
     // B button: Toggle the coral command (cancel running command on re-press)
     operatorController.b().onTrue(Commands.runOnce(() -> {
       if (coralCommand != null && coralCommand.isScheduled()) {
@@ -152,15 +141,23 @@ public class RobotContainer {
     // X button: Run climb mechanism at 70% power while held
     driverController.x().whileTrue(new RunClimbCommand(climb));
 
-    // D-Pad binding: operator dpad up -> go to TEST2 position
-    operatorController.povUp().onTrue(
-        new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.TEST2));
-    // D-Pad binding: operator dpad left -> go to TEST1 position
+    operatorController.povDown().onTrue(
+        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.LOW).schedule()));
+
     operatorController.povLeft().onTrue(
-        new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.TEST1));
-    // D-Pad binding: operator dpad down -> go to ZERO position
+        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.MID).schedule()));
+
+    operatorController.povUp().onTrue(
+        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.HIGH).schedule()));
+
+    operatorController.povRight().onTrue(
+        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.INTAKE).schedule()));
+
     operatorController.back().onTrue(
-        new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.ZERO));
+        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.ZERO).schedule()));
+
+    operatorController.start().onTrue(
+        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.CLIMB).schedule()));
   }
 
   /**

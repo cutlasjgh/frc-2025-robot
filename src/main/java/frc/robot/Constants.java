@@ -115,8 +115,10 @@ public final class Constants {
         public static final PID ELEVATOR_PID = new PID(0.1, 0.0, 0.0);
         /** Whether elevator motor is inverted */
         public static final boolean ELEVATOR_INVERTED = true;
-        /** Power to use when zeroing elevator */
-        public static final double ELEVATOR_ZEROING_POWER = 0.15;
+        /** Power to use when zeroing elevator up */
+        public static final double ELEVATOR_ZEROING_POWER_UP = 0.15;
+        /** Power to use when zeroing elevator down */
+        public static final double ELEVATOR_ZEROING_POWER_DOWN = -0.15;
 
         // Arm constants
         /** CAN ID for arm motor. */
@@ -174,13 +176,11 @@ public final class Constants {
         public static final Pose2d[] PICKUP_POINTS = new Pose2d[]{
             new Pose2d(1.0, 2.0, new Rotation2d(0)),
             new Pose2d(3.0, 4.0, new Rotation2d(0))
-            // ...add more as needed...
         };
 
         public static final Pose2d[] CORAL_SIDE_POINTS = new Pose2d[]{
             new Pose2d(5.0, 6.0, new Rotation2d(0)),
             new Pose2d(7.0, 8.0, new Rotation2d(0))
-            // ...add more as needed...
         };
     }
 }

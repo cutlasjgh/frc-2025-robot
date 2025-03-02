@@ -14,77 +14,72 @@ public class SetCoralPosition extends SequentialCommandGroup {
     /**
      * Constructs a sequential command group that transitions the coral mechanism
      * to the target setpoint.
-     * @param coralHandler the CoralHandler subsystem
-     * @param targetPosition the desired target position (using the enum defined in CoralHandler)
+     * 
+     * @param coralHandler   the CoralHandler subsystem
+     * @param targetPosition the desired target position (using the enum defined in
+     *                       CoralHandler)
      */
     public SetCoralPosition(CoralHandler coralHandler, HandlerPosition targetPosition) {
+        // Add requirements
+        addRequirements(coralHandler);
+        
         // Start by setting the current status to CUSTOM.
         addCommands(new InstantCommand(() -> coralHandler.setCurrentPosition(HandlerPosition.CUSTOM), coralHandler));
-        
-        boolean switchingSides = coralHandler.getCurrentSide() != targetPosition.side;
-        System.out.println("Switching sides: " + switchingSides);
-        System.out.println("Current side: " + coralHandler.getCurrentSide());
-        System.out.println("Target side: " + targetPosition.side);
-        
+
+        boolean switchingSides = coralHandler.isFront() != targetPosition.isFront();
+
         if (switchingSides) {
             double safeElevator = CoralConstants.SAFE_ELEVATOR_HEIGHT.in(Inch);
             boolean alreadyAbove = coralHandler.getElevator().getPosition() > safeElevator;
-            // Determine flipped intermediate arm angle for over-the-top switch.
-            double flippedArm = (coralHandler.getCurrentSide() == CoralHandler.Side.FRONT) ?
-                CoralConstants.INTERMEDIATE_ARM_BACK_ANGLE :
-                CoralConstants.INTERMEDIATE_ARM_FRONT_ANGLE;
-            
-            if (alreadyAbove) {
+            double thisSideAngle = coralHandler.isFront()
+                    ? CoralConstants.INTERMEDIATE_ARM_FRONT_ANGLE
+                    : CoralConstants.INTERMEDIATE_ARM_BACK_ANGLE;
+
+            double otherSideAngle = coralHandler.isFront()
+                    ? CoralConstants.INTERMEDIATE_ARM_BACK_ANGLE
+                    : CoralConstants.INTERMEDIATE_ARM_FRONT_ANGLE;
+
+            // Step 1: If not already above safe height, move elevator up and arm to this side position
+            if (!alreadyAbove) {
                 addCommands(
-                    // Only adjust the arm first.
-                    new InstantCommand(() -> {
-                        coralHandler.getArm().set(flippedArm);
-                    }, coralHandler),
-                    new WaitUntilCommand(() -> {
-                        double armError = Math.abs(coralHandler.getArm().getPosition() - flippedArm);
-                        return armError < 5.0;
-                    }),
-                    // Then lower elevator and set final arm position.
-                    new InstantCommand(() -> {
-                        coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
-                        coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
-                    }, coralHandler)
-                );
-            } else {
-                addCommands(
-                    // 1. Command intermediate setpoints for switching over the top.
                     new InstantCommand(() -> {
                         coralHandler.getElevator().set(safeElevator);
-                        coralHandler.getArm().set(flippedArm);
+                        coralHandler.getArm().set(thisSideAngle);
                     }, coralHandler),
-                    // 2. Wait until the intermediate positions are reached.
                     new WaitUntilCommand(() -> {
                         double elevError = Math.abs(coralHandler.getElevator().getPosition() - safeElevator);
-                        double armError = Math.abs(coralHandler.getArm().getPosition() - flippedArm);
+                        double armError = Math.abs(coralHandler.getArm().getPosition() - thisSideAngle);
                         return elevError < 1.0 && armError < 5.0;
-                    }),
-                    // 3. Command the final target positions.
-                    new InstantCommand(() -> {
-                        coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
-                        coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
-                    }, coralHandler)
+                    })
                 );
             }
-        } else {
-            // No side switch: command target positions immediately.
-            addCommands(new InstantCommand(() -> {
-                coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
-                coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
-            }, coralHandler));
+            
+            // Step 2: Move arm to other side
+            addCommands(
+                new InstantCommand(() -> {
+                    coralHandler.getArm().set(otherSideAngle);
+                }, coralHandler),
+                new WaitUntilCommand(() -> {
+                    double armError = Math.abs(coralHandler.getArm().getPosition() - otherSideAngle);
+                    return armError < 5.0;
+                })
+            );
         }
-        
-        // 4. Wait until final target positions are reached.
+
+        // No side switch: command target positions immediately.
+        addCommands(new InstantCommand(() -> {
+            coralHandler.getElevator().set(targetPosition.elevatorHeight.in(Inch));
+            coralHandler.getArm().set(targetPosition.armAngle.in(Degree));
+        }, coralHandler));
+
+        // Wait until final target positions are reached.
         addCommands(new WaitUntilCommand(() -> {
-            double finalElevError = Math.abs(coralHandler.getElevator().getPosition() - targetPosition.elevatorHeight.in(Inch));
+            double finalElevError = Math
+                    .abs(coralHandler.getElevator().getPosition() - targetPosition.elevatorHeight.in(Inch));
             double finalArmError = Math.abs(coralHandler.getArm().getPosition() - targetPosition.armAngle.in(Degree));
             return finalElevError < 1.0 && finalArmError < 5.0;
         }));
-        
+
         // Conclude by updating the current status to the requested target.
         addCommands(new InstantCommand(() -> coralHandler.setCurrentPosition(targetPosition), coralHandler));
     }
