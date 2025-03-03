@@ -15,16 +15,20 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * Controls the alga arm mechanism for game piece manipulation.
- * This subsystem manages a single motor used for intaking and controlling alga game pieces.
+ * This subsystem manages a single motor used for intaking and controlling alga
+ * game pieces.
  * 
- * <p>Features include:
+ * <p>
+ * Features include:
  * <ul>
- *   <li>Simple voltage-based control for intake
- *   <li>Game piece detection
- *   <li>Brake mode for secure holding
+ * <li>Simple voltage-based control for intake
+ * <li>Game piece detection
+ * <li>Brake mode for secure holding
  * </ul>
  * 
- * <p>Uses a REV Robotics SparkMax controller in brushless mode with brake mode enabled
+ * <p>
+ * Uses a REV Robotics SparkMax controller in brushless mode with brake mode
+ * enabled
  * for precise control and secure game piece retention.
  */
 public class AlgaArm extends SubsystemBase {
@@ -52,8 +56,10 @@ public class AlgaArm extends SubsystemBase {
 
     /**
      * Creates a new AlgaArm subsystem.
-     * Initializes the motor controller with brake mode enabled for secure game piece holding.
-     * Motor configuration is non-persistent to ensure consistent behavior across reboots.
+     * Initializes the motor controller with brake mode enabled for secure game
+     * piece holding.
+     * Motor configuration is non-persistent to ensure consistent behavior across
+     * reboots.
      */
     public AlgaArm() {
         sparkMax = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
@@ -63,35 +69,24 @@ public class AlgaArm extends SubsystemBase {
         sparkMaxConfig.inverted(AlgaArmConstants.ALGA_INVERTED);
         sparkMax.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
-        // Update to use factory method for DIO limit switch
-        algaSensor = LimitSwitch.createDIO(
-            AlgaArmConstants.SENSOR_CHANNEL,
-            () -> {  // Hardware interrupt callback for alga detection
-                /* Stops intake motor immediately when alga is detected during intake.
-                 * Using hardware interrupts for fastest possible response time.
-                 * Only stops if motor is running in intake direction (positive power).
-                 */
-                if (sparkMax.get() > 0) {
-                    stopIntake();
-                }
-            },
-            () -> {  // Hardware interrupt callback for alga release
-                /* Stops outtake motor immediately when alga is released during outtake.
-                 * Using hardware interrupts for fastest possible response time.
-                 * Only stops if motor is running in outtake direction (negative power).
-                 */
-                if (sparkMax.get() < 0) {
-                    stopIntake();
-                }
+        algaSensor = new LimitSwitch(AlgaArmConstants.SENSOR_CHANNEL, () -> {
+            if (sparkMax.get() > 0) {
+                stopIntake();
             }
-        );
+        }, () -> {
+            if (sparkMax.get() < 0) {
+                stopIntake();
+            }
+        });
 
         table = NetworkTableInstance.getDefault().getTable("AlgaArm");
     }
 
     /**
      * Activates the intake motor to collect alga game pieces.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * AlgaArm.getInstance().startIntake();
@@ -104,7 +99,9 @@ public class AlgaArm extends SubsystemBase {
 
     /**
      * Runs the motor in reverse to release the alga.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * AlgaArm.getInstance().dropGamepiece();
@@ -117,7 +114,9 @@ public class AlgaArm extends SubsystemBase {
 
     /**
      * Stops the intake motor.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * AlgaArm.getInstance().stopIntake();
@@ -130,7 +129,9 @@ public class AlgaArm extends SubsystemBase {
 
     /**
      * Checks if the alga game piece is detected.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * boolean hasPiece = AlgaArm.getInstance().hasGamepiece();
@@ -138,7 +139,7 @@ public class AlgaArm extends SubsystemBase {
      * </pre>
      */
     public boolean hasGamepiece() {
-        return algaSensor.getBoolean();
+        return algaSensor.get();
     }
 
     @Override

@@ -43,7 +43,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    LimitSwitch.updatePolledSwitches();
   }
 
   /** Called once when the robot is disabled. */

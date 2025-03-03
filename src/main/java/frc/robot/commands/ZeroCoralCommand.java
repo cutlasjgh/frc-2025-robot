@@ -15,6 +15,8 @@ public class ZeroCoralCommand extends SequentialCommandGroup {
      * 3. Commands the elevator to move to position 0.
      */
     public ZeroCoralCommand(CoralHandler coralHandler) {
+        addRequirements(coralHandler);
+
         addCommands(
             // 1. Move the elevator upward using raw motor output.
             new InstantCommand(() -> coralHandler.getElevator().getMotor().set(CoralConstants.ELEVATOR_ZEROING_POWER_UP), coralHandler),

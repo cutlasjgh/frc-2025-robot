@@ -112,16 +112,6 @@ public class CoralHandler extends SubsystemBase {
      * Creates and configures the elevator subsystem.
      */
     private LimitedPID createElevatorSubsystem() {
-        // Create limit switches first
-        LimitSwitch minLimitSwitch = LimitSwitch.createDIO(
-            CoralConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
-            null, null);
-        
-        LimitSwitch maxLimitSwitch = LimitSwitch.createCANifier(
-            canifier,
-            CoralConstants.ELEVATOR_TOP_LIMIT_PIN,
-            null, null);
-            
         // Then pass them to the subsystem constructor with additional parameters
         return new LimitedPID(
             CoralConstants.ELEVATOR_CAN_ID,
@@ -129,8 +119,8 @@ public class CoralHandler extends SubsystemBase {
             0,
             CoralConstants.ELEVATOR_HEIGHT.in(Inch),
             CoralConstants.ELEVATOR_PID,
-            minLimitSwitch,
-            maxLimitSwitch,
+            CoralConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
+            CoralConstants.ELEVATOR_TOP_LIMIT_CHANNEL,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPID.ControlMode.POSITION,
             CoralConstants.ELEVATOR_INVERTED,
@@ -142,18 +132,7 @@ public class CoralHandler extends SubsystemBase {
     /**
      * Creates and configures the arm subsystem.
      */
-    private LimitedPID createArmSubsystem() {
-        // Create limit switches first
-        LimitSwitch minLimitSwitch = LimitSwitch.createCANifier(
-            canifier,
-            CoralConstants.ARM_MIN_LIMIT_PIN,
-            null, null);
-            
-        LimitSwitch maxLimitSwitch = LimitSwitch.createCANifier(
-            canifier,
-            CoralConstants.ARM_MAX_LIMIT_PIN,
-            null, null);
-            
+    private LimitedPID createArmSubsystem() { 
         // Then pass them to the subsystem constructor with additional parameters
         return new LimitedPID(
             CoralConstants.ARM_CAN_ID,
@@ -161,8 +140,8 @@ public class CoralHandler extends SubsystemBase {
             CoralConstants.ARM_MIN_ANGLE.in(Degree),
             CoralConstants.ARM_MAX_ANGLE.in(Degree),
             CoralConstants.ARM_PID,
-            minLimitSwitch,
-            maxLimitSwitch,
+            CoralConstants.ARM_MIN_LIMIT_CHANNEL,
+            CoralConstants.ARM_MAX_LIMIT_CHANNEL,
             CoralConstants.POSITION_TOLERANCE,
             LimitedPID.ControlMode.POSITION,
             CoralConstants.ARM_INVERTED,

@@ -108,7 +108,7 @@ public final class Constants {
         /** DIO channel for elevator bottom limit switch */
         public static final int ELEVATOR_BOTTOM_LIMIT_CHANNEL = 0;
         /** CANifier pin for elevator top limit */
-        public static final CANifier.GeneralPin ELEVATOR_TOP_LIMIT_PIN = CANifier.GeneralPin.SPI_CLK_PWM0P;
+        public static final int ELEVATOR_TOP_LIMIT_CHANNEL = 1;
         /** Maximum elevator height. */
         public static final Distance ELEVATOR_HEIGHT = Inch.of(15.5);
         /** PID constants for elevator control. */
@@ -130,9 +130,9 @@ public final class Constants {
         /** Angle traveled per motor rotation. */
         public static final Angle ARM_ANGLE_PER_ROTATION = Degree.of(2.25);
         /** CANifier pin for arm maximum angle limit */
-        public static final CANifier.GeneralPin ARM_MAX_LIMIT_PIN = CANifier.GeneralPin.SPI_MISO_PWM2P;
+        public static final int ARM_MAX_LIMIT_CHANNEL = 2;
         /** CANifier pin for arm minimum angle limit */
-        public static final CANifier.GeneralPin ARM_MIN_LIMIT_PIN = CANifier.GeneralPin.SPI_MOSI_PWM1P;
+        public static final int ARM_MIN_LIMIT_CHANNEL = 3;
         /** Maximum arm angle. */
         public static final Angle ARM_MAX_ANGLE = Degree.of(125.0);
         /** Minimum arm angle. */

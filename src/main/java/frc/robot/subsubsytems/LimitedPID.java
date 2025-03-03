@@ -12,47 +12,18 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.Constants.CoralConstants;
 import frc.robot.Constants.PID;
 
 /**
  * Represents a PID-controlled subsystem with limit switches and position
  * control.
- *
- * <p>
- * Example usage:
- * 
- * <pre>
- * {@code
- * // Assume minSwitch and maxSwitch are created previously:
- * LimitSwitch minSwitch = LimitSwitch.createDIO(0,
- *         () -> System.out.println("Min limit triggered"), null);
- * LimitSwitch maxSwitch = LimitSwitch.createDIO(1,
- *         () -> System.out.println("Max limit triggered"), null);
- * 
- * // Create the limited PID subsystem:
- * LimitedPIDSubsystem subsystem = new LimitedPIDSubsystem(
- *         10, // CAN ID
- *         1.0, // conversionFactor
- *         0.0, // minPosition
- *         100.0, // maxPosition
- *         new PID(0.1, 0.0, 0.0), // PID constants
- *         minSwitch, // min limit switch
- *         maxSwitch, // max limit switch
- *         5.0, // tolerance
- *         LimitedPIDSubsystem.ControlMode.POSITION);
- * }
- * </pre>
  */
 public class LimitedPID {
     /** Control mode for the subsystem. */
     public enum ControlMode {
         POSITION,
         VELOCITY
-    }
-
-    /** State of position knowledge for a subsystem. */
-    public enum SubsystemState {
-        KNOWN, UNKNOWN
     }
 
     /** The motor controller. */
@@ -75,36 +46,35 @@ public class LimitedPID {
     private final ControlMode controlMode;
     /** Whether the motor direction is inverted */
     private final boolean isInverted;
-    /** Whether initialization is complete */
-    private boolean initializationComplete = false;
     /** Ramp rate in seconds from 0 to full throttle */
     private final double rampRate;
     /** Maximum current limit in amps */
     private final int currentLimit;
 
+    /** State of position knowledge for a subsystem. */
+    public enum SubsystemState {
+        KNOWN, UNKNOWN
+    }
+
     /**
-     * Creates a new motor subsystem with position/velocity control, pre-created
-     * limit switches,
-     * and motor inversion setting.
+     * Creates a new motor subsystem with position/velocity control and limit switches.
      *
-     * @param canId            The CAN ID of the motor controller
-     * @param conversionFactor Factor to convert motor rotations to
-     *                         position/velocity units
+     * @param canId            CAN ID of the motor controller
+     * @param conversionFactor Factor to convert motor rotations to position/velocity units
      * @param minPosition      Minimum allowed position value
      * @param maxPosition      Maximum allowed position value
      * @param pidConstants     PID constants for control
-     * @param minLimitSwitch   Pre-created limit switch for minimum position
-     * @param maxLimitSwitch   Pre-created limit switch for maximum position
+     * @param minLimitChannel  DIO channel for minimum position limit switch
+     * @param maxLimitChannel  DIO channel for maximum position limit switch
      * @param tolerance        Tolerance for position offset
      * @param controlMode      Whether to use position or velocity control
-     * @param isInverted       Whether to invert the motor direction
+     * @param isInverted       Whether the motor direction is inverted
      * @param rampRate         Ramp rate in seconds from 0 to full throttle
      * @param currentLimit     Maximum current limit in amps
      */
     public LimitedPID(int canId, double conversionFactor, double minPosition, double maxPosition,
-            PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch,
-            double tolerance, ControlMode controlMode, boolean isInverted,
-            double rampRate, int currentLimit) {
+            PID pidConstants, int minLimitChannel, int maxLimitChannel, double tolerance, ControlMode controlMode,
+            boolean isInverted, double rampRate, int currentLimit) {
         this.conversionFactor = conversionFactor;
         this.pidConstants = pidConstants;
         this.minPosition = minPosition;
@@ -118,52 +88,19 @@ public class LimitedPID {
         motor = new SparkMax(canId, MotorType.kBrushless);
         configureMotor();
 
-        // Create limit switch pair using the switches with handlers
         limitSwitches = new LimitSwitchPair(
-                minLimitSwitch::getBoolean,
-                maxLimitSwitch::getBoolean,
-                this::handleMinLimit,
-                this::handleMaxLimit);
+                minLimitChannel,
+                maxLimitChannel,
+                () -> handleMinLimit(),
+                () -> handleMaxLimit());
 
-        initializePosition();
-    }
-
-    /**
-     * Creates a new motor subsystem with position/velocity control without ramp rate
-     * and current limit settings (backwards compatibility).
-     *
-     * @param canId            The CAN ID of the motor controller
-     * @param conversionFactor Factor to convert motor rotations to
-     *                         position/velocity units
-     * @param minPosition      Minimum allowed position value
-     * @param maxPosition      Maximum allowed position value
-     * @param pidConstants     PID constants for control
-     * @param minLimitSwitch   Pre-created limit switch for minimum position
-     * @param maxLimitSwitch   Pre-created limit switch for maximum position
-     * @param tolerance        Tolerance for position offset
-     * @param controlMode      Whether to use position or velocity control
-     * @param isInverted       Whether to invert the motor direction
-     */
-    public LimitedPID(int canId, double conversionFactor, double minPosition, double maxPosition,
-            PID pidConstants, LimitSwitch minLimitSwitch, LimitSwitch maxLimitSwitch,
-            double tolerance, ControlMode controlMode, boolean isInverted) {
-        this(canId, conversionFactor, minPosition, maxPosition, pidConstants, 
-             minLimitSwitch, maxLimitSwitch, tolerance, controlMode, isInverted,
-             0.0, 40); // Default: no ramp rate, 40A current limit
-    }
-
-    /**
-     * Initializes the position of the mechanism based on limit switches.
-     */
-    private void initializePosition() {
         if (limitSwitches.isAtMin()) {
             setPositionAndTarget(minPosition);
         } else if (limitSwitches.isAtMax()) {
             setPositionAndTarget(maxPosition);
         } else {
-            DriverStation.reportWarning("Position unknown for motor " + motor.getDeviceId(), false);
+            DriverStation.reportWarning("Position unknown for motor " + canId, false);
         }
-        initializationComplete = true;
     }
 
     /**
@@ -173,8 +110,8 @@ public class LimitedPID {
         SparkMaxConfig config = new SparkMaxConfig();
         config.idleMode(IdleMode.kBrake);
         config.inverted(isInverted);
-        config.closedLoopRampRate(rampRate);
         config.openLoopRampRate(rampRate);
+        config.closedLoopRampRate(rampRate);
         config.smartCurrentLimit(currentLimit);
 
         EncoderConfig encoderConfig = new EncoderConfig();
@@ -183,7 +120,6 @@ public class LimitedPID {
 
         ClosedLoopConfig pidConfig = new ClosedLoopConfig();
         pidConfig.pid(pidConstants.p, pidConstants.i, pidConstants.d);
-        pidConfig.outputRange(-0.75, 0.75);
         config.apply(pidConfig);
 
         motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -208,19 +144,17 @@ public class LimitedPID {
      * Handles when minimum limit switch is triggered.
      */
     private void handleMinLimit() {
-        if (!initializationComplete)
-            return;
-
         motor.stopMotor();
         double currentPosition = motor.getEncoder().getPosition();
         double offset = Math.abs(minPosition - currentPosition);
         if (offset > tolerance) {
             DriverStation.reportError(
-                    String.format("Large position offset detected at min limit: %.2f units", offset),
-                    false);
+                String.format("Large position offset detected at min limit: %.2f units", offset),
+                false
+            );
         }
         motor.getEncoder().setPosition(minPosition);
-        set(minPosition);
+        setPosition(minPosition);
         state = SubsystemState.KNOWN;
     }
 
@@ -228,47 +162,38 @@ public class LimitedPID {
      * Handles when maximum limit switch is triggered.
      */
     private void handleMaxLimit() {
-        if (!initializationComplete)
-            return;
         motor.stopMotor();
         double currentPosition = motor.getEncoder().getPosition();
         double offset = Math.abs(maxPosition - currentPosition);
         if (offset > tolerance) {
             DriverStation.reportError(
-                    String.format("Large position offset detected at max limit: %.2f units", offset),
-                    false);
+                String.format("Large position offset detected at max limit: %.2f units", offset),
+                false
+            );
         }
         motor.getEncoder().setPosition(maxPosition);
-        set(maxPosition);
+        setPosition(maxPosition);
         state = SubsystemState.KNOWN;
     }
 
     /**
-     * Returns the current position knowledge state of the subsystem.
-     * <p>
-     * Example:
-     * 
-     * <pre>
-     * {@code
-     * SubsystemState state = subsystem.getState();
-     * }
-     * </pre>
+     * Applies zeroing power if position is unknown.
+     */
+    public void zeroIfNeeded() {
+        if (state == SubsystemState.UNKNOWN) {
+            motor.set(CoralConstants.UNKNOWN_STATE_POWER);
+        }
+    }
+
+    /**
+     * Gets the current state of the subsystem.
      */
     public SubsystemState getState() {
         return state;
     }
 
     /**
-     * Returns the current position of the mechanism.
-     * <p>
-     * Example:
-     * 
-     * <pre>
-     * {@code
-     * double pos = subsystem.getPosition();
-     * }
-     * </pre>
-     * 
+     * Gets the current position of the mechanism.
      * @return current position in mechanism units
      */
     public double getPosition() {
@@ -276,26 +201,21 @@ public class LimitedPID {
     }
 
     /**
-     * Sets the target (position or velocity) of the mechanism.
-     * <p>
-     * Example:
-     * 
-     * <pre>
-     * {@code
-     * subsystem.set(50.0);
-     * }
-     * </pre>
-     * 
+     * Sets the target value (position or velocity) of the mechanism.
+     * For position control, value is clamped to valid range.
+     * For velocity control, value is zeroed at limits.
      * @param value target value in mechanism units
      */
     public void set(double value) {
         if (controlMode == ControlMode.POSITION) {
             motor.getClosedLoopController().setReference(
-                    MathUtil.clamp(value, minPosition, maxPosition),
-                    ControlType.kPosition);
+                MathUtil.clamp(value, minPosition, maxPosition), 
+                ControlType.kPosition
+            );
         } else {
-            if ((limitSwitches.isAtMin() && value < 0) ||
-                    (limitSwitches.isAtMax() && value > 0)) {
+            // For velocity, zero at limits to prevent overrun
+            if ((limitSwitches.isAtMin() && value < 0) || 
+                (limitSwitches.isAtMax() && value > 0)) {
                 motor.getClosedLoopController().setReference(0, ControlType.kVelocity);
             } else {
                 motor.getClosedLoopController().setReference(value, ControlType.kVelocity);
@@ -304,41 +224,34 @@ public class LimitedPID {
     }
 
     /**
-     * Stops the motor.
+     * @deprecated Use set() instead
      */
-    public void stopMotor() {
-        motor.stopMotor();
+    @Deprecated
+    public void setPosition(double position) {
+        if (controlMode != ControlMode.POSITION) {
+            throw new UnsupportedOperationException("Subsystem is in velocity control mode");
+        }
+        set(position);
     }
 
     /**
-     * Returns the underlying SparkMax motor controller.
-     * <p>
-     * Example:
-     * 
-     * <pre>
-     * {@code
-     * SparkMax motor = subsystem.getMotor();
-     * }
-     * </pre>
-     * 
-     * @return the motor controller
+     * Gets the motor controller for this subsystem.
+     * @return the SparkMax motor controller
      */
     public SparkMax getMotor() {
         return motor;
     }
-
+    
     /**
-     * Returns whether the minimum limit switch is currently triggered.
-     * 
+     * Checks if the mechanism is at the minimum limit.
      * @return true if at minimum limit, false otherwise
      */
     public boolean isAtMinLimit() {
         return limitSwitches.isAtMin();
     }
-
+    
     /**
-     * Returns whether the maximum limit switch is currently triggered.
-     * 
+     * Checks if the mechanism is at the maximum limit.
      * @return true if at maximum limit, false otherwise
      */
     public boolean isAtMaxLimit() {
