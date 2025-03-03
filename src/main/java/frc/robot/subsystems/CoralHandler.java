@@ -10,7 +10,6 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import frc.robot.subsubsytems.LimitSwitch;
 
 import frc.robot.Constants.CoralConstants;
 import frc.robot.subsubsytems.LimitedPID;
