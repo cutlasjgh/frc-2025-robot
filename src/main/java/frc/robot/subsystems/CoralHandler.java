@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Inch;
 
-import com.ctre.phoenix.CANifier;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -12,6 +11,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.CoralConstants;
+import frc.robot.subsubsytems.LimitSwitch;
 import frc.robot.subsubsytems.LimitedPID;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.units.measure.Angle;
@@ -74,8 +74,8 @@ public class CoralHandler extends SubsystemBase {
     private HandlerPosition currentPosition = HandlerPosition.CUSTOM;
     /** NetworkTable instance for publishing data. */
     private final NetworkTable table;
-
-    private final CANifier canifier;
+    /** LimitSwitch for coral handler */
+    private final LimitSwitch coralLimit;
 
     /**
      * @return Singleton instance of the CoralHandler
@@ -91,18 +91,10 @@ public class CoralHandler extends SubsystemBase {
      * Creates a new CoralHandler, initializing all subsystems.
      */
     public CoralHandler() {
-        // Initialize CANifier
-        canifier = new CANifier(CoralConstants.CANIFIER_ID);
-        canifier.configFactoryDefault();
-
-        // Initialize elevator with mixed limit switch types (DIO for min, CANifier for max)
         elevator = createElevatorSubsystem();
-        
-        // Initialize arm with CANifier limit switches
         arm = createArmSubsystem();
-
-        // Initialize intake motor
         intakeMotor = createIntakeMotor();
+        coralLimit = new LimitSwitch(CoralConstants.INTAKE_SENSOR_CHANNEL, this::stopIntake, this::stopIntake);
 
         table = NetworkTableInstance.getDefault().getTable("CoralHandler");
     }
@@ -232,7 +224,7 @@ public class CoralHandler extends SubsystemBase {
      * </pre>
      */
     public boolean hasCoral() {
-        return !canifier.getGeneralInput(CoralConstants.INTAKE_SENSOR_PIN);
+        return coralLimit.get();
     }
 
     public HandlerPosition getPosition() {

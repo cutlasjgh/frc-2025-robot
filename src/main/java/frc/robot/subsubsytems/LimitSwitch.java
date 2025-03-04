@@ -21,10 +21,10 @@ public class LimitSwitch {
         digitalInput = new DigitalInput(channel);
         interrupt = new AsynchronousInterrupt(digitalInput, (rising, falling) -> {
             if (rising && onPress != null) {
-                onPress.run();
+                onRelease.run();
             }
             if (falling && onRelease != null) {
-                onRelease.run();
+                onPress.run();
             }
         });
         interrupt.enable();
@@ -34,6 +34,6 @@ public class LimitSwitch {
      * @return true if switch is pressed
      */
     public boolean get() {
-        return digitalInput.get();
+        return !digitalInput.get();
     }
 }

@@ -4,8 +4,6 @@ import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
-import com.ctre.phoenix.CANifier;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -108,7 +106,7 @@ public final class Constants {
         /** DIO channel for elevator bottom limit switch */
         public static final int ELEVATOR_BOTTOM_LIMIT_CHANNEL = 0;
         /** CANifier pin for elevator top limit */
-        public static final int ELEVATOR_TOP_LIMIT_CHANNEL = 1;
+        public static final int ELEVATOR_TOP_LIMIT_CHANNEL = 2;
         /** Maximum elevator height. */
         public static final Distance ELEVATOR_HEIGHT = Inch.of(15.5);
         /** PID constants for elevator control. */
@@ -130,7 +128,7 @@ public final class Constants {
         /** Angle traveled per motor rotation. */
         public static final Angle ARM_ANGLE_PER_ROTATION = Degree.of(2.25);
         /** CANifier pin for arm maximum angle limit */
-        public static final int ARM_MAX_LIMIT_CHANNEL = 2;
+        public static final int ARM_MAX_LIMIT_CHANNEL = 4;
         /** CANifier pin for arm minimum angle limit */
         public static final int ARM_MIN_LIMIT_CHANNEL = 3;
         /** Maximum arm angle. */
@@ -154,7 +152,7 @@ public final class Constants {
         /** CAN ID for intake motor. */
         public static final int INTAKE_CAN_ID = 17;
         /** CANifier pin for coral detection */
-        public static final CANifier.GeneralPin INTAKE_SENSOR_PIN = CANifier.GeneralPin.LIMF;
+        public static final int INTAKE_SENSOR_CHANNEL = 1;
         /** Intake motor power (-1.0 to 1.0). */
         public static final double INTAKE_POWER = 0.1;
         /** Outtake motor power (-1.0 to 1.0). */
