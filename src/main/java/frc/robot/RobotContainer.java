@@ -60,13 +60,7 @@ public class RobotContainer {
   private final AlgaArm algaArm = AlgaArm.getInstance();
 
   /** Coral handler subsystem for handling coral gamepieces. */
-  private final CoralHandler coralHandler = CoralHandler.getInstance();
-
-  /** Track the currently scheduled coral command, if any */
-  private Command coralCommand = null;
-
-  /** Track the currently scheduled alga command, if any */
-  private Command algaCommand = null;
+  private final CoralSuperstructure coralSuperstructure = CoralSuperstructure.getInstance();
 
   /** Climb subsystem for handling climb mechanism. */
   private final Climb climb = Climb.getInstance();
@@ -103,61 +97,21 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
-    // B button: Toggle the coral command (cancel running command on re-press)
-    operatorController.b().onTrue(Commands.runOnce(() -> {
-      if (coralCommand != null && coralCommand.isScheduled()) {
-        coralCommand.cancel();
-        coralCommand = null;
-      } else {
-        // Check the current state at press time
-        if (coralHandler.hasCoral()) {
-          coralCommand = new DropCoralCommand();
-        } else {
-          coralCommand = new IntakeCoralCommand();
-        }
-        coralCommand.schedule();
-      }
-    }));
+    operatorController.a().onTrue(algaArm.toggle());
+    operatorController.b().whileTrue(coralSuperstructure.toggle());
 
-    // A button: Toggle the alga command (cancel running command on re-press)
-    operatorController.a().onTrue(Commands.runOnce(() -> {
-      if (algaCommand != null && algaCommand.isScheduled()) {
-        algaCommand.cancel();
-        algaCommand = null;
-      } else {
-        // Check the current state at press time
-        if (algaArm.hasGamepiece()) {
-          algaCommand = new DropAlgaCommand();
-        } else {
-          algaCommand = new IntakeAlgaCommand();
-        }
-        algaCommand.schedule();
-      }
-    }));
-
-    // Start button: Zero Coral mechanism if needed
-    operatorController.y().onTrue(new ZeroCoralCommand(coralHandler));
+    // Y button: Zero Coral mechanism when needed
+    operatorController.y().onTrue(coralSuperstructure.zeroCommand());
 
     // X button: Run climb mechanism at 70% power while held
-    driverController.x().whileTrue(new RunClimbCommand(climb));
+    driverController.x().whileTrue(climb.climb());
 
-    operatorController.povDown().onTrue(
-        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.LOW).schedule()));
-
-    operatorController.povLeft().onTrue(
-        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.MID).schedule()));
-
-    operatorController.povUp().onTrue(
-        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.HIGH).schedule()));
-
-    operatorController.povRight().onTrue(
-        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.INTAKE).schedule()));
-
-    operatorController.back().onTrue(
-        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.ZERO).schedule()));
-
-    operatorController.start().onTrue(
-        Commands.runOnce(() -> new SetCoralPosition(coralHandler, CoralHandler.HandlerPosition.CLIMB).schedule()));
+    operatorController.back().onTrue(coralSuperstructure.setZero());
+    operatorController.povRight().onTrue(coralSuperstructure.setIntake());
+    operatorController.povUp().onTrue(coralSuperstructure.setHigh());
+    operatorController.povDown().onTrue(coralSuperstructure.setLow());
+    operatorController.povLeft().onTrue(coralSuperstructure.setMid());
+    operatorController.start().onTrue(coralSuperstructure.setClimb());
   }
 
   /**

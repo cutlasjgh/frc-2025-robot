@@ -12,7 +12,6 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
-import frc.robot.Constants.CoralConstants;
 import frc.robot.Constants.PID;
 
 /**
@@ -154,7 +153,7 @@ public class LimitedPID {
             );
         }
         motor.getEncoder().setPosition(minPosition);
-        setPosition(minPosition);
+        set(minPosition);
         state = SubsystemState.KNOWN;
     }
 
@@ -172,17 +171,8 @@ public class LimitedPID {
             );
         }
         motor.getEncoder().setPosition(maxPosition);
-        setPosition(maxPosition);
+        set(maxPosition);
         state = SubsystemState.KNOWN;
-    }
-
-    /**
-     * Applies zeroing power if position is unknown.
-     */
-    public void zeroIfNeeded() {
-        if (state == SubsystemState.UNKNOWN) {
-            motor.set(CoralConstants.UNKNOWN_STATE_POWER);
-        }
     }
 
     /**
@@ -221,17 +211,6 @@ public class LimitedPID {
                 motor.getClosedLoopController().setReference(value, ControlType.kVelocity);
             }
         }
-    }
-
-    /**
-     * @deprecated Use set() instead
-     */
-    @Deprecated
-    public void setPosition(double position) {
-        if (controlMode != ControlMode.POSITION) {
-            throw new UnsupportedOperationException("Subsystem is in velocity control mode");
-        }
-        set(position);
     }
 
     /**

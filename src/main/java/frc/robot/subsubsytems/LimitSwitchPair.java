@@ -16,8 +16,8 @@ public class LimitSwitchPair {
      * @param onMax Callback executed when maximum position is reached
      */
     public LimitSwitchPair(int minChannel, int maxChannel, Runnable onMin, Runnable onMax) {
-        minSwitch = new LimitSwitch(minChannel, onMin, null);
-        maxSwitch = new LimitSwitch(maxChannel, onMax, null);
+        minSwitch = new LimitSwitch(minChannel, onMin, () -> {});
+        maxSwitch = new LimitSwitch(maxChannel, onMax, () -> {});
     }
 
     /**

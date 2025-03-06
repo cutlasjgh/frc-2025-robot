@@ -18,8 +18,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.PubSubOption;
+import edu.wpi.first.networktables.PubSubOptions;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -48,8 +51,9 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
  */
 public class Swerve extends SubsystemBase {
     private static Swerve instance;
-    private final SwerveDrive swerveDrive;
-    private final NetworkTable table;
+    private final SwerveDrive drivebase;
+    private final NetworkTable visionTable;
+    // private final DoubleArraySubscriber visionTranslation;
 
     /**
      * Returns the singleton instance of the Swerve subsystem.
@@ -75,7 +79,7 @@ public class Swerve extends SubsystemBase {
     public Swerve() {
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
         try {
-            swerveDrive = new SwerveParser(new File(Filesystem.getDeployDirectory(), "swerve"))
+            drivebase = new SwerveParser(new File(Filesystem.getDeployDirectory(), "swerve"))
                     .createSwerveDrive(
                             RobotConstants.MAX_SPEED.in(MetersPerSecond),
                             new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
@@ -84,14 +88,14 @@ public class Swerve extends SubsystemBase {
             throw new RuntimeException("Failed to create swerve drive", e);
         }
 
-        // swerveDrive.setHeadingCorrection(true);
-        swerveDrive.setAngularVelocityCompensation(true, true, 0.1);
-        swerveDrive.setCosineCompensator(!SwerveDriveTelemetry.isSimulation);
-        swerveDrive.setModuleEncoderAutoSynchronize(true, 1);
-        swerveDrive.useExternalFeedbackSensor();
+        drivebase.setHeadingCorrection(true);
+        drivebase.setAngularVelocityCompensation(true, true, 0.1);
+        drivebase.setCosineCompensator(!SwerveDriveTelemetry.isSimulation);
+        drivebase.setModuleEncoderAutoSynchronize(true, 1);
+        drivebase.useExternalFeedbackSensor();
 
-        table = NetworkTableInstance.getDefault().getTable("chalkydri");
-
+        visionTable = NetworkTableInstance.getDefault().getTable("chalkydri");
+        // visionTranslation = visionTable.getDoubleArrayTopic("robot_pose/pipewiredevice1/translation").subscribe(new double[] {0, 0, 0}, PubSubOption.keepDuplicates(true));
         setupPathPlanner();
     }
 
@@ -114,12 +118,12 @@ public class Swerve extends SubsystemBase {
                     this::getRobotVelocity,
                     (speedsRobotRelative, moduleFeedForwards) -> {
                         if (enableFeedForward) {
-                            swerveDrive.drive(
+                            drivebase.drive(
                                     speedsRobotRelative,
-                                    swerveDrive.kinematics.toSwerveModuleStates(speedsRobotRelative),
+                                    drivebase.kinematics.toSwerveModuleStates(speedsRobotRelative),
                                     moduleFeedForwards.linearForces());
                         } else {
-                            swerveDrive.setChassisSpeeds(speedsRobotRelative);
+                            drivebase.setChassisSpeeds(speedsRobotRelative);
                         }
                     },
                     new PPHolonomicDriveController(
@@ -155,7 +159,7 @@ public class Swerve extends SubsystemBase {
      * @see ChassisSpeeds
      */
     public Command driveFieldOriented(Supplier<ChassisSpeeds> velocity) {
-        return run(() -> swerveDrive.driveFieldOriented(velocity.get()));
+        return run(() -> drivebase.driveFieldOriented(velocity.get()));
     }
 
     /**
@@ -169,7 +173,7 @@ public class Swerve extends SubsystemBase {
      * </pre>
      */
     public void lockWheels() {
-        swerveDrive.lockPose();
+        drivebase.lockPose();
     }
 
     /**
@@ -183,7 +187,7 @@ public class Swerve extends SubsystemBase {
      * </pre>
      */
     public void resetOdometry() {
-        swerveDrive.resetOdometry(new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
+        drivebase.resetOdometry(new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
                 Rotation2d.fromDegrees(0)));
     }
 
@@ -199,7 +203,7 @@ public class Swerve extends SubsystemBase {
      * @return the current Pose2d representing the robot's position and rotation
      */
     public Pose2d getPose() {
-        return swerveDrive.getPose();
+        return drivebase.getPose();
     }
 
     /**
@@ -214,7 +218,7 @@ public class Swerve extends SubsystemBase {
      * @param pose the Pose2d to set as the robot's current position and rotation
      */
     public void resetOdometry(Pose2d pose) {
-        swerveDrive.resetOdometry(pose);
+        drivebase.resetOdometry(pose);
     }
 
     /**
@@ -229,7 +233,7 @@ public class Swerve extends SubsystemBase {
      * @return the ChassisSpeeds representing the robot's current velocity
      */
     public ChassisSpeeds getRobotVelocity() {
-        return swerveDrive.getRobotVelocity();
+        return drivebase.getRobotVelocity();
     }
 
     /**
@@ -244,7 +248,7 @@ public class Swerve extends SubsystemBase {
      * @return the SwerveDrive instance used by this subsystem
      */
     public SwerveDrive getSwerveDrive() {
-        return swerveDrive;
+        return drivebase;
     }
 
     /**
@@ -262,8 +266,8 @@ public class Swerve extends SubsystemBase {
      */
     public Command driveToPose(Pose2d pose) {
         PathConstraints constraints = new PathConstraints(
-                swerveDrive.getMaximumChassisVelocity(), 4.0,
-                swerveDrive.getMaximumChassisAngularVelocity(), Units.degreesToRadians(720));
+                drivebase.getMaximumChassisVelocity(), 4.0,
+                drivebase.getMaximumChassisAngularVelocity(), Units.degreesToRadians(720));
 
         return AutoBuilder.pathfindToPose(
                 pose,
@@ -274,5 +278,6 @@ public class Swerve extends SubsystemBase {
     @Override
     public void periodic() {
         // Topic translation = table.getTopic("chalkydri/robot_pose/translation");
+        // System.out.println(visionTranslation.get()[0]);
     }
 }

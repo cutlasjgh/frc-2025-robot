@@ -61,8 +61,8 @@ public final class Constants {
 
         public static final int CAN_ID = 19;
         public static final int SENSOR_CHANNEL = 7;
-        public static final double INTAKE_POWER = 0.5;
-        public static final double OUTTAKE_POWER = -1.0;
+        public static final double INTAKE_POWER = 1.0;
+        public static final double DROP_POWER = -1.0;
         public static final boolean ALGA_INVERTED = false;
     }
 
@@ -76,7 +76,7 @@ public final class Constants {
         public static final int CAN_ID = 14;
         public static final int BOTTOM_LIMIT_CHANNEL = 9;
         public static final int TOP_LIMIT_CHANNEL = 8;
-        public static final double CLIMB_POWER = -0.7;
+        public static final double CLIMB_POWER = -0.05;
         public static final boolean IS_INVERTED = false;
     }
 
@@ -94,8 +94,8 @@ public final class Constants {
     /**
      * Constants for the coral mechanism (elevator, arm, and intake).
      */
-    public static final class CoralConstants {
-        private CoralConstants() {
+    public static final class CoralSuperstructureConstants {
+        private CoralSuperstructureConstants() {
         }
 
         // Elevator constants
@@ -122,47 +122,31 @@ public final class Constants {
         /** Current limit for elevator motor in amps */
         public static final int ELEVATOR_CURRENT_LIMIT = 30;
 
-        // Arm constants
-        /** CAN ID for arm motor. */
-        public static final int ARM_CAN_ID = 16;
+        // Elbow constants
+        public static final int ELBOW_CAN_ID = 16;
         /** Angle traveled per motor rotation. */
-        public static final Angle ARM_ANGLE_PER_ROTATION = Degree.of(2.25);
-        /** CANifier pin for arm maximum angle limit */
-        public static final int ARM_MAX_LIMIT_CHANNEL = 4;
-        /** CANifier pin for arm minimum angle limit */
-        public static final int ARM_MIN_LIMIT_CHANNEL = 3;
-        /** Maximum arm angle. */
-        public static final Angle ARM_MAX_ANGLE = Degree.of(125.0);
-        /** Minimum arm angle. */
-        public static final Angle ARM_MIN_ANGLE = Degree.of(-125.0);
-        /** PID constants for arm control. */
-        public static final PID ARM_PID = new PID(0.01, 0.0, 0.0);
+        public static final Angle ELBOW_ANGLE_PER_ROTATION = Degree.of(2.25);
+        public static final int ELBOW_MAX_LIMIT_CHANNEL = 4;
+        public static final int ELBOW_MIN_LIMIT_CHANNEL = 3;
+        public static final Angle ELBOW_MAX_ANGLE = Degree.of(125.0);
+        public static final Angle ELBOW_MIN_ANGLE = Degree.of(-125.0);
+        public static final PID ELBOW_PID = new PID(0.01, 0.0, 0.0);
         /** Arm length. */
         public static final Distance ARM_LENGTH = Inch.of(30);
-        /** Whether arm motor is inverted */
-        public static final boolean ARM_INVERTED = false;
-        /** Power to use when zeroing arm */
-        public static final double ARM_ZEROING_POWER = 0.15;
-        /** Ramp rate for arm motor (seconds from 0 to full throttle) */
-        public static final double ARM_RAMP_RATE = 0.3;
-        /** Current limit for arm motor in amps */
-        public static final int ARM_CURRENT_LIMIT = 20;
+        public static final boolean ELBOW_INVERTED = false;
+        public static final double ELBOW_ZEROING_POWER = 0.15;
+        public static final double ELBOW_RAMP_RATE = 0.3;
+        public static final int ELBOW_CURRENT_LIMIT = 20;
 
         // Intake constants
-        /** CAN ID for intake motor. */
-        public static final int INTAKE_CAN_ID = 17;
-        /** CANifier pin for coral detection */
-        public static final int INTAKE_SENSOR_CHANNEL = 1;
-        /** Intake motor power (-1.0 to 1.0). */
-        public static final double INTAKE_POWER = 0.1;
-        /** Outtake motor power (-1.0 to 1.0). */
-        public static final double OUTTAKE_POWER = 0.5;
-        /** Whether intake motor is inverted */
-        public static final boolean INTAKE_INVERTED = false;
+        public static final int MANIPULATOR_CAN_ID = 17;
+        public static final int MANIPULATOR_SENSOR_CHANNEL = 1;
+        public static final double INTAKE_POWER = 0.2;
+        public static final double DROP_POWER = 1.0;
+        public static final double EJECT_POWER = 1.0; // Power for ejecting stuck items
+        public static final boolean MANIPULATOR_INVERTED = false;
 
         // Shared constants
-        /** CANifier ID */
-        public static final int CANIFIER_ID = 18;
         /** Power applied when zeroing unknown positions (-1.0 to 1.0). */
         public static final double UNKNOWN_STATE_POWER = 0.1;
         /** Maximum allowed offset when hitting limit switches. */
@@ -170,8 +154,8 @@ public final class Constants {
 
         // Add safe transition constants:
         public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(13.5);
-        public static final double INTERMEDIATE_ARM_FRONT_ANGLE = 45.0; // degrees
-        public static final double INTERMEDIATE_ARM_BACK_ANGLE = -45.0; // degrees
+        public static final double INTERMEDIATE_ELBOW_FRONT_ANGLE = 45.0; // degrees
+        public static final double INTERMEDIATE_ELBOW_BACK_ANGLE = -45.0; // degrees
     }
 
     /**
