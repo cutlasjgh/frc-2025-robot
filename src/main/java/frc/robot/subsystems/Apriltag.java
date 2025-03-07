@@ -9,9 +9,6 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonUtils;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-import org.photonvision.simulation.PhotonCameraSim;
-import org.photonvision.simulation.SimCameraProperties;
-import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -19,7 +16,6 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
@@ -28,7 +24,6 @@ import edu.wpi.first.networktables.NetworkTablesJNI;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -44,11 +39,6 @@ public final class Apriltag extends SubsystemBase {
      * The singleton instance of the {@link Apriltag} subsystem.
      */
     private static Apriltag instance = null;
-
-    /**
-     * Vision simulation for use in simulator.
-     */
-    private VisionSystemSim visionSim;
 
     /**
      * Field visualization for tracked targets.
@@ -75,9 +65,7 @@ public final class Apriltag extends SubsystemBase {
         SmartDashboard.putData("Vision Field", field2d);
 
         // Initialize cameras
-        for (Camera camera : Camera.values()) {
-            camera.initialize();
-            
+        for (Camera camera : Camera.values()) {            
             if (!camera.camera.isConnected()) {
                 DriverStation.reportWarning(
                     "PhotonCamera " + camera.getName() + " is not connected!",
@@ -87,16 +75,6 @@ public final class Apriltag extends SubsystemBase {
             SmartDashboard.putBoolean(
                 camera.getName() + " Connected", 
                 camera.camera.isConnected());
-        }
-
-        // Set up simulation if needed
-        if (RobotBase.isSimulation()) {
-            visionSim = new VisionSystemSim("Vision");
-            visionSim.addAprilTags(ApriltagConstants.FIELD_LAYOUT);
-
-            for (Camera camera : Camera.values()) {
-                camera.addToVisionSim(visionSim);
-            }
         }
     }
 
@@ -108,11 +86,6 @@ public final class Apriltag extends SubsystemBase {
         // Get the YAGSL SwerveDrive instead of a separate pose estimator
         SwerveDrive swerveDrive = Swerve.getInstance().getSwerveDrive();
         Pose2d currentPose = Swerve.getInstance().getPose();
-
-        // In simulation, update the vision sim with the current robot pose
-        if (RobotBase.isSimulation() && visionSim != null) {
-            visionSim.update(currentPose);
-        }
 
         // Process all cameras
         for (Camera camera : Camera.values()) {
@@ -253,9 +226,6 @@ public final class Apriltag extends SubsystemBase {
         /** Latest estimated robot pose */
         public Optional<EstimatedRobotPose> estimatedRobotPose = Optional.empty();
 
-        /** Simulated camera (in simulation mode only) */
-        public PhotonCameraSim cameraSim;
-
         /** Results cache to avoid unnecessary queries */
         public List<PhotonPipelineResult> resultsList = new ArrayList<>();
 
@@ -288,34 +258,6 @@ public final class Apriltag extends SubsystemBase {
                 strategy,
                 robotToCamTransform);
             this.poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
-        }
-
-        /**
-         * Initialize camera and simulation properties if in simulation.
-         */
-        public void initialize() {
-            if (RobotBase.isSimulation()) {
-                SimCameraProperties cameraProp = new SimCameraProperties();
-                cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(100));
-                cameraProp.setCalibError(0.25, 0.08);
-                cameraProp.setFPS(30);
-                cameraProp.setAvgLatencyMs(35);
-                cameraProp.setLatencyStdDevMs(5);
-
-                cameraSim = new PhotonCameraSim(camera, cameraProp);
-                cameraSim.enableDrawWireframe(true);
-            }
-        }
-
-        /**
-         * Add camera to vision simulation.
-         * 
-         * @param systemSim Vision system simulation
-         */
-        public void addToVisionSim(VisionSystemSim systemSim) {
-            if (RobotBase.isSimulation() && cameraSim != null) {
-                systemSim.addCamera(cameraSim, robotToCamTransform);
-            }
         }
 
         /**
@@ -370,10 +312,7 @@ public final class Apriltag extends SubsystemBase {
             if ((resultsList.isEmpty() || (currentTimestamp - mostRecentTimestamp >= debounceTime)) &&
                 (currentTimestamp - lastReadTimestamp) >= debounceTime) {
                 
-                resultsList = RobotBase.isReal() ? 
-                    camera.getAllUnreadResults() : 
-                    cameraSim.getCamera().getAllUnreadResults();
-                    
+                resultsList = camera.getAllUnreadResults();
                 lastReadTimestamp = currentTimestamp;
                 
                 // Sort results by timestamp (newest first)
