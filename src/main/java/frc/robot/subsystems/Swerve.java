@@ -18,11 +18,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.DoubleArraySubscriber;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.PubSubOption;
-import edu.wpi.first.networktables.PubSubOptions;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -52,7 +47,6 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class Swerve extends SubsystemBase {
     private static Swerve instance;
     private final SwerveDrive drivebase;
-    private final NetworkTable visionTable;
     // private final DoubleArraySubscriber visionTranslation;
 
     /**
@@ -94,8 +88,6 @@ public class Swerve extends SubsystemBase {
         drivebase.setModuleEncoderAutoSynchronize(true, 1);
         drivebase.useExternalFeedbackSensor();
 
-        visionTable = NetworkTableInstance.getDefault().getTable("chalkydri");
-        // visionTranslation = visionTable.getDoubleArrayTopic("robot_pose/pipewiredevice1/translation").subscribe(new double[] {0, 0, 0}, PubSubOption.keepDuplicates(true));
         setupPathPlanner();
     }
 
@@ -275,9 +267,5 @@ public class Swerve extends SubsystemBase {
                 edu.wpi.first.units.Units.MetersPerSecond.of(0));
     }
 
-    @Override
-    public void periodic() {
-        // Topic translation = table.getTopic("chalkydri/robot_pose/translation");
-        // System.out.println(visionTranslation.get()[0]);
-    }
+
 }

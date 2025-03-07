@@ -144,8 +144,8 @@ public class CoralSuperstructure extends SubsystemBase {
         updateCurrentState();
         
         // Create triggers
-        doesntHaveCoral = new Trigger(() -> coralSensor.get()).debounce(0.25);
-        hasCoral = new Trigger(() -> !coralSensor.get()).debounce(0.25);
+        doesntHaveCoral = new Trigger(() -> coralSensor.get());
+        hasCoral = new Trigger(() -> !coralSensor.get());
         coralRunning = new Trigger(() -> coralMotor.get() != 0);
         ejecting = new Trigger(() -> isEjecting);
         
@@ -174,11 +174,16 @@ public class CoralSuperstructure extends SubsystemBase {
      */
     private void configureAutoBehaviors() {
         // Auto transition to MID when coral is detected during intake
-        hasCoral.onTrue(Commands.runOnce(() -> {
-            if (isAtSetpoint(ArmSetpoint.INTAKE)) {
-                goToSetpoint(ArmSetpoint.MID);
-            }
-        }));
+        hasCoral.onTrue(Commands.sequence(
+            // First stop the intake motor before moving
+            Commands.runOnce(this::stopIntake),
+            // Then transition to MID position if we're at INTAKE
+            Commands.runOnce(() -> {
+                if (isAtSetpoint(ArmSetpoint.INTAKE)) {
+                    goToSetpoint(ArmSetpoint.MID);
+                }
+            })
+        ));
         
         // Combined trigger for auto-intake and auto-stop
         Trigger atIntakePosition = new Trigger(() -> isAtSetpoint(ArmSetpoint.INTAKE));
@@ -557,6 +562,16 @@ public class CoralSuperstructure extends SubsystemBase {
         table.getEntry("canIntake").setBoolean(isAtSetpoint(ArmSetpoint.INTAKE) && doesntHaveCoral.getAsBoolean());
         table.getEntry("canDrop").setBoolean(isInDropPosition() && hasCoral.getAsBoolean());
         table.getEntry("canEject").setBoolean(isInDropPosition() && doesntHaveCoral.getAsBoolean());
+        table.getEntry("elevatorAtMin").setBoolean(elevatorController.isAtMinLimit());
+        table.getEntry("elevatorAtMax").setBoolean(elevatorController.isAtMaxLimit());
+        table.getEntry("elbowAtMin").setBoolean(elbowController.isAtMinLimit());
+        table.getEntry("elbowAtMax").setBoolean(elbowController.isAtMaxLimit());
+        
+        // Add min/max limits to NetworkTables
+        table.getEntry("minElbowAngle").setDouble(CoralSuperstructureConstants.ELBOW_MIN_ANGLE.in(Degree));
+        table.getEntry("maxElbowAngle").setDouble(CoralSuperstructureConstants.ELBOW_MAX_ANGLE.in(Degree));
+        table.getEntry("minElevatorHeight").setDouble(0.0); // Minimum elevator height is always 0
+        table.getEntry("maxElevatorHeight").setDouble(CoralSuperstructureConstants.ELEVATOR_HEIGHT.in(Inch));
         
         if (targetState != null) {
             table.getEntry("targetElbowAngle").setDouble(targetState.elbowAngle().in(Degree));

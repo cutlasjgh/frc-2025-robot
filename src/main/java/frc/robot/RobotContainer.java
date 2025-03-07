@@ -65,6 +65,9 @@ public class RobotContainer {
   /** Climb subsystem for handling climb mechanism. */
   private final Climb climb = Climb.getInstance();
 
+  /** Apriltag subsystem for handling apriltags */
+  private final Apriltag apriltag = Apriltag.getInstance();
+
   /**
    * Creates a new RobotContainer and initializes all robot subsystems and
    * commands.
