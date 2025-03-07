@@ -52,17 +52,28 @@ public class RobotContainer {
    * Input stream for swerve drive control.
    * Configures how controller inputs are processed and applied to drive commands.
    */
+  // private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
+  //     () -> driverController.getLeftY() * -1,
+  //     () -> driverController.getLeftX() * -1)
+  //     .cubeTranslationControllerAxis(true)
+  //     .scaleTranslation(0.5)
+  //     .cubeRotationControllerAxis(true)
+  //     .withControllerHeadingAxis(() -> driverController.getRightX() * -1, () -> driverController.getRightY() * -1)
+  //     .cubeRotationControllerAxis(true)
+  //     .deadband(OIConstants.DRIVER_DEADBAND)
+  //     .allianceRelativeControl(true)
+  //     .headingWhile(true);
+
   private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
       () -> driverController.getLeftY() * -1,
       () -> driverController.getLeftX() * -1)
       .cubeTranslationControllerAxis(true)
-      .scaleTranslation(0.5)
+      .scaleTranslation(1.0)
       .cubeRotationControllerAxis(true)
-      .withControllerHeadingAxis(() -> driverController.getRightX() * -1, () -> driverController.getRightY() * -1)
+      .withControllerRotationAxis(() -> driverController.getLeftX() * -1)
       .cubeRotationControllerAxis(true)
       .deadband(OIConstants.DRIVER_DEADBAND)
-      .allianceRelativeControl(true)
-      .headingWhile(true);
+      .allianceRelativeControl(true);
 
   /** Alga arm subsystem for handling alga gamepieces. */
   private final AlgaArm algaArm = AlgaArm.getInstance();
@@ -77,7 +88,7 @@ public class RobotContainer {
   private final Climb climb = Climb.getInstance();
 
   /** Apriltag subsystem for handling apriltags */
-  // private final Apriltag apriltag = Apriltag.getInstance();
+  private final Apriltag apriltag = Apriltag.getInstance();
 
   // Add the SendableChooser for autonomous
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -143,6 +154,9 @@ public class RobotContainer {
 
     // Add the simple backward drive auto
     autoChooser.addOption("Simple Backward Drive", AutoCommands.simpleBackwardDrive());
+    
+    // Add the Mid to Reef auto (works for both alliances)
+    autoChooser.addOption("Mid to Reef", AutoCommands.midBlueToReef());
 
     // Put the chooser on the dashboard
     SmartDashboard.putData("Auto Chooser", autoChooser);

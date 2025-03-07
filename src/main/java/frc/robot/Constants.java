@@ -88,7 +88,7 @@ public final class Constants {
         public static final int CAN_ID = 14;
         public static final int BOTTOM_LIMIT_CHANNEL = 9;
         public static final int TOP_LIMIT_CHANNEL = 8;
-        public static final double CLIMB_POWER = -0.5;
+        public static final double CLIMB_POWER = -0.7;
         public static final boolean IS_INVERTED = false;
     }
 
@@ -258,7 +258,7 @@ public final class Constants {
                                 new Rotation3d(
                                         0.0,
                                         0.0,
-                                        Degree.of(225).in(Radian))),
+                                        Degree.of(135).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Driver Cam",
@@ -269,8 +269,8 @@ public final class Constants {
                                         1.05),
                                 new Rotation3d(
                                         0.0,
-                                        Degree.of(-15).in(Radian),
-                                        Degree.of(225).in(Radian))),
+                                        Degree.of(-5).in(Radian),
+                                        Degree.of(195).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR)
         };
 

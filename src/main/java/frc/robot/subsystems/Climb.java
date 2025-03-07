@@ -33,7 +33,7 @@ public class Climb extends SubsystemBase {
 
     private Climb() {
         SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
-        sparkMaxConfig.idleMode(IdleMode.kBrake);
+        sparkMaxConfig.idleMode(IdleMode.kCoast);
         sparkMaxConfig.inverted(ClimbConstants.IS_INVERTED);
         sparkMaxConfig.smartCurrentLimit(30);
         climbMotor.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
