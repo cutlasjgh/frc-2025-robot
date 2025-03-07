@@ -1,7 +1,9 @@
 package frc.robot.subsystems;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.photonvision.EstimatedRobotPose;
@@ -44,6 +46,11 @@ public final class Apriltag extends SubsystemBase {
      * Field visualization for tracked targets.
      */
     private Field2d field2d;
+    
+    /**
+     * Collection of all cameras on the robot.
+     */
+    private final Map<String, Camera> cameras = new HashMap<>();
 
     /**
      * Gets the instance of the {@link Apriltag} class.
@@ -64,8 +71,18 @@ public final class Apriltag extends SubsystemBase {
         field2d = new Field2d();
         SmartDashboard.putData("Vision Field", field2d);
 
-        // Initialize cameras
-        for (Camera camera : Camera.values()) {            
+        // Initialize cameras from Constants
+        for (ApriltagConstants.ApriltagCameraConfig cameraConfig : ApriltagConstants.PHOTON_CAMERAS) {
+            Camera camera = new Camera(
+                cameraConfig.getName(),
+                cameraConfig.getTransform(),
+                cameraConfig.getStrategy(),
+                ApriltagConstants.SINGLE_TAG_STD_DEVS,
+                ApriltagConstants.MULTI_TAG_STD_DEVS
+            );
+            
+            cameras.put(camera.getName(), camera);
+            
             if (!camera.camera.isConnected()) {
                 DriverStation.reportWarning(
                     "PhotonCamera " + camera.getName() + " is not connected!",
@@ -83,12 +100,11 @@ public final class Apriltag extends SubsystemBase {
      */
     @Override
     public void periodic() {
-        // Get the YAGSL SwerveDrive instead of a separate pose estimator
         SwerveDrive swerveDrive = Swerve.getInstance().getSwerveDrive();
         Pose2d currentPose = Swerve.getInstance().getPose();
 
         // Process all cameras
-        for (Camera camera : Camera.values()) {
+        for (Camera camera : cameras.values()) {
             SmartDashboard.putBoolean(
                 camera.getName() + " Connected", 
                 camera.camera.isConnected());
@@ -99,7 +115,6 @@ public final class Apriltag extends SubsystemBase {
             Optional<EstimatedRobotPose> estimatedPose = camera.getEstimatedGlobalPose(currentPose);
             
             if (estimatedPose.isPresent()) {
-                // Call addVisionMeasurement directly on the SwerveDrive
                 swerveDrive.addVisionMeasurement(
                     estimatedPose.get().estimatedPose.toPose2d(),
                     estimatedPose.get().timestampSeconds,
@@ -143,10 +158,13 @@ public final class Apriltag extends SubsystemBase {
      * Get tracked target from a camera for a specific AprilTag ID.
      *
      * @param id     AprilTag ID
-     * @param camera Camera to check
+     * @param cameraName Name of the camera to check
      * @return Tracked target, or null if not found
      */
-    public PhotonTrackedTarget getTargetFromId(int id, Camera camera) {
+    public PhotonTrackedTarget getTargetFromId(int id, String cameraName) {
+        Camera camera = cameras.get(cameraName);
+        if (camera == null) return null;
+        
         for (PhotonPipelineResult result : camera.resultsList) {
             if (result.hasTargets()) {
                 for (PhotonTrackedTarget target : result.getTargets()) {
@@ -164,7 +182,7 @@ public final class Apriltag extends SubsystemBase {
      */
     private void updateVisionField() {
         List<PhotonTrackedTarget> targets = new ArrayList<>();
-        for (Camera camera : Camera.values()) {
+        for (Camera camera : cameras.values()) {
             if (!camera.resultsList.isEmpty()) {
                 PhotonPipelineResult latest = camera.resultsList.get(0);
                 if (latest.hasTargets()) {
@@ -185,23 +203,18 @@ public final class Apriltag extends SubsystemBase {
     }
 
     /**
-     * Enum defining the robot's cameras and their configurations.
+     * Get all cameras configured in this subsystem.
+     * 
+     * @return Map of camera name to Camera object
      */
-    public enum Camera {
-        FRONT_CAMERA(
-            ApriltagConstants.PHOTON_CAMERAS[0].getName(),
-            ApriltagConstants.PHOTON_CAMERAS[0].getTransform(),
-            ApriltagConstants.PHOTON_CAMERAS[0].getStrategy(),
-            ApriltagConstants.SINGLE_TAG_STD_DEVS,
-            ApriltagConstants.MULTI_TAG_STD_DEVS),
+    public Map<String, Camera> getCameras() {
+        return cameras;
+    }
 
-        BACK_CAMERA(
-            ApriltagConstants.PHOTON_CAMERAS[1].getName(),
-            ApriltagConstants.PHOTON_CAMERAS[1].getTransform(),
-            ApriltagConstants.PHOTON_CAMERAS[1].getStrategy(),
-            ApriltagConstants.SINGLE_TAG_STD_DEVS,
-            ApriltagConstants.MULTI_TAG_STD_DEVS);
-
+    /**
+     * Class representing a camera on the robot.
+     */
+    public static class Camera {
         /** Latency alert for high camera latency */
         public final Alert latencyAlert;
 
@@ -244,7 +257,7 @@ public final class Apriltag extends SubsystemBase {
          * @param singleTagStdDevs Standard deviations for single tag detection
          * @param multiTagStdDevs Standard deviations for multi-tag detection
          */
-        Camera(String name, Transform3d transform, PoseStrategy strategy, 
+        public Camera(String name, Transform3d transform, PoseStrategy strategy, 
                Matrix<N3, N1> singleTagStdDevs, Matrix<N3, N1> multiTagStdDevs) {
             this.latencyAlert = new Alert("'" + name + "' Camera is experiencing high latency.", AlertType.kWarning);
             this.camera = new PhotonCamera(name);

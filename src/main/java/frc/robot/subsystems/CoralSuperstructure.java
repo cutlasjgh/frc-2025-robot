@@ -86,7 +86,7 @@ public class CoralSuperstructure extends SubsystemBase {
     public final Trigger doesntHaveCoral;
     public final Trigger hasCoral;
     public final Trigger coralRunning;
-    public final Trigger ejecting;  // New trigger for eject mode
+    public final Trigger ejecting;
     
     /**
      * Gets the singleton instance of CoralSuperstructure
@@ -341,12 +341,15 @@ public class CoralSuperstructure extends SubsystemBase {
         if (movementState == MovementState.IDLE || targetState == null) {
             return; // Nothing to do
         }
-        
+
         updateCurrentState();
         double elevatorPosition = elevatorController.getPosition();
         double elbowPosition = elbowController.getPosition();
-        
+
         switch (movementState) {
+            case IDLE:
+                break;
+                
             case MOVING_TO_SAFE_HEIGHT:
                 // Check if at safety position
                 if (isWithinTolerance(
