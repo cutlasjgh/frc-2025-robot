@@ -33,7 +33,7 @@ public class AlgaArm extends SubsystemBase {
     /** Limit switch for detecting alga game pieces. */
     private final DigitalInput algaSensor = new DigitalInput(AlgaArmConstants.SENSOR_CHANNEL);
     /** NetworkTable for publishing alga detection state. */
-    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("AlgaArm");
+    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("AlgaArm");
 
     private AlgaArm() {
         SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
@@ -43,6 +43,8 @@ public class AlgaArm extends SubsystemBase {
         sparkMaxConfig.openLoopRampRate(0.1);
         sparkMaxConfig.closedLoopRampRate(0.1);
         algaMotor.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+
+        setDefaultCommand(stop());
     }
 
     public final Trigger doesntHaveAlga = new Trigger(
@@ -56,26 +58,24 @@ public class AlgaArm extends SubsystemBase {
                 return algaMotor.get() != 0;
             });
 
+    public Command runIntake() {
+        return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER)).withName("algaRunIntake");
+    }
+
     public Command intake() {
-        return run(() -> {
-            algaMotor.set(AlgaArmConstants.INTAKE_POWER);
-        }).onlyWhile(doesntHaveAlga).finallyDo((interrupted) -> {
-            stop().schedule();
-        }).withName("algaIntake");
+        return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER)).onlyWhile(doesntHaveAlga).withName("algaIntake");
+    }
+
+    public Command runDrop() {
+        return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).withName("algaRunDrop");
     }
 
     public Command drop() {
-        return run(() -> {
-            algaMotor.set(AlgaArmConstants.DROP_POWER);
-        }).onlyWhile(hasAlga).finallyDo((interrupted) -> {
-            stop().schedule();
-        }).withName("algaDrop");
+        return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).onlyWhile(hasAlga).withName("algaDrop");
     }
 
     public Command stop() {
-        return run(() -> {
-            algaMotor.set(0);
-        }).withName("algaStop");
+        return run(() -> algaMotor.set(0)).withName("algaStop");
     }
 
     public Command toggle() {

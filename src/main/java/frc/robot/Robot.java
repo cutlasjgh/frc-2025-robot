@@ -24,7 +24,7 @@ public class Robot extends TimedRobot {
   private Command autonomousCommand;
 
   /** The robot's container, which holds subsystems and commands. */
-  private final RobotContainer robotContainer;
+  private RobotContainer robotContainer;
 
   /**
    * Creates a new Robot and initializes the RobotContainer.
@@ -66,8 +66,10 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
+    // Get the selected autonomous command
     autonomousCommand = robotContainer.getAutonomousCommand();
 
+    // Schedule the autonomous command
     if (autonomousCommand != null) {
       autonomousCommand.schedule();
     }
@@ -90,6 +92,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopInit() {
+    // Cancel the autonomous command when teleop starts
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }

@@ -1,10 +1,15 @@
 package frc.robot;
 
+import edu.wpi.first.cscore.HttpCamera;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.*;
 import frc.robot.subsystems.*;
@@ -31,6 +36,9 @@ import swervelib.SwerveInputStream;
  * defined through command bindings and default commands.
  */
 public class RobotContainer {
+  /** Network table for robot-related bs */
+  private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Robot");
+
   /** Xbox controller used for driver input. */
   private final CommandXboxController driverController = new CommandXboxController(OIConstants.DRIVER_CONTROLLER_PORT);
 
@@ -60,13 +68,19 @@ public class RobotContainer {
   private final AlgaArm algaArm = AlgaArm.getInstance();
 
   /** Coral handler subsystem for handling coral gamepieces. */
-  private final CoralSuperstructure coralSuperstructure = CoralSuperstructure.getInstance();
+  private final CoralManipulator coralManipulator = CoralManipulator.getInstance();
+
+  /** Coral handler subsystem for handling coral gamepieces. */
+  private final CoralArm coralArm = CoralArm.getInstance();
 
   /** Climb subsystem for handling climb mechanism. */
   private final Climb climb = Climb.getInstance();
 
   /** Apriltag subsystem for handling apriltags */
-  private final Apriltag apriltag = Apriltag.getInstance();
+  // private final Apriltag apriltag = Apriltag.getInstance();
+
+  // Add the SendableChooser for autonomous
+  private final SendableChooser<Command> autoChooser = new SendableChooser<>();
 
   /**
    * Creates a new RobotContainer and initializes all robot subsystems and
@@ -84,6 +98,7 @@ public class RobotContainer {
     operatorController.setRumble(RumbleType.kBothRumble, 0.0);
 
     configureBindings();
+    configureAutoChooser();
   }
 
   /**
@@ -101,20 +116,36 @@ public class RobotContainer {
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     operatorController.a().onTrue(algaArm.toggle());
-    operatorController.b().whileTrue(coralSuperstructure.toggle());
+    operatorController.leftBumper().whileTrue(algaArm.runIntake());
+    operatorController.rightBumper().whileTrue(algaArm.runDrop());
+    operatorController.b().onTrue(coralManipulator.toggle());
 
-    // Y button: Zero Coral mechanism when needed
-    operatorController.y().onTrue(coralSuperstructure.zeroCommand());
+    // // Y button: Zero Coral mechanism when needed
+    // operatorController.y().onTrue(coralSuperstructure.zeroCommand());
 
     // X button: Run climb mechanism at 70% power while held
     driverController.x().whileTrue(climb.climb());
 
-    operatorController.back().onTrue(coralSuperstructure.setZero());
-    operatorController.povRight().onTrue(coralSuperstructure.setIntake());
-    operatorController.povUp().onTrue(coralSuperstructure.setHigh());
-    operatorController.povDown().onTrue(coralSuperstructure.setLow());
-    operatorController.povLeft().onTrue(coralSuperstructure.setMid());
-    operatorController.start().onTrue(coralSuperstructure.setClimb());
+    operatorController.back().onTrue(coralArm.setZero());
+    operatorController.povRight().onTrue(coralArm.setIntake());
+    operatorController.povUp().onTrue(coralArm.setHigh());
+    operatorController.povDown().onTrue(coralArm.setLow());
+    operatorController.povLeft().onTrue(coralArm.setMid());
+    operatorController.start().onTrue(coralArm.setClimb());
+  }
+
+  /**
+   * Configure the autonomous command chooser with available options.
+   */
+  private void configureAutoChooser() {
+    // Add a "None" option
+    autoChooser.setDefaultOption("None", Commands.none());
+
+    // Add the simple backward drive auto
+    autoChooser.addOption("Simple Backward Drive", AutoCommands.simpleBackwardDrive());
+
+    // Put the chooser on the dashboard
+    SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   /**
@@ -125,6 +156,11 @@ public class RobotContainer {
    * @return the command to run in autonomous mode
    */
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    // Return the selected auto command from the chooser
+    return autoChooser.getSelected();
+  }
+
+  public NetworkTable getTable() {
+    return table;
   }
 }

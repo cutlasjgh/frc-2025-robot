@@ -29,19 +29,24 @@ import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
 /**
- * Manages the robot's swerve drive system, providing control over movement, autonomous path following,
- * and odometry tracking. This subsystem handles both autonomous and teleoperated drive control,
+ * Manages the robot's swerve drive system, providing control over movement,
+ * autonomous path following,
+ * and odometry tracking. This subsystem handles both autonomous and
+ * teleoperated drive control,
  * integrating with PathPlanner for advanced autonomous capabilities.
  * 
- * <p>Features include:
+ * <p>
+ * Features include:
  * <ul>
- *   <li>Field-oriented drive control
- *   <li>Autonomous path following and path finding
- *   <li>Odometry tracking and pose estimation
- *   <li>Wheel locking for stability
+ * <li>Field-oriented drive control
+ * <li>Autonomous path following and path finding
+ * <li>Odometry tracking and pose estimation
+ * <li>Wheel locking for stability
  * </ul>
  * 
- * <p>Uses YAGSL (Yet Another Generic Swerve Library) for underlying swerve drive implementation
+ * <p>
+ * Uses YAGSL (Yet Another Generic Swerve Library) for underlying swerve drive
+ * implementation
  * and PathPlanner for autonomous navigation.
  */
 public class Swerve extends SubsystemBase {
@@ -77,7 +82,7 @@ public class Swerve extends SubsystemBase {
                     .createSwerveDrive(
                             RobotConstants.MAX_SPEED.in(MetersPerSecond),
                             new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
-                                    Rotation2d.fromDegrees(0)));
+                                    getAllianceRotation()));
         } catch (Exception e) {
             throw new RuntimeException("Failed to create swerve drive", e);
         }
@@ -89,6 +94,20 @@ public class Swerve extends SubsystemBase {
         drivebase.useExternalFeedbackSensor();
 
         setupPathPlanner();
+    }
+
+    /**
+     * Returns the rotation to use based on the alliance color.
+     * 0 degrees for blue alliance, 180 degrees for red alliance.
+     *
+     * @return Rotation2d set to 0 or 180 degrees based on alliance
+     */
+    private Rotation2d getAllianceRotation() {
+        var alliance = DriverStation.getAlliance();
+        if (alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red) {
+            return Rotation2d.fromDegrees(180);
+        }
+        return Rotation2d.fromDegrees(0);
     }
 
     /**
@@ -139,15 +158,19 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Creates a command to drive the robot in field-oriented mode.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * Swerve.getInstance().driveFieldOriented(() -> new ChassisSpeeds(1.0, 0.0, 0.5));
      * }
      * </pre>
      * 
-     * @param velocity a supplier that provides the desired chassis speeds in field-oriented coordinates
-     * @return a command that continuously updates drive output based on supplied velocities
+     * @param velocity a supplier that provides the desired chassis speeds in
+     *                 field-oriented coordinates
+     * @return a command that continuously updates drive output based on supplied
+     *         velocities
      * @see ChassisSpeeds
      */
     public Command driveFieldOriented(Supplier<ChassisSpeeds> velocity) {
@@ -157,7 +180,9 @@ public class Swerve extends SubsystemBase {
     /**
      * Locks the swerve modules in an X pattern to prevent the robot from moving.
      * Useful for maintaining position or preparing for disable.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * Swerve.getInstance().lockWheels();
@@ -169,9 +194,12 @@ public class Swerve extends SubsystemBase {
     }
 
     /**
-     * Resets the robot's odometry to the center of the field (8.774m, 4.026m, 0°).
+     * Resets the robot's odometry to the center of the field (8.774m, 4.026m),
+     * with rotation based on alliance (0° for blue, 180° for red).
      * This is typically used at the start of autonomous routines.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * Swerve.getInstance().resetOdometry();
@@ -180,12 +208,14 @@ public class Swerve extends SubsystemBase {
      */
     public void resetOdometry() {
         drivebase.resetOdometry(new Pose2d(new Translation2d(Meter.of(8.774), Meter.of(4.026)),
-                Rotation2d.fromDegrees(0)));
+                getAllianceRotation()));
     }
 
     /**
      * Retrieves the current estimated pose of the robot on the field.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * Pose2d currentPose = Swerve.getInstance().getPose();
@@ -200,7 +230,9 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Resets the robot's odometry to a specific pose.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * Swerve.getInstance().resetOdometry(new Pose2d(new Translation2d(8.0, 4.0), Rotation2d.fromDegrees(90)));
@@ -215,7 +247,9 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Gets the current velocity of the robot.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * ChassisSpeeds speeds = Swerve.getInstance().getRobotVelocity();
@@ -230,7 +264,9 @@ public class Swerve extends SubsystemBase {
 
     /**
      * Gets the underlying SwerveDrive object.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
      * SwerveDrive drive = Swerve.getInstance().getSwerveDrive();
@@ -246,10 +282,13 @@ public class Swerve extends SubsystemBase {
     /**
      * Creates a command to autonomously drive the robot to a specific pose using
      * PathPlanner.
-     * <p>Example:
+     * <p>
+     * Example:
+     * 
      * <pre>
      * {@code
-     * Command autoDrive = Swerve.getInstance().driveToPose(new Pose2d(new Translation2d(6.0, 3.0), Rotation2d.fromDegrees(45)));
+     * Command autoDrive = Swerve.getInstance()
+     *         .driveToPose(new Pose2d(new Translation2d(6.0, 3.0), Rotation2d.fromDegrees(45)));
      * }
      * </pre>
      * 
@@ -266,6 +305,5 @@ public class Swerve extends SubsystemBase {
                 constraints,
                 edu.wpi.first.units.Units.MetersPerSecond.of(0));
     }
-
 
 }
