@@ -48,7 +48,7 @@ public class AutoCommands {
                     // Stop the robot
                     swerve.getSwerveDrive().setChassisSpeeds(
                             new ChassisSpeeds(0, 0, 0));
-                }).andThen(coralArm.setMid());
+                });
     }
 
     /**

@@ -132,12 +132,13 @@ public class RobotContainer {
     operatorController.leftBumper().whileTrue(algaArm.runIntake());
     operatorController.rightBumper().whileTrue(algaArm.runDrop());
     operatorController.b().onTrue(coralManipulator.toggle());
-    operatorController.back().onTrue(coralArm.setZero());
-    operatorController.povRight().onTrue(coralArm.setIntake());
-    operatorController.povUp().onTrue(coralArm.setHigh());
-    operatorController.povDown().onTrue(coralArm.setLow());
-    operatorController.povLeft().onTrue(coralArm.setMid());
-    operatorController.start().onTrue(coralArm.setClimb());
+
+    operatorController.back().onTrue(Commands.runOnce(() -> coralArm.setZero().schedule()));
+    operatorController.povRight().onTrue(Commands.runOnce(() -> coralArm.setIntake().schedule()));
+    operatorController.povUp().onTrue(Commands.runOnce(() -> coralArm.setHigh().schedule()));
+    operatorController.povDown().onTrue(Commands.runOnce(() -> coralArm.setLow().schedule()));
+    operatorController.povLeft().onTrue(Commands.runOnce(() -> coralArm.setMid().schedule()));
+    operatorController.start().onTrue(Commands.runOnce(() -> coralArm.setClimb().schedule()));
   }
 
   /**
