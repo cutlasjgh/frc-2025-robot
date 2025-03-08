@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.Radian;
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import java.util.Map;
+
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -21,6 +23,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 /**
  * Constants used throughout the robot code.
@@ -61,7 +64,7 @@ public final class Constants {
         private RobotConstants() {
         }
 
-        public static final LinearVelocity MAX_SPEED = MetersPerSecond.of(15.0);
+        public static final LinearVelocity MAX_SPEED = MetersPerSecond.of(5.45);
     }
 
     /**
@@ -100,7 +103,7 @@ public final class Constants {
         }
 
         public static final int DRIVER_CONTROLLER_PORT = 0;
-        public static final double DRIVER_DEADBAND = 0.05;
+        public static final double DRIVER_DEADBAND = 0.002;
     }
 
     /**
@@ -162,6 +165,27 @@ public final class Constants {
         public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(13.5);
         public static final double INTERMEDIATE_ELBOW_FRONT_ANGLE = 45.0; // degrees
         public static final double INTERMEDIATE_ELBOW_BACK_ANGLE = -45.0; // degrees
+        
+        /**
+         * Represents a specific position state of the arm
+         */
+        public record ArmState(Angle elbowAngle, Distance elevatorHeight) {
+            public boolean isFront() {
+                return elbowAngle.in(Degree) > 0;
+            }
+        }
+        
+        /**
+         * Predefined arm positions
+         */
+        public static final Map<String, ArmState> ARM_SETPOINTS = Map.of(
+            "ZERO", new ArmState(ELBOW_FRONT_ANGLE, ELEVATOR_MIN_POSITION),
+            "INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)),
+            "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
+            "MID", new ArmState(Degree.of(-35), Inch.of(0.0)),
+            "HIGH", new ArmState(Degree.of(-35), Inch.of(15.0)),
+            "CLIMB", new ArmState(Degree.of(-90), ELEVATOR_MAX_POSITION)
+        );
     }
 
     /**
@@ -291,5 +315,74 @@ public final class Constants {
         
         /** Maximum number of camera results to keep in memory */
         public static final int MAX_CAMERA_RESULTS = 1; // Only keep the latest result
+    }
+
+    /**
+     * Constants for field positions and points of interest
+     */
+    public static final class FieldConstants {
+        private FieldConstants() {
+        }
+        
+        /** Field dimensions for 2025 Reefscape */
+        public static final double FIELD_LENGTH_METERS = 16.54;
+        public static final double FIELD_WIDTH_METERS = 8.21;
+        
+        /**
+         * Point of Interest on the field
+         * Contains a pose and an alliance designation
+         */
+        public record POI(Pose2d pose, Alliance alliance) {}
+        
+        /** Intake station locations */
+        public static final POI[] INTAKE_STATIONS = {
+            // Blue alliance intake station: x=1.25, y=7.0, rotation=126.0 degrees
+            new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), Alliance.Blue),
+            
+            // Blue alliance mirrored across Y-axis (other side of the field)
+            new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0)), Alliance.Blue),
+            
+            // Red alliance equivalent of first blue station (mirrored across field)
+            new POI(new Pose2d(FIELD_LENGTH_METERS - 1.25, 7.0, Rotation2d.fromDegrees(126.0 + 180.0)), Alliance.Red),
+            
+            // Red alliance equivalent of second blue station (mirrored across field and Y-axis)
+            new POI(new Pose2d(FIELD_LENGTH_METERS - 1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0 + 180.0)), Alliance.Red)
+        };
+        
+        /** Coral reef bar locations */
+        public static final POI[] CORAL_REEF_BARS = {
+            // Blue alliance reef bar 1: x=5.3, y=5.15, rotation=60 degrees
+            new POI(new Pose2d(5.3, 5.15, Rotation2d.fromDegrees(60.0)), Alliance.Blue),
+            
+            // Blue alliance reef bar 2: x=5, y=5.3, rotation=60 degrees
+            new POI(new Pose2d(5.0, 5.3, Rotation2d.fromDegrees(60.0)), Alliance.Blue),
+            
+            // Blue alliance reef bar 1 mirrored across Y-axis
+            new POI(new Pose2d(5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(-60.0)), Alliance.Blue),
+            
+            // Blue alliance reef bar 2 mirrored across Y-axis
+            new POI(new Pose2d(5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(-60.0)), Alliance.Blue),
+
+            // Red alliance equivalent of blue reef bar 1 (mirrored across field)
+            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.3, 5.15, Rotation2d.fromDegrees(60.0 + 180.0)), Alliance.Red),
+            
+            // Red alliance equivalent of blue reef bar 2 (mirrored across field)
+            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.0, 5.3, Rotation2d.fromDegrees(60.0 + 180.0)), Alliance.Red),
+            
+            // Red alliance equivalent of blue reef bar 1 (mirrored across field and Y-axis)
+            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(-60.0 + 180.0)), Alliance.Red),
+            
+            // Red alliance equivalent of blue reef bar 2 (mirrored across field and Y-axis)
+            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(-60.0 + 180.0)), Alliance.Red)
+        };
+        
+        /** Alga station locations */
+        public static final POI[] ALGA_STATIONS = {
+            // Blue alliance alga station: x=6.0, y=0.75, rotation=180 degrees
+            new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), Alliance.Blue),
+            
+            // Red alliance equivalents (mirrored across field)
+            new POI(new Pose2d(FIELD_LENGTH_METERS - 6.0, 0.75, Rotation2d.fromDegrees(0.0)), Alliance.Red),
+        };
     }
 }

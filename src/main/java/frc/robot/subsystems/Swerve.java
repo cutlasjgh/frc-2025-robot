@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -27,6 +28,9 @@ import swervelib.SwerveDrive;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+import java.util.Optional;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.FieldConstants.POI;
 
 /**
  * Manages the robot's swerve drive system, providing control over movement,
@@ -304,6 +308,146 @@ public class Swerve extends SubsystemBase {
                 pose,
                 constraints,
                 edu.wpi.first.units.Units.MetersPerSecond.of(0));
+    }
+
+    /**
+     * Creates a command to drive to the closest intake station for the current alliance.
+     * This finds the nearest intake station POI that matches our current alliance
+     * and automatically navigates to it. Does nothing if no valid station is found.
+     * 
+     * @return a Command that will drive to the closest intake station
+     */
+    public Command driveToClosestIntakeStation() {
+        return runOnce(() -> {
+            // Get current alliance
+            Optional<Alliance> allianceOpt = DriverStation.getAlliance();
+            if (allianceOpt.isEmpty()) {
+                System.out.println("Alliance not available, cannot drive to intake station");
+                return; // Just return without doing anything
+            }
+            Alliance currentAlliance = allianceOpt.get();
+
+            // Get current pose
+            Pose2d currentPose = getPose();
+
+            // Find closest intake station
+            double closestDistance = Double.MAX_VALUE;
+            Pose2d targetPose = null;
+
+            for (POI station : FieldConstants.INTAKE_STATIONS) {
+                // Only consider stations for our alliance
+                if (station.alliance() == currentAlliance) {
+                    Pose2d stationPose = station.pose();
+                    double distance = currentPose.getTranslation().getDistance(stationPose.getTranslation());
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        targetPose = stationPose;
+                    }
+                }
+            }
+
+            if (targetPose != null) {
+                System.out.println("Driving to closest intake station: " + targetPose);
+                // Schedule the command to drive to the target pose
+                driveToPose(targetPose).schedule();
+            } else {
+                System.out.println("No intake station found for alliance: " + currentAlliance + ", doing nothing");
+                // Do nothing if no valid station was found
+            }
+        }).withName("DriveToClosestIntakeStation");
+    }
+
+    /**
+     * Creates a command to drive to the closest alga station for the current alliance.
+     * This finds the nearest alga station POI that matches our current alliance
+     * and automatically navigates to it. Does nothing if no valid station is found.
+     * 
+     * @return a Command that will drive to the closest alga station
+     */
+    public Command driveToClosestAlgaStation() {
+        return runOnce(() -> {
+            // Get current alliance
+            Optional<Alliance> allianceOpt = DriverStation.getAlliance();
+            if (allianceOpt.isEmpty()) {
+                System.out.println("Alliance not available, cannot drive to alga station");
+                return;
+            }
+            Alliance currentAlliance = allianceOpt.get();
+
+            // Get current pose
+            Pose2d currentPose = getPose();
+
+            // Find closest alga station
+            double closestDistance = Double.MAX_VALUE;
+            Pose2d targetPose = null;
+
+            for (POI station : FieldConstants.ALGA_STATIONS) {
+                // Only consider stations for our alliance
+                if (station.alliance() == currentAlliance) {
+                    Pose2d stationPose = station.pose();
+                    double distance = currentPose.getTranslation().getDistance(stationPose.getTranslation());
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        targetPose = stationPose;
+                    }
+                }
+            }
+
+            if (targetPose != null) {
+                System.out.println("Driving to closest alga station: " + targetPose);
+                driveToPose(targetPose).schedule();
+            } else {
+                System.out.println("No alga station found for alliance: " + currentAlliance + ", doing nothing");
+            }
+        }).withName("DriveToClosestAlgaStation");
+    }
+
+    /**
+     * Creates a command to drive to the closest coral reef bar for the current alliance.
+     * This finds the nearest coral reef bar POI that matches our current alliance
+     * and automatically navigates to it. Does nothing if no valid position is found.
+     * 
+     * @return a Command that will drive to the closest coral reef bar
+     */
+    public Command driveToClosestCoralReefBar() {
+        return runOnce(() -> {
+            // Get current alliance
+            Optional<Alliance> allianceOpt = DriverStation.getAlliance();
+            if (allianceOpt.isEmpty()) {
+                System.out.println("Alliance not available, cannot drive to coral reef bar");
+                return;
+            }
+            Alliance currentAlliance = allianceOpt.get();
+
+            // Get current pose
+            Pose2d currentPose = getPose();
+
+            // Find closest coral reef bar
+            double closestDistance = Double.MAX_VALUE;
+            Pose2d targetPose = null;
+
+            for (POI station : FieldConstants.CORAL_REEF_BARS) {
+                // Only consider stations for our alliance
+                if (station.alliance() == currentAlliance) {
+                    Pose2d stationPose = station.pose();
+                    double distance = currentPose.getTranslation().getDistance(stationPose.getTranslation());
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        targetPose = stationPose;
+                    }
+                }
+            }
+
+            if (targetPose != null) {
+                System.out.println("Driving to closest coral reef bar: " + targetPose);
+                driveToPose(targetPose).schedule();
+            } else {
+                System.out.println("No coral reef bar found for alliance: " + currentAlliance + ", doing nothing");
+            }
+        }).withName("DriveToClosestCoralReefBar");
     }
 
 }

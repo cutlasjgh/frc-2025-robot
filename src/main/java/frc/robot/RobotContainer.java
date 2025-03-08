@@ -1,6 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -52,28 +51,26 @@ public class RobotContainer {
    * Input stream for swerve drive control.
    * Configures how controller inputs are processed and applied to drive commands.
    */
-  // private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
-  //     () -> driverController.getLeftY() * -1,
-  //     () -> driverController.getLeftX() * -1)
-  //     .cubeTranslationControllerAxis(true)
-  //     .scaleTranslation(0.5)
-  //     .cubeRotationControllerAxis(true)
-  //     .withControllerHeadingAxis(() -> driverController.getRightX() * -1, () -> driverController.getRightY() * -1)
-  //     .cubeRotationControllerAxis(true)
-  //     .deadband(OIConstants.DRIVER_DEADBAND)
-  //     .allianceRelativeControl(true)
-  //     .headingWhile(true);
-
   private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
       () -> driverController.getLeftY() * -1,
       () -> driverController.getLeftX() * -1)
       .cubeTranslationControllerAxis(true)
-      .scaleTranslation(1.0)
-      .cubeRotationControllerAxis(true)
-      .withControllerRotationAxis(() -> driverController.getLeftX() * -1)
+      .scaleTranslation(0.75)
+      .withControllerHeadingAxis(() -> driverController.getRightX() * -1, () -> driverController.getRightY() * -1)
       .cubeRotationControllerAxis(true)
       .deadband(OIConstants.DRIVER_DEADBAND)
-      .allianceRelativeControl(true);
+      .allianceRelativeControl(true)
+      .headingWhile(true);
+
+  // private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
+  //     () -> driverController.getLeftY() * -1,
+  //     () -> driverController.getLeftX() * -1)
+  //     .cubeTranslationControllerAxis(true)
+  //     .scaleTranslation(1.0)
+  //     .withControllerRotationAxis(() -> driverController.getLeftX() * -1)
+  //     .cubeRotationControllerAxis(true)
+  //     .deadband(OIConstants.DRIVER_DEADBAND)
+  //     .allianceRelativeControl(true);
 
   /** Alga arm subsystem for handling alga gamepieces. */
   private final AlgaArm algaArm = AlgaArm.getInstance();
@@ -126,17 +123,15 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
+    driverController.povDown().whileTrue(swerveDrive.driveToClosestIntakeStation());
+    driverController.povRight().whileTrue(swerveDrive.driveToClosestAlgaStation());  
+    driverController.povLeft().whileTrue(swerveDrive.driveToClosestCoralReefBar());
+    driverController.x().whileTrue(climb.climb());
+
     operatorController.a().onTrue(algaArm.toggle());
     operatorController.leftBumper().whileTrue(algaArm.runIntake());
     operatorController.rightBumper().whileTrue(algaArm.runDrop());
     operatorController.b().onTrue(coralManipulator.toggle());
-
-    // // Y button: Zero Coral mechanism when needed
-    // operatorController.y().onTrue(coralSuperstructure.zeroCommand());
-
-    // X button: Run climb mechanism at 70% power while held
-    driverController.x().whileTrue(climb.climb());
-
     operatorController.back().onTrue(coralArm.setZero());
     operatorController.povRight().onTrue(coralArm.setIntake());
     operatorController.povUp().onTrue(coralArm.setHigh());

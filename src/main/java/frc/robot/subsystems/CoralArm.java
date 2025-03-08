@@ -1,22 +1,20 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Inch;
+import static edu.wpi.first.units.Units.Degree;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 
-import static edu.wpi.first.units.Units.Degree;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CoralArmConstants;
+import frc.robot.Constants.CoralArmConstants.ArmState;
 import frc.robot.helpers.LimitedPID;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 public class CoralArm extends SubsystemBase {
@@ -58,54 +56,10 @@ public class CoralArm extends SubsystemBase {
     private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("CoralArm");
 
     private CoralArm() {
-        // Initialize with a default position
-        setDefaultCommand(Commands.run(() -> {
-            // This maintains the last set position when no other commands are running
-            // By doing nothing, the motor controllers will maintain their PID targets
-        }, this).withName("MaintainPosition"));
-
         // Initialize networktable entries
         table.getEntry("targetElbowAngle").setDouble(0.0);
         table.getEntry("targetElevatorHeight").setDouble(0.0);
         table.getEntry("currentSetpoint").setString("None");
-
-        // Check if we're at any limit and initialize position accordingly
-        if (elevatorController.isAtMinLimit()) {
-            setElevatorHeight(CoralArmConstants.ELEVATOR_MIN_POSITION);
-        }
-        if (elevatorController.isAtMaxLimit()) {
-            setElevatorHeight(CoralArmConstants.ELEVATOR_MAX_POSITION);
-        }
-        if (elbowController.isAtMinLimit()) {
-            setElbowAngle(CoralArmConstants.ELBOW_BACK_ANGLE);
-        }
-        if (elbowController.isAtMaxLimit()) {
-            setElbowAngle(CoralArmConstants.ELBOW_FRONT_ANGLE);
-        }
-    }
-
-    /**
-     * Represents a specific position state of the arm
-     */
-    public record ArmState(Angle elbowAngle, Distance elevatorHeight) {
-        public boolean isFront() {
-            return elbowAngle.in(Degree) > 0;
-        }
-    }
-
-    /**
-     * Predefined arm positions
-     */
-    public static final Map<String, ArmState> ARM_SETPOINTS = new HashMap<>();
-
-    static {
-        ARM_SETPOINTS.put("ZERO",
-                new ArmState(CoralArmConstants.ELBOW_FRONT_ANGLE, CoralArmConstants.ELEVATOR_MIN_POSITION));
-        ARM_SETPOINTS.put("INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)));
-        ARM_SETPOINTS.put("LOW", new ArmState(Degree.of(-90), Inch.of(5.0)));
-        ARM_SETPOINTS.put("MID", new ArmState(Degree.of(-35), Inch.of(0.0)));
-        ARM_SETPOINTS.put("HIGH", new ArmState(Degree.of(-35), Inch.of(15.0)));
-        ARM_SETPOINTS.put("CLIMB", new ArmState(Degree.of(-90), Inch.of(13.5)));
     }
 
     /**
@@ -123,8 +77,8 @@ public class CoralArm extends SubsystemBase {
         
         // Command that directly sets the target positions without any safety measures
         Command directMove = Commands.runOnce(() -> {
-            setElbowAngle(targetState.elbowAngle());
-            setElevatorHeight(targetState.elevatorHeight());
+            elbowController.setPosition(targetState.elbowAngle().in(Degree));
+            elevatorController.setPosition(targetState.elevatorHeight().in(Inch));
             table.getEntry("currentSetpoint").setString("Direct: " + targetState.elbowAngle().in(Degree) + "°, " + 
                 targetState.elevatorHeight().in(Inch) + "\"");
         });
@@ -146,8 +100,8 @@ public class CoralArm extends SubsystemBase {
                     CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
                 
                 // Set both positions simultaneously
-                setElevatorHeight(CoralArmConstants.SAFE_ELEVATOR_HEIGHT);
-                setElbowAngle(Degree.of(firstSafeAngle));
+                elevatorController.setPosition(CoralArmConstants.SAFE_ELEVATOR_HEIGHT.in(Inch));
+                elbowController.setPosition(firstSafeAngle);
                 
                 table.getEntry("phase").setString("Moving to safe height and first safe angle");
             }),
@@ -178,7 +132,7 @@ public class CoralArm extends SubsystemBase {
                     CoralArmConstants.INTERMEDIATE_ELBOW_FRONT_ANGLE : 
                     CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
                 
-                setElbowAngle(Degree.of(secondSafeAngle));
+                elbowController.setPosition(secondSafeAngle);
                 
                 table.getEntry("phase").setString("Moving to second safe angle");
             }),
@@ -197,8 +151,8 @@ public class CoralArm extends SubsystemBase {
             
             // PHASE 3: Now we're safe to move to final position
             Commands.runOnce(() -> {
-                setElbowAngle(targetState.elbowAngle());
-                setElevatorHeight(targetState.elevatorHeight());
+                elbowController.setPosition(targetState.elbowAngle().in(Degree));
+                elevatorController.setPosition(targetState.elevatorHeight().in(Inch));
                 
                 table.getEntry("phase").setString("Moving to final position");
             })
@@ -243,7 +197,7 @@ public class CoralArm extends SubsystemBase {
      * @return A command that moves the arm to the specified position
      */
     public Command setPosition(String setpointKey) {
-        ArmState state = ARM_SETPOINTS.get(setpointKey);
+        ArmState state = CoralArmConstants.ARM_SETPOINTS.get(setpointKey);
         if (state == null) {
             return Commands.none().withName("SetPosition-Invalid");
         }
@@ -308,26 +262,6 @@ public class CoralArm extends SubsystemBase {
      */
     public Distance getCurrentElevatorHeight() {
         return Inch.of(elevatorController.getPosition());
-    }
-
-    /**
-     * Sets the target elbow angle
-     * 
-     * @param angle Target angle
-     */
-    public void setElbowAngle(Angle angle) {
-        elbowController.setPosition(angle.in(Degree));
-        table.getEntry("targetElbowAngle").setDouble(angle.in(Degree));
-    }
-
-    /**
-     * Sets the target elevator height
-     * 
-     * @param height Target height
-     */
-    public void setElevatorHeight(Distance height) {
-        elevatorController.setPosition(height.in(Inch));
-        table.getEntry("targetElevatorHeight").setDouble(height.in(Inch));
     }
 
     @Override
