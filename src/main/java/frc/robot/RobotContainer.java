@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.*;
+import frc.robot.helpers.CustomSwerveInput;
 import frc.robot.subsystems.*;
 import swervelib.SwerveInputStream;
 
@@ -51,7 +52,7 @@ public class RobotContainer {
    * Input stream for swerve drive control.
    * Configures how controller inputs are processed and applied to drive commands.
    */
-  private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
+  private final CustomSwerveInput driveInputStream = CustomSwerveInput.of(swerveDrive.getSwerveDrive(),
       () -> driverController.getLeftY() * -1,
       () -> driverController.getLeftX() * -1)
       .cubeTranslationControllerAxis(true)

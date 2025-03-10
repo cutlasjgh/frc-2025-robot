@@ -27,10 +27,6 @@ public class LimitedPID {
     private final DigitalInput minLimitSwitch;
     /** Maximum limit switch. */
     private final DigitalInput maxLimitSwitch;
-    /** Previous state of min limit switch (true = pressed) */
-    private boolean prevMinLimitPressed = false;
-    /** Previous state of max limit switch (true = pressed) */
-    private boolean prevMaxLimitPressed = false;
     /** Conversion factor from motor rotations to position units. */
     private final double conversionFactor;
     /** PID constants for position control. */
@@ -85,10 +81,6 @@ public class LimitedPID {
 
         minLimitSwitch = new DigitalInput(minLimitChannel);
         maxLimitSwitch = new DigitalInput(maxLimitChannel);
-        
-        // Initialize limit switch states
-        prevMinLimitPressed = isAtMinLimit();
-        prevMaxLimitPressed = isAtMaxLimit();
         
         // Initialize position if at a limit
         if (isAtMinLimit()) {
