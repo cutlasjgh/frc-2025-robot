@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -13,7 +14,6 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.commands.*;
 import frc.robot.helpers.CustomSwerveInput;
 import frc.robot.subsystems.*;
-import swervelib.SwerveInputStream;
 
 /**
  * Main robot configuration class that binds controls and commands to
@@ -63,15 +63,16 @@ public class RobotContainer {
       .allianceRelativeControl(true)
       .headingWhile(true);
 
-  // private final SwerveInputStream driveInputStream = SwerveInputStream.of(swerveDrive.getSwerveDrive(),
-  //     () -> driverController.getLeftY() * -1,
-  //     () -> driverController.getLeftX() * -1)
-  //     .cubeTranslationControllerAxis(true)
-  //     .scaleTranslation(1.0)
-  //     .withControllerRotationAxis(() -> driverController.getLeftX() * -1)
-  //     .cubeRotationControllerAxis(true)
-  //     .deadband(OIConstants.DRIVER_DEADBAND)
-  //     .allianceRelativeControl(true);
+  // private final SwerveInputStream driveInputStream =
+  // SwerveInputStream.of(swerveDrive.getSwerveDrive(),
+  // () -> driverController.getLeftY() * -1,
+  // () -> driverController.getLeftX() * -1)
+  // .cubeTranslationControllerAxis(true)
+  // .scaleTranslation(1.0)
+  // .withControllerRotationAxis(() -> driverController.getLeftX() * -1)
+  // .cubeRotationControllerAxis(true)
+  // .deadband(OIConstants.DRIVER_DEADBAND)
+  // .allianceRelativeControl(true);
 
   /** Alga arm subsystem for handling alga gamepieces. */
   private final AlgaArm algaArm = AlgaArm.getInstance();
@@ -124,8 +125,12 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
+    // This will be inverted in the fture so that the driver does not rotate the robot and they have to override it
+    driverController.leftBumper()
+        .whileTrue(swerveDrive.driveFieldOriented(driveInputStream.copy().withHeading(() -> new Rotation2d(0))));
+
     driverController.povDown().whileTrue(swerveDrive.driveToClosestIntakeStation());
-    driverController.povRight().whileTrue(swerveDrive.driveToClosestAlgaStation());  
+    driverController.povRight().whileTrue(swerveDrive.driveToClosestAlgaStation());
     driverController.povLeft().whileTrue(swerveDrive.driveToClosestCoralReefBar());
     driverController.x().whileTrue(climb.climb());
 
@@ -146,16 +151,9 @@ public class RobotContainer {
    * Configure the autonomous command chooser with available options.
    */
   private void configureAutoChooser() {
-    // Add a "None" option
     autoChooser.setDefaultOption("None", Commands.none());
-
-    // Add the simple backward drive auto
     autoChooser.addOption("Simple Backward Drive", AutoCommands.simpleBackwardDrive());
-    
-    // Add the Mid to Reef auto (works for both alliances)
     autoChooser.addOption("Mid to Reef", AutoCommands.midBlueToReef());
-
-    // Put the chooser on the dashboard
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
@@ -167,7 +165,6 @@ public class RobotContainer {
    * @return the command to run in autonomous mode
    */
   public Command getAutonomousCommand() {
-    // Return the selected auto command from the chooser
     return autoChooser.getSelected();
   }
 
