@@ -125,7 +125,7 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
-    // This will be inverted in the fture so that the driver does not rotate the robot and they have to override it
+    // This will be inverted in the future so that the driver does not rotate the robot and they have to override it
     driverController.leftBumper()
         .whileTrue(swerveDrive.driveFieldOriented(driveInputStream.copy().withHeading(() -> new Rotation2d(0))));
 
