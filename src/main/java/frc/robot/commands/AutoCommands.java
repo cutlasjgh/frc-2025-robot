@@ -10,7 +10,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.CoralArmConstants;
 import frc.robot.subsystems.CoralArm;
 import frc.robot.subsystems.CoralManipulator;
 import frc.robot.subsystems.Swerve;
@@ -34,7 +33,6 @@ public class AutoCommands {
      */
     public static Command simpleBackwardDrive() {
         Swerve swerve = Swerve.getInstance();
-        CoralArm coralArm = CoralArm.getInstance();
 
         return Commands.run(() -> {
             // Drive backward at half speed (-0.5 m/s in the x direction)
@@ -66,7 +64,7 @@ public class AutoCommands {
      *
      * @return The command to run
      */
-    public static Command midBlueToReef() {
+    public static Command leftToReef() {
         // Get subsystem instances
         Swerve swerve = Swerve.getInstance();
         CoralArm coralArm = CoralArm.getInstance();

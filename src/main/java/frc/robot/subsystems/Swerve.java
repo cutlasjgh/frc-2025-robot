@@ -19,18 +19,15 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.RobotConstants;
 import swervelib.SwerveDrive;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
-import java.util.Optional;
-import frc.robot.Constants.FieldConstants;
-import frc.robot.Constants.FieldConstants.POI;
 
 /**
  * Manages the robot's swerve drive system, providing control over movement,
@@ -309,145 +306,139 @@ public class Swerve extends SubsystemBase {
                 constraints,
                 edu.wpi.first.units.Units.MetersPerSecond.of(0));
     }
-
+    
     /**
-     * Creates a command to drive to the closest intake station for the current alliance.
-     * This finds the nearest intake station POI that matches our current alliance
-     * and automatically navigates to it. Does nothing if no valid station is found.
+     * Finds the closest point from an array of positions to the robot's current position.
+     * Uses squared distance for optimization to avoid expensive square root operations.
      * 
-     * @return a Command that will drive to the closest intake station
+     * @param points Array of Pose2d positions to check
+     * @return The closest Pose2d from the array, or null if the array is empty
      */
-    public Command driveToClosestIntakeStation() {
-        return runOnce(() -> {
-            // Get current alliance
-            Optional<Alliance> allianceOpt = DriverStation.getAlliance();
-            if (allianceOpt.isEmpty()) {
-                System.out.println("Alliance not available, cannot drive to intake station");
-                return; // Just return without doing anything
+    public Pose2d getClosestPoint(Pose2d[] points) {
+        if (points == null || points.length == 0) {
+            return null;
+        }
+        
+        Pose2d currentPose = getPose();
+        double minDistSq = Double.MAX_VALUE;
+        Pose2d closest = null;
+        
+        for (Pose2d point : points) {
+            // Calculate squared distance to avoid square root operation
+            double dx = currentPose.getX() - point.getX();
+            double dy = currentPose.getY() - point.getY();
+            double distSq = dx * dx + dy * dy;
+            
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                closest = point;
             }
-            Alliance currentAlliance = allianceOpt.get();
-
-            // Get current pose
-            Pose2d currentPose = getPose();
-
-            // Find closest intake station
-            double closestDistance = Double.MAX_VALUE;
-            Pose2d targetPose = null;
-
-            for (POI station : FieldConstants.INTAKE_STATIONS) {
-                // Only consider stations for our alliance
-                if (station.alliance() == currentAlliance) {
-                    Pose2d stationPose = station.pose();
-                    double distance = currentPose.getTranslation().getDistance(stationPose.getTranslation());
-                    
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        targetPose = stationPose;
-                    }
-                }
+        }
+        
+        return closest;
+    }
+    
+    /**
+     * Finds the closest point from an array of field POIs to the robot's current position.
+     * Takes alliance into account and optimizes calculations for frequent calls.
+     * 
+     * @param points Array of POI objects to check
+     * @return The Pose2d of the closest POI, or null if the array is empty
+     */
+    public Pose2d getClosestPOI(FieldConstants.POI[] points) {
+        if (points == null || points.length == 0) {
+            return null;
+        }
+        
+        var alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
+        Pose2d currentPose = getPose();
+        double minDistSq = Double.MAX_VALUE;
+        int closestIndex = -1;
+        
+        // Cache current position for optimization
+        final double robotX = currentPose.getX();
+        final double robotY = currentPose.getY();
+        
+        for (int i = 0; i < points.length; i++) {
+            Pose2d pointPose = points[i].get(alliance);
+            
+            // Calculate squared distance to avoid square root operation
+            double dx = robotX - pointPose.getX();
+            double dy = robotY - pointPose.getY();
+            double distSq = dx * dx + dy * dy;
+            
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                closestIndex = i;
             }
-
-            if (targetPose != null) {
-                System.out.println("Driving to closest intake station: " + targetPose);
-                // Schedule the command to drive to the target pose
-                driveToPose(targetPose).schedule();
-            } else {
-                System.out.println("No intake station found for alliance: " + currentAlliance + ", doing nothing");
-                // Do nothing if no valid station was found
-            }
-        }).withName("DriveToClosestIntakeStation");
+        }
+        
+        return closestIndex >= 0 ? points[closestIndex].get(alliance) : null;
     }
 
     /**
-     * Creates a command to drive to the closest alga station for the current alliance.
-     * This finds the nearest alga station POI that matches our current alliance
-     * and automatically navigates to it. Does nothing if no valid station is found.
+     * Finds the closest POI with a specific tag to the robot's current position.
+     * Highly optimized for frequent calls in control loops.
      * 
-     * @return a Command that will drive to the closest alga station
+     * @param points Array of POI objects to check
+     * @param tag The tag to filter by, or null to check all POIs
+     * @return The Pose2d of the closest matching POI, or null if none found
      */
-    public Command driveToClosestAlgaStation() {
-        return runOnce(() -> {
-            // Get current alliance
-            Optional<Alliance> allianceOpt = DriverStation.getAlliance();
-            if (allianceOpt.isEmpty()) {
-                System.out.println("Alliance not available, cannot drive to alga station");
-                return;
+    public Pose2d getClosestPOIByTag(FieldConstants.POI[] points, String tag) {
+        if (points == null || points.length == 0) {
+            return null;
+        }
+        
+        var alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
+        Pose2d currentPose = getPose();
+        double minDistSq = Double.MAX_VALUE;
+        int closestIndex = -1;
+        
+        // Cache current position for optimization
+        final double robotX = currentPose.getX();
+        final double robotY = currentPose.getY();
+        
+        for (int i = 0; i < points.length; i++) {
+            // Skip POIs that don't match the requested tag
+            if (tag != null && !points[i].getTag().equals(tag)) {
+                continue;
             }
-            Alliance currentAlliance = allianceOpt.get();
-
-            // Get current pose
-            Pose2d currentPose = getPose();
-
-            // Find closest alga station
-            double closestDistance = Double.MAX_VALUE;
-            Pose2d targetPose = null;
-
-            for (POI station : FieldConstants.ALGA_STATIONS) {
-                // Only consider stations for our alliance
-                if (station.alliance() == currentAlliance) {
-                    Pose2d stationPose = station.pose();
-                    double distance = currentPose.getTranslation().getDistance(stationPose.getTranslation());
-                    
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        targetPose = stationPose;
-                    }
-                }
+            
+            Pose2d pointPose = points[i].get(alliance);
+            
+            // Calculate squared distance to avoid square root operation
+            double dx = robotX - pointPose.getX();
+            double dy = robotY - pointPose.getY();
+            double distSq = dx * dx + dy * dy;
+            
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                closestIndex = i;
             }
-
-            if (targetPose != null) {
-                System.out.println("Driving to closest alga station: " + targetPose);
-                driveToPose(targetPose).schedule();
-            } else {
-                System.out.println("No alga station found for alliance: " + currentAlliance + ", doing nothing");
-            }
-        }).withName("DriveToClosestAlgaStation");
+        }
+        
+        return closestIndex >= 0 ? points[closestIndex].get(alliance) : null;
     }
-
+    
     /**
-     * Creates a command to drive to the closest coral reef bar for the current alliance.
-     * This finds the nearest coral reef bar POI that matches our current alliance
-     * and automatically navigates to it. Does nothing if no valid position is found.
+     * Creates a supplier that returns a Rotation2d pointing toward the closest POI with a specific tag.
      * 
-     * @return a Command that will drive to the closest coral reef bar
+     * @param points Array of POIs to target
+     * @param tag The tag to filter by, or null to consider all POIs
+     * @return A supplier that provides the rotation toward the closest matching POI when called
      */
-    public Command driveToClosestCoralReefBar() {
-        return runOnce(() -> {
-            // Get current alliance
-            Optional<Alliance> allianceOpt = DriverStation.getAlliance();
-            if (allianceOpt.isEmpty()) {
-                System.out.println("Alliance not available, cannot drive to coral reef bar");
-                return;
+    public Supplier<Rotation2d> createPointToClosestSupplier(FieldConstants.POI[] points, String tag) {
+        return () -> {
+            Pose2d closestPose = getClosestPOIByTag(points, tag);
+            if (closestPose == null) {
+                return new Rotation2d(); // Default to 0 if no points available
             }
-            Alliance currentAlliance = allianceOpt.get();
-
-            // Get current pose
-            Pose2d currentPose = getPose();
-
-            // Find closest coral reef bar
-            double closestDistance = Double.MAX_VALUE;
-            Pose2d targetPose = null;
-
-            for (POI station : FieldConstants.CORAL_REEF_BARS) {
-                // Only consider stations for our alliance
-                if (station.alliance() == currentAlliance) {
-                    Pose2d stationPose = station.pose();
-                    double distance = currentPose.getTranslation().getDistance(stationPose.getTranslation());
-                    
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        targetPose = stationPose;
-                    }
-                }
-            }
-
-            if (targetPose != null) {
-                System.out.println("Driving to closest coral reef bar: " + targetPose);
-                driveToPose(targetPose).schedule();
-            } else {
-                System.out.println("No coral reef bar found for alliance: " + currentAlliance + ", doing nothing");
-            }
-        }).withName("DriveToClosestCoralReefBar");
+            return closestPose.getRotation();
+        };
     }
-
+    
+    // For backward compatibility
+    public Supplier<Rotation2d> createPointToClosestSupplier(FieldConstants.POI[] points) {
+        return createPointToClosestSupplier(points, null);
+    }
 }

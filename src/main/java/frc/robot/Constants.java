@@ -183,8 +183,8 @@ public final class Constants {
             "INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)),
             "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
             "MID", new ArmState(Degree.of(-35), Inch.of(0.0)),
-            "HIGH", new ArmState(Degree.of(-35), Inch.of(15.0)),
-            "CLIMB", new ArmState(Degree.of(-90), ELEVATOR_MAX_POSITION)
+            "HIGH", new ArmState(Degree.of(-30), Inch.of(14.0)),
+            "CLIMB", new ArmState(Degree.of(-90), Inch.of(15.0))
         );
     }
 
@@ -270,7 +270,7 @@ public final class Constants {
                 //                 new Rotation3d(
                 //                         0,
                 //                         0,
-                //                         Degree.of(45).in(Radian))),
+                //                         Degree.of(-45).in(Radian))),
                 //         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Back Left",
@@ -284,18 +284,18 @@ public final class Constants {
                                         0.0,
                                         Degree.of(135).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
-                new ApriltagCameraConfig(
-                        "Driver Cam",
-                        new Transform3d(
-                                new Translation3d(
-                                        -0.075,
-                                        -0.09,
-                                        1.05),
-                                new Rotation3d(
-                                        0.0,
-                                        Degree.of(-5).in(Radian),
-                                        Degree.of(195).in(Radian))),
-                        PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR)
+                // new ApriltagCameraConfig(
+                //         "Driver Cam",
+                //         new Transform3d(
+                //                 new Translation3d(
+                //                         -0.075,
+                //                         -0.09,
+                //                         1.05),
+                //                 new Rotation3d(
+                //                         0.0,
+                //                         Degree.of(-5).in(Radian),
+                //                         Degree.of(195).in(Radian))),
+                //         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR)
         };
 
         public static final AprilTagFieldLayout FIELD_LAYOUT = AprilTagFields.k2025ReefscapeWelded
@@ -330,59 +330,83 @@ public final class Constants {
         
         /**
          * Point of Interest on the field
-         * Contains a pose and an alliance designation
+         * Contains a pose, alliance designation, and a descriptive tag
          */
-        public record POI(Pose2d pose, Alliance alliance) {}
+        public static final class POI {
+            private final Pose2d pose;
+            private final String tag;
+            
+            public POI(Pose2d pose, String tag) {
+                this.pose = pose;
+                this.tag = tag;
+            }
+            
+            public Pose2d get(Alliance alliance) {
+                if (alliance == Alliance.Blue) {
+                    return pose;
+                } else {
+                    return new Pose2d(
+                        FIELD_LENGTH_METERS - pose.getTranslation().getX(),
+                        FIELD_WIDTH_METERS - pose.getTranslation().getY(),
+                        pose.getRotation().rotateBy(Rotation2d.fromDegrees(180.0))
+                    );
+                }
+            }
+            
+            /**
+             * Gets the descriptive tag for this POI
+             * @return The tag string
+             */
+            public String getTag() {
+                return tag;
+            }
+        }
         
-        /** Intake station locations */
-        public static final POI[] INTAKE_STATIONS = {
-            // Blue alliance intake station: x=1.25, y=7.0, rotation=126.0 degrees
-            new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), Alliance.Blue),
+        /** All consolidated points of interest on the field */
+        public static final POI[] ALL_POIS = {
+            // Intake stations
+            new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION"),
+            new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0)), "INTAKE_STATION"),
             
-            // Blue alliance mirrored across Y-axis (other side of the field)
-            new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0)), Alliance.Blue),
+            // Coral reef bars
+            new POI(new Pose2d(5.9, 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
+            new POI(new Pose2d(5.3, 5.15, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
+            new POI(new Pose2d(5.0, 5.3, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
+            new POI(new Pose2d(4.0, 5.3, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
+            new POI(new Pose2d(3.7, 5.15, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
+            new POI(new Pose2d(3.1, 4.2, Rotation2d.fromDegrees(180.0)), "CORAL_REEF"),
+            new POI(new Pose2d(5.9, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
+            new POI(new Pose2d(5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
+            new POI(new Pose2d(5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
+            new POI(new Pose2d(4.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(230.0)), "CORAL_REEF"),
+            new POI(new Pose2d(3.7, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(240.0)), "CORAL_REEF"),
+            new POI(new Pose2d(3.1, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(180)), "CORAL_REEF"),
             
-            // Red alliance equivalent of first blue station (mirrored across field)
-            new POI(new Pose2d(FIELD_LENGTH_METERS - 1.25, 7.0, Rotation2d.fromDegrees(126.0 + 180.0)), Alliance.Red),
+            // Alga stations
+            new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), "ALGA_STATION"),
             
-            // Red alliance equivalent of second blue station (mirrored across field and Y-axis)
-            new POI(new Pose2d(FIELD_LENGTH_METERS - 1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0 + 180.0)), Alliance.Red)
+            // Cages
+            new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 8.765, Rotation2d.fromDegrees(0.0)), "CAGE"),
+            new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 6.165, Rotation2d.fromDegrees(0.0)), "CAGE"),
+            new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 3.565, Rotation2d.fromDegrees(0.0)), "CAGE")
         };
         
-        /** Coral reef bar locations */
-        public static final POI[] CORAL_REEF_BARS = {
-            // Blue alliance reef bar 1: x=5.3, y=5.15, rotation=60 degrees
-            new POI(new Pose2d(5.3, 5.15, Rotation2d.fromDegrees(60.0)), Alliance.Blue),
-            
-            // Blue alliance reef bar 2: x=5, y=5.3, rotation=60 degrees
-            new POI(new Pose2d(5.0, 5.3, Rotation2d.fromDegrees(60.0)), Alliance.Blue),
-            
-            // Blue alliance reef bar 1 mirrored across Y-axis
-            new POI(new Pose2d(5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(-60.0)), Alliance.Blue),
-            
-            // Blue alliance reef bar 2 mirrored across Y-axis
-            new POI(new Pose2d(5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(-60.0)), Alliance.Blue),
-
-            // Red alliance equivalent of blue reef bar 1 (mirrored across field)
-            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.3, 5.15, Rotation2d.fromDegrees(60.0 + 180.0)), Alliance.Red),
-            
-            // Red alliance equivalent of blue reef bar 2 (mirrored across field)
-            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.0, 5.3, Rotation2d.fromDegrees(60.0 + 180.0)), Alliance.Red),
-            
-            // Red alliance equivalent of blue reef bar 1 (mirrored across field and Y-axis)
-            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(-60.0 + 180.0)), Alliance.Red),
-            
-            // Red alliance equivalent of blue reef bar 2 (mirrored across field and Y-axis)
-            new POI(new Pose2d(FIELD_LENGTH_METERS - 5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(-60.0 + 180.0)), Alliance.Red)
-        };
+        /** Legacy POI lists for backward compatibility - reference the consolidated list by tag */
+        public static final POI[] INTAKE_STATIONS = filterPoisByTag(ALL_POIS, "INTAKE_STATION");
+        public static final POI[] CORAL_REEF_BARS = filterPoisByTag(ALL_POIS, "CORAL_REEF");
+        public static final POI[] ALGA_STATIONS = filterPoisByTag(ALL_POIS, "ALGA_STATION");
+        public static final POI[] CAGES = filterPoisByTag(ALL_POIS, "CAGE");
         
-        /** Alga station locations */
-        public static final POI[] ALGA_STATIONS = {
-            // Blue alliance alga station: x=6.0, y=0.75, rotation=180 degrees
-            new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), Alliance.Blue),
-            
-            // Red alliance equivalents (mirrored across field)
-            new POI(new Pose2d(FIELD_LENGTH_METERS - 6.0, 0.75, Rotation2d.fromDegrees(0.0)), Alliance.Red),
-        };
+        /**
+         * Filters the master POI list by tag
+         * @param pois The array of POIs to filter
+         * @param tag The tag to match
+         * @return Array of POIs with the matching tag
+         */
+        private static POI[] filterPoisByTag(POI[] pois, String tag) {
+            return java.util.Arrays.stream(pois)
+                .filter(poi -> poi.getTag().equals(tag))
+                .toArray(POI[]::new);
+        }
     }
 }
