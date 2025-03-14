@@ -141,9 +141,7 @@ public class AutoCommands {
                 coralManipulator.drop().withTimeout(1.5),
 
                 // Move arm back to intake position
-                Commands.parallel(
-                        coralArm.setIntake(),
-                        coralManipulator.stop()))
+                coralArm.setIntake().andThen(coralManipulator.intake()))
                 .withName("Mid to Reef Auto (" + alliance + ")");
     }
 }

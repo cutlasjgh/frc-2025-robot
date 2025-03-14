@@ -129,7 +129,8 @@ public class RobotContainer {
     // DEFAULT COMMAND - Field-oriented drive with automatic heading
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream.copy()
         .withHeading(swerveDrive.createPointToClosestSupplier(Constants.FieldConstants.ALL_POIS))
-        .allianceRelativeControl(false));
+        .allianceRelativeControl(false)
+        .headingWhile(true));
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     // AUTONOMOUS ASSIST - Drive to closest point when holding A
@@ -162,8 +163,7 @@ public class RobotContainer {
     operatorController.rightBumper().whileTrue(algaArm.runDrop());
 
     // ---- CORAL MANIPULATOR CONTROLS ----
-    // Eject or drop coral
-    operatorController.b().onTrue(coralManipulator.ejectOrDrop().onlyIf(coralArm.onFront));
+    operatorController.b().onTrue(coralManipulator.ejectOrDrop().onlyIf(coralArm.onFront.negate()));
 
     // ---- CORAL ARM POSITION CONTROLS ----
     // Each of these stops the manipulator before moving to ensure safe operation
@@ -176,6 +176,7 @@ public class RobotContainer {
     // Intake sequence - move to intake, start intake, then move to mid
     operatorController.povRight().onTrue(
         Commands.runOnce(() -> coralArm.setIntake()
+            .beforeStarting(coralManipulator.instantStop())
             .andThen(coralManipulator.intake())
             .andThen(coralArm.setMid())
             .onlyIf(coralManipulator.doesntHaveCoral)
