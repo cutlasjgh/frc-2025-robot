@@ -184,7 +184,7 @@ public final class Constants {
             "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
             "MID", new ArmState(Degree.of(-35), Inch.of(0.0)),
             "HIGH", new ArmState(Degree.of(-30), Inch.of(14.0)),
-            "CLIMB", new ArmState(Degree.of(-90), Inch.of(15.0))
+            "CLIMB", new ArmState(Degree.of(-25), Inch.of(15.0))
         );
     }
 
@@ -204,31 +204,13 @@ public final class Constants {
         /** Power level for dropping coral */
         public static final double DROP_POWER = 1.0;
         /** Power level for ejecting stuck objects */
-        public static final double EJECT_POWER = 1.0;
+        public static final double EJECT_POWER = 0.5;
         /** Whether manipulator motor is inverted */
         public static final boolean INVERTED = false;
         /** Current limit for manipulator motor in amps */
         public static final int CURRENT_LIMIT = 20;
         /** Ramp rate for manipulator motor (seconds from 0 to full throttle) */
         public static final double RAMP_RATE = 0.1;
-    }
-
-    /**
-     * Constants for pickup and coral side points.
-     */
-    public static final class PickupPoints {
-        private PickupPoints() {
-        }
-
-        public static final Pose2d[] PICKUP_POINTS = new Pose2d[] {
-                new Pose2d(1.0, 2.0, new Rotation2d(0)),
-                new Pose2d(3.0, 4.0, new Rotation2d(0))
-        };
-
-        public static final Pose2d[] CORAL_SIDE_POINTS = new Pose2d[] {
-                new Pose2d(5.0, 6.0, new Rotation2d(0)),
-                new Pose2d(7.0, 8.0, new Rotation2d(0))
-        };
     }
 
     public static final class ApriltagConstants {
@@ -260,18 +242,18 @@ public final class Constants {
         }
 
         public static final ApriltagCameraConfig[] PHOTON_CAMERAS = {
-                // new ApriltagCameraConfig(
-                //         "Front Right",
-                //         new Transform3d(
-                //                 new Translation3d(
-                //                         0.2794,
-                //                         0.2794,
-                //                         0.264),
-                //                 new Rotation3d(
-                //                         0,
-                //                         0,
-                //                         Degree.of(-45).in(Radian))),
-                //         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
+                new ApriltagCameraConfig(
+                        "Front Right",
+                        new Transform3d(
+                                new Translation3d(
+                                        0.2794,
+                                        0.2794,
+                                        0.264),
+                                new Rotation3d(
+                                        0,
+                                        0,
+                                        Degree.of(-45).in(Radian))),
+                        PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Back Left",
                         new Transform3d(

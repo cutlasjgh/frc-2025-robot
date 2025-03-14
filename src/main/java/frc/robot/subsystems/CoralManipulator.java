@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.CoralManipulatorConstants;
 
 /**
@@ -81,20 +82,6 @@ public class CoralManipulator extends SubsystemBase {
         coralMotor.set(0.0);
     }
 
-    public Command toggle() {
-        return runOnce(() -> {
-            if (running.getAsBoolean()) {
-                stop().schedule();
-            } else {
-                if (hasCoral.getAsBoolean()) {
-                    drop().schedule();
-                } else {
-                    intake().schedule();
-                }
-            }
-        }).withName("toggle");
-    }
-
     /**
      * Command that toggles between different states:
      * - If stopped: Drops coral if detected, otherwise ejects
@@ -108,13 +95,10 @@ public class CoralManipulator extends SubsystemBase {
     public Command ejectOrDrop() {
         return runOnce(() -> {
             if (running.getAsBoolean()) {
-                // If any coral operation is running, stop everything
                 stop().schedule();
             } else if (hasCoral.getAsBoolean()) {
-                // If we have coral, run the drop command
                 drop().schedule();
             } else {
-                // If no coral and not running, eject to clear any potential jams
                 eject().schedule();
             }
         }).withName("ejectOrDrop");
