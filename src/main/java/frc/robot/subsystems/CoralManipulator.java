@@ -32,7 +32,8 @@ public class CoralManipulator extends SubsystemBase {
 
     private final SparkMax coralMotor = new SparkMax(CoralManipulatorConstants.CAN_ID, MotorType.kBrushless);
     private final DigitalInput coralSensor = new DigitalInput(CoralManipulatorConstants.SENSOR_CHANNEL);
-    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("CoralManipulator");
+    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Robot")
+            .getSubTable("CoralManipulator");
 
     private CoralManipulator() {
         SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
@@ -54,7 +55,10 @@ public class CoralManipulator extends SubsystemBase {
             () -> !coralSensor.get());
 
     public Command intake() {
-        return run(() -> coralMotor.set(CoralManipulatorConstants.INTAKE_POWER)).onlyWhile(doesntHaveCoral);
+        return run(() -> coralMotor.set(CoralManipulatorConstants.INTAKE_POWER)).onlyWhile(doesntHaveCoral)
+                .andThen(run(() -> {
+                    coralMotor.set(0.0);
+                }).withTimeout(0.5));
     }
 
     public Command drop() {
@@ -66,9 +70,15 @@ public class CoralManipulator extends SubsystemBase {
     }
 
     public Command stop() {
-        return run(() -> {
-            coralMotor.set(0.0);
-        });
+        return run(() -> stopMotor());
+    }
+
+    public Command instantStop() {
+        return runOnce(() -> stopMotor());
+    }
+
+    private void stopMotor() {
+        coralMotor.set(0.0);
     }
 
     public Command toggle() {
@@ -83,6 +93,31 @@ public class CoralManipulator extends SubsystemBase {
                 }
             }
         }).withName("toggle");
+    }
+
+    /**
+     * Command that toggles between different states:
+     * - If stopped: Drops coral if detected, otherwise ejects
+     * - If already running: Stops all operations
+     * 
+     * This provides an easy way to perform the most intuitive action based on
+     * context.
+     * 
+     * @return Command that performs the appropriate action based on current state
+     */
+    public Command ejectOrDrop() {
+        return runOnce(() -> {
+            if (running.getAsBoolean()) {
+                // If any coral operation is running, stop everything
+                stop().schedule();
+            } else if (hasCoral.getAsBoolean()) {
+                // If we have coral, run the drop command
+                drop().schedule();
+            } else {
+                // If no coral and not running, eject to clear any potential jams
+                eject().schedule();
+            }
+        }).withName("ejectOrDrop");
     }
 
     @Override

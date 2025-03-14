@@ -1,6 +1,6 @@
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -113,38 +113,93 @@ public class RobotContainer {
 
   /**
    * Configures button bindings for commands.
-   * Maps controller buttons to specific robot actions:
-   * <ul>
-   * <li>Default command: Field oriented drive using joystick input
-   * <li>X button: Lock wheels in X pattern for stability
-   * <li>Start button: Reset odometry to field center
-   * <li>Back button: Autonomous drive to field center
-   * </ul>
+   * Maps controller buttons to specific robot actions organized by controller and
+   * function.
    */
   private void configureBindings() {
-    Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream);
+    configureDriverControls();
+    configureOperatorControls();
+  }
+
+  /**
+   * Configure driver controller bindings for drivetrain controls, autonomous
+   * features, and climb
+   */
+  private void configureDriverControls() {
+    // DEFAULT COMMAND - Field-oriented drive with automatic heading
+    Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream.copy()
+        .withHeading(swerveDrive.createPointToClosestSupplier(Constants.FieldConstants.ALL_POIS))
+        .allianceRelativeControl(false));
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
-    // This will be inverted in the future so that the driver does not rotate the robot and they have to override it
+    // AUTONOMOUS ASSIST - Drive to closest point when holding A
+    driverController.a().whileTrue(
+        Commands.runOnce(() -> {
+          Pose2d targetPose = swerveDrive.getClosestPOI(Constants.FieldConstants.ALL_POIS);
+          if (targetPose != null) {
+            swerveDrive.driveToPose(targetPose).schedule();
+          }
+        }).andThen(Commands.waitUntil(() -> false)));
+
+    // MANUAL OVERRIDE - Use raw input without auto heading when holding left bumper
     driverController.leftBumper()
-        .whileTrue(swerveDrive.driveFieldOriented(driveInputStream.copy().withHeading(() -> new Rotation2d(0))));
+        .whileTrue(swerveDrive.driveFieldOriented(driveInputStream));
 
-    driverController.povDown().whileTrue(swerveDrive.driveToClosestIntakeStation());
-    driverController.povRight().whileTrue(swerveDrive.driveToClosestAlgaStation());
-    driverController.povLeft().whileTrue(swerveDrive.driveToClosestCoralReefBar());
+    // CLIMBING CONTROL
     driverController.x().whileTrue(climb.climb());
+  }
 
+  /**
+   * Configure operator controller bindings for game piece and mechanism controls
+   */
+  private void configureOperatorControls() {
+    // ---- ALGA ARM CONTROLS ----
+    // Toggle alga arm
     operatorController.a().onTrue(algaArm.toggle());
+    // Run alga intake while held
     operatorController.leftBumper().whileTrue(algaArm.runIntake());
+    // Run alga drop while held
     operatorController.rightBumper().whileTrue(algaArm.runDrop());
-    operatorController.b().onTrue(coralManipulator.toggle());
 
-    operatorController.back().onTrue(Commands.runOnce(() -> coralArm.setZero().schedule()));
-    operatorController.povRight().onTrue(Commands.runOnce(() -> coralArm.setIntake().schedule()));
-    operatorController.povUp().onTrue(Commands.runOnce(() -> coralArm.setHigh().schedule()));
-    operatorController.povDown().onTrue(Commands.runOnce(() -> coralArm.setLow().schedule()));
-    operatorController.povLeft().onTrue(Commands.runOnce(() -> coralArm.setMid().schedule()));
-    operatorController.start().onTrue(Commands.runOnce(() -> coralArm.setClimb().schedule()));
+    // ---- CORAL MANIPULATOR CONTROLS ----
+    // Eject or drop coral
+    operatorController.b().onTrue(coralManipulator.ejectOrDrop().onlyIf(coralArm.onFront));
+
+    // ---- CORAL ARM POSITION CONTROLS ----
+    // Each of these stops the manipulator before moving to ensure safe operation
+
+    // Return to zero position
+    operatorController.back()
+        .onTrue(Commands.runOnce(() -> coralArm.setZero().beforeStarting(coralManipulator.instantStop())
+            .schedule()));
+
+    // Intake sequence - move to intake, start intake, then move to mid
+    operatorController.povRight().onTrue(
+        Commands.runOnce(() -> coralArm.setIntake()
+            .andThen(coralManipulator.intake())
+            .andThen(coralArm.setMid())
+            .onlyIf(coralManipulator.doesntHaveCoral)
+            .schedule()));
+
+    // High scoring position
+    operatorController.povUp()
+        .onTrue(Commands.runOnce(() -> coralArm.setHigh().beforeStarting(coralManipulator.instantStop())
+            .schedule()));
+
+    // Low scoring position
+    operatorController.povDown()
+        .onTrue(Commands.runOnce(() -> coralArm.setLow().beforeStarting(coralManipulator.instantStop())
+            .schedule()));
+
+    // Mid scoring position
+    operatorController.povLeft()
+        .onTrue(Commands.runOnce(() -> coralArm.setMid().beforeStarting(coralManipulator.instantStop())
+            .schedule()));
+
+    // Climb position
+    operatorController.start()
+        .onTrue(Commands.runOnce(() -> coralArm.setClimb().beforeStarting(coralManipulator.instantStop())
+            .schedule()));
   }
 
   /**
@@ -153,7 +208,7 @@ public class RobotContainer {
   private void configureAutoChooser() {
     autoChooser.setDefaultOption("None", Commands.none());
     autoChooser.addOption("Simple Backward Drive", AutoCommands.simpleBackwardDrive());
-    autoChooser.addOption("Mid to Reef", AutoCommands.midBlueToReef());
+    autoChooser.addOption("Left to Reef", AutoCommands.leftToReef());
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 

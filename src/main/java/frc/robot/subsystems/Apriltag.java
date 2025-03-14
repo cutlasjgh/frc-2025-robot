@@ -22,11 +22,12 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTablesJNI;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ApriltagConstants;
@@ -41,16 +42,16 @@ public final class Apriltag extends SubsystemBase {
      * The singleton instance of the {@link Apriltag} subsystem.
      */
     private static Apriltag instance = null;
-
-    /**
-     * Field visualization for tracked targets.
-     */
-    private Field2d field2d;
     
     /**
      * Collection of all cameras on the robot.
      */
     private final Map<String, Camera> cameras = new HashMap<>();
+    
+    /**
+     * NetworkTable for publishing apriltag detection state.
+     */
+    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("Apriltag");
 
     /**
      * Gets the instance of the {@link Apriltag} class.
@@ -68,9 +69,6 @@ public final class Apriltag extends SubsystemBase {
      * Constructor for the Apriltag subsystem.
      */
     private Apriltag() {
-        field2d = new Field2d();
-        SmartDashboard.putData("Vision Field", field2d);
-
         // Initialize cameras from Constants
         for (ApriltagConstants.ApriltagCameraConfig cameraConfig : ApriltagConstants.PHOTON_CAMERAS) {
             Camera camera = new Camera(
@@ -102,6 +100,10 @@ public final class Apriltag extends SubsystemBase {
     public void periodic() {
         SwerveDrive swerveDrive = Swerve.getInstance().getSwerveDrive();
         Pose2d currentPose = Swerve.getInstance().getPose();
+        
+        // Track camera information for NetworkTables
+        int totalTagsDetected = 0;
+        boolean anyPoseUpdated = false;
 
         // Process all cameras
         for (Camera camera : cameras.values()) {
@@ -114,16 +116,35 @@ public final class Apriltag extends SubsystemBase {
             // Get and process vision measurements
             Optional<EstimatedRobotPose> estimatedPose = camera.getEstimatedGlobalPose(currentPose);
             
+            // Check how many tags this camera sees
+            int cameraTagCount = 0;
+            for (PhotonPipelineResult result : camera.resultsList) {
+                if (result.hasTargets()) {
+                    cameraTagCount = Math.max(cameraTagCount, result.getTargets().size());
+                }
+            }
+            totalTagsDetected += cameraTagCount;
+            
+            // Publish camera-specific data
+            NetworkTable cameraTable = table.getSubTable(camera.getName());
+            cameraTable.getEntry("tagsDetected").setInteger(cameraTagCount);
+            cameraTable.getEntry("isConnected").setBoolean(camera.camera.isConnected());
+            
             if (estimatedPose.isPresent()) {
+                anyPoseUpdated = true;
+                EstimatedRobotPose pose = estimatedPose.get();
                 swerveDrive.addVisionMeasurement(
-                    estimatedPose.get().estimatedPose.toPose2d(),
-                    estimatedPose.get().timestampSeconds,
+                    pose.estimatedPose.toPose2d(),
+                    pose.timestampSeconds,
                     camera.curStdDevs);
+                
+                cameraTable.getEntry("lastPoseTimestamp").setDouble(pose.timestampSeconds);
             }
         }
-
-        // Update field visualization with tracked targets
-        updateVisionField();
+        
+        // Update global vision status
+        table.getEntry("totalTagsDetected").setInteger(totalTagsDetected);
+        table.getEntry("visionUpdatingPose").setBoolean(anyPoseUpdated);
     }
 
     /**
@@ -175,31 +196,6 @@ public final class Apriltag extends SubsystemBase {
             }
         }
         return null;
-    }
-
-    /**
-     * Update the Field2d visualization with tracked AprilTags.
-     */
-    private void updateVisionField() {
-        List<PhotonTrackedTarget> targets = new ArrayList<>();
-        for (Camera camera : cameras.values()) {
-            if (!camera.resultsList.isEmpty()) {
-                PhotonPipelineResult latest = camera.resultsList.get(0);
-                if (latest.hasTargets()) {
-                    targets.addAll(latest.targets);
-                }
-            }
-        }
-
-        List<Pose2d> poses = new ArrayList<>();
-        for (PhotonTrackedTarget target : targets) {
-            if (ApriltagConstants.FIELD_LAYOUT.getTagPose(target.getFiducialId()).isPresent()) {
-                Pose2d targetPose = ApriltagConstants.FIELD_LAYOUT.getTagPose(target.getFiducialId()).get().toPose2d();
-                poses.add(targetPose);
-            }
-        }
-
-        field2d.getObject("tracked targets").setPoses(poses);
     }
 
     /**

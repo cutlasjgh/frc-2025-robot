@@ -11,6 +11,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.CoralArmConstants;
 import frc.robot.Constants.CoralArmConstants.ArmState;
 import frc.robot.helpers.LimitedPID;
@@ -62,6 +63,8 @@ public class CoralArm extends SubsystemBase {
         table.getEntry("currentSetpoint").setString("None");
     }
 
+    public final Trigger onFront = new Trigger(() -> getCurrentElbowAngle().in(Degree) > 0);
+
     /**
      * Creates a command to set the arm position based on a predefined setpoint
      * 
@@ -70,7 +73,7 @@ public class CoralArm extends SubsystemBase {
      */
     private Command setPosition(ArmState targetState) {
         BooleanSupplier isSwitchingSides = () -> {
-            boolean currentSideIsFront = getCurrentElbowAngle().in(Degree) > 0;
+            boolean currentSideIsFront = onFront.getAsBoolean();
             boolean targetSideIsFront = targetState.isFront();
             return currentSideIsFront != targetSideIsFront;
         };
@@ -94,7 +97,7 @@ public class CoralArm extends SubsystemBase {
             // PHASE 1: Move to safe height and first intermediate angle simultaneously
             Commands.runOnce(() -> {
                 // Get current side and set appropriate first safe angle
-                boolean currentSideIsFront = getCurrentElbowAngle().in(Degree) > 0;
+                boolean currentSideIsFront = onFront.getAsBoolean();
                 double firstSafeAngle = currentSideIsFront ? 
                     CoralArmConstants.INTERMEDIATE_ELBOW_FRONT_ANGLE : 
                     CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
@@ -108,7 +111,7 @@ public class CoralArm extends SubsystemBase {
             
             // Wait until BOTH elevator AND elbow reach their targets
             Commands.waitUntil(() -> {
-                boolean currentSideIsFront = getCurrentElbowAngle().in(Degree) > 0;
+                boolean currentSideIsFront = onFront.getAsBoolean();
                 double firstSafeAngle = currentSideIsFront ? 
                     CoralArmConstants.INTERMEDIATE_ELBOW_FRONT_ANGLE : 
                     CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
