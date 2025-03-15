@@ -300,8 +300,8 @@ public class Swerve extends SubsystemBase {
     public Command driveToPose(Pose2d targetPose) {
         // Use conservative constraints for accurate trajectory following
         PathConstraints constraints = new PathConstraints(
-            1.0,  // max velocity (m/s)
-            0.5,  // max acceleration (m/s²)
+            4.0,  // max velocity (m/s)
+            1.0,  // max acceleration (m/s²)
             1.0,  // max angular velocity (rad/s)
             Degree.of(90).in(Radian) // max angular acceleration (rad/s²)
         );
@@ -312,8 +312,8 @@ public class Swerve extends SubsystemBase {
             MetersPerSecond.of(0)
         );
         // After path following, hold the position indefinitely using simple P controllers
-        final double kPx = 1.0;
-        final double kPy = 1.0;
+        final double kPx = -1.0;
+        final double kPy = -1.0;
         final double kPTheta = 1.0;
         Command holdCommand = run(() -> {
             Pose2d current = getPose();
