@@ -164,6 +164,9 @@ public class CustomSwerveInput implements Supplier<ChassisSpeeds> {
      * Current {@link SwerveInputMode} to use.
      */
     private SwerveInputMode currentMode = SwerveInputMode.ANGULAR_VELOCITY;
+    // NEW FIELDS for dynamic scaling:
+    private Optional<BooleanSupplier> dynamicTranslationScaling = Optional.empty();
+    private double dynamicTranslationScaleFactor = 1.0;
 
     /**
      * Create a {@link CustomSwerveInput} for an easy way to generate
@@ -257,6 +260,8 @@ public class CustomSwerveInput implements Supplier<ChassisSpeeds> {
         newStream.allianceRelative = allianceRelative;
         newStream.headingOffsetEnabled = headingOffsetEnabled;
         newStream.headingOffset = headingOffset;
+        newStream.dynamicTranslationScaling = dynamicTranslationScaling;
+        newStream.dynamicTranslationScaleFactor = dynamicTranslationScaleFactor;
         return newStream;
     }
 
@@ -502,6 +507,21 @@ public class CustomSwerveInput implements Supplier<ChassisSpeeds> {
     }
 
     /**
+     * Scale the translation axis based on a boolean supplier.
+     * When the supplier returns true, the translation will be scaled by the provided scale;
+     * otherwise, it will remain unscaled.
+     *
+     * @param condition Boolean supplier determining if scaling should be applied.
+     * @param scale     Scale factor when condition is true.
+     * @return this
+     */
+    public CustomSwerveInput scaleTranslation(BooleanSupplier condition, double scale) {
+        dynamicTranslationScaling = Optional.of(condition);
+        dynamicTranslationScaleFactor = scale;
+        return this;
+    }
+
+    /**
      * Scale the rotation axis input for {@link CustomSwerveInput} to reduce the
      * range in which they operate.
      *
@@ -710,21 +730,20 @@ public class CustomSwerveInput implements Supplier<ChassisSpeeds> {
     }
 
     /**
-     * Scale the translational axis by the
-     * {@link CustomSwerveInput#translationAxisScale} if it exists.
+     * Scale the translational axis by the applicable scalar value.
      *
-     * @param xAxis X axis to scale.
-     * @param yAxis Y axis to scale.
+     * @param xAxis X axis value.
+     * @param yAxis Y axis value.
      * @return Scaled {@link Translation2d}
      */
     private Translation2d applyTranslationScalar(double xAxis, double yAxis) {
-        if (translationAxisScale.isPresent())
-
-        {
-            return SwerveMath.scaleTranslation(new Translation2d(xAxis, yAxis),
-                    translationAxisScale.get());
+        double factor = 1.0;
+        if (dynamicTranslationScaling.isPresent() && dynamicTranslationScaling.get().getAsBoolean()) {
+            factor = dynamicTranslationScaleFactor;
+        } else if (translationAxisScale.isPresent()) {
+            factor = translationAxisScale.get();
         }
-        return new Translation2d(xAxis, yAxis);
+        return SwerveMath.scaleTranslation(new Translation2d(xAxis, yAxis), factor);
     }
 
     /**

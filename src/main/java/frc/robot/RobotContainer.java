@@ -56,7 +56,8 @@ public class RobotContainer {
       () -> driverController.getLeftY() * -1,
       () -> driverController.getLeftX() * -1)
       .cubeTranslationControllerAxis(true)
-      .scaleTranslation(0.75)
+      .scaleTranslation(0.75) // default scale
+      .scaleTranslation(() -> driverController.rightBumper().getAsBoolean(), 0.5) // when right bumper held, scale becomes 0.25
       .withControllerHeadingAxis(() -> driverController.getRightX() * -1, () -> driverController.getRightY() * -1)
       .cubeRotationControllerAxis(true)
       .deadband(OIConstants.DRIVER_DEADBAND)

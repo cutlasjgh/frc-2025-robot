@@ -165,7 +165,7 @@ public final class Constants {
         public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(13.5);
         public static final double INTERMEDIATE_ELBOW_FRONT_ANGLE = 45.0; // degrees
         public static final double INTERMEDIATE_ELBOW_BACK_ANGLE = -45.0; // degrees
-        
+
         /**
          * Represents a specific position state of the arm
          */
@@ -174,18 +174,17 @@ public final class Constants {
                 return elbowAngle.in(Degree) > 0;
             }
         }
-        
+
         /**
          * Predefined arm positions
          */
         public static final Map<String, ArmState> ARM_SETPOINTS = Map.of(
-            "ZERO", new ArmState(ELBOW_FRONT_ANGLE, ELEVATOR_MIN_POSITION),
-            "INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)),
-            "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
-            "MID", new ArmState(Degree.of(-35), Inch.of(0.0)),
-            "HIGH", new ArmState(Degree.of(-30), Inch.of(14.0)),
-            "CLIMB", new ArmState(Degree.of(-25), Inch.of(15.0))
-        );
+                "ZERO", new ArmState(ELBOW_FRONT_ANGLE, ELEVATOR_MIN_POSITION),
+                "INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)),
+                "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
+                "MID", new ArmState(Degree.of(-35), Inch.of(0.0)),
+                "HIGH", new ArmState(Degree.of(-30), Inch.of(14.0)),
+                "CLIMB", new ArmState(Degree.of(-25), Inch.of(15.0)));
     }
 
     /**
@@ -242,8 +241,20 @@ public final class Constants {
         }
 
         public static final ApriltagCameraConfig[] PHOTON_CAMERAS = {
+                // new ApriltagCameraConfig(
+                // "Front Right",
+                // new Transform3d(
+                // new Translation3d(
+                // 0.2794,
+                // 0.2794,
+                // 0.264),
+                // new Rotation3d(
+                // 0,
+                // 0,
+                // Degree.of(-45).in(Radian))),
+                // PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
-                        "Front Right",
+                        "Front Left",
                         new Transform3d(
                                 new Translation3d(
                                         0.2794,
@@ -251,33 +262,33 @@ public final class Constants {
                                         0.264),
                                 new Rotation3d(
                                         0,
+                                        Degree.of(-20.0).in(Radian),
+                                        Degree.of(-16.38).in(Radian))),
+                        PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
+                new ApriltagCameraConfig(
+                        "Back Right",
+                        new Transform3d(
+                                new Translation3d(
+                                        -0.2794,
+                                        -0.2794,
+                                        0.264),
+                                new Rotation3d(
                                         0,
-                                        Degree.of(-45).in(Radian))),
+                                        Degree.of(-20.0).in(Radian),
+                                        Degree.of(163.62).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Back Left",
                         new Transform3d(
                                 new Translation3d(
                                         -0.2794,
-                                        -0.2794,
+                                        0.2794,
                                         0.264),
                                 new Rotation3d(
                                         0.0,
                                         0.0,
                                         Degree.of(135).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
-                // new ApriltagCameraConfig(
-                //         "Driver Cam",
-                //         new Transform3d(
-                //                 new Translation3d(
-                //                         -0.075,
-                //                         -0.09,
-                //                         1.05),
-                //                 new Rotation3d(
-                //                         0.0,
-                //                         Degree.of(-5).in(Radian),
-                //                         Degree.of(195).in(Radian))),
-                //         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR)
         };
 
         public static final AprilTagFieldLayout FIELD_LAYOUT = AprilTagFields.k2025ReefscapeWelded
@@ -294,7 +305,7 @@ public final class Constants {
 
         /** Debounce time for camera reads in seconds */
         public static final double CAMERA_DEBOUNCE_TIME = 0.100; // Increased to 100ms to reduce processing frequency
-        
+
         /** Maximum number of camera results to keep in memory */
         public static final int MAX_CAMERA_RESULTS = 1; // Only keep the latest result
     }
@@ -305,11 +316,11 @@ public final class Constants {
     public static final class FieldConstants {
         private FieldConstants() {
         }
-        
+
         /** Field dimensions for 2025 Reefscape */
         public static final double FIELD_LENGTH_METERS = 16.54;
         public static final double FIELD_WIDTH_METERS = 8.21;
-        
+
         /**
          * Point of Interest on the field
          * Contains a pose, alliance designation, and a descriptive tag
@@ -317,78 +328,82 @@ public final class Constants {
         public static final class POI {
             private final Pose2d pose;
             private final String tag;
-            
+
             public POI(Pose2d pose, String tag) {
                 this.pose = pose;
                 this.tag = tag;
             }
-            
+
             public Pose2d get(Alliance alliance) {
                 if (alliance == Alliance.Blue) {
                     return pose;
                 } else {
                     return new Pose2d(
-                        FIELD_LENGTH_METERS - pose.getTranslation().getX(),
-                        FIELD_WIDTH_METERS - pose.getTranslation().getY(),
-                        pose.getRotation().rotateBy(Rotation2d.fromDegrees(180.0))
-                    );
+                            FIELD_LENGTH_METERS - pose.getTranslation().getX(),
+                            FIELD_WIDTH_METERS - pose.getTranslation().getY(),
+                            pose.getRotation().rotateBy(Rotation2d.fromDegrees(180.0)));
                 }
             }
-            
+
             /**
              * Gets the descriptive tag for this POI
+             * 
              * @return The tag string
              */
             public String getTag() {
                 return tag;
             }
         }
-        
+
         /** All consolidated points of interest on the field */
         public static final POI[] ALL_POIS = {
-            // Intake stations
-            new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION"),
-            new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0)), "INTAKE_STATION"),
-            
-            // Coral reef bars
-            new POI(new Pose2d(5.9, 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
-            new POI(new Pose2d(5.3, 5.15, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
-            new POI(new Pose2d(5.0, 5.3, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
-            new POI(new Pose2d(4.0, 5.3, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
-            new POI(new Pose2d(3.7, 5.15, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
-            new POI(new Pose2d(3.1, 4.2, Rotation2d.fromDegrees(180.0)), "CORAL_REEF"),
-            new POI(new Pose2d(5.9, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
-            new POI(new Pose2d(5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
-            new POI(new Pose2d(5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
-            new POI(new Pose2d(4.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(230.0)), "CORAL_REEF"),
-            new POI(new Pose2d(3.7, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(240.0)), "CORAL_REEF"),
-            new POI(new Pose2d(3.1, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(180)), "CORAL_REEF"),
-            
-            // Alga stations
-            new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), "ALGA_STATION"),
-            
-            // Cages
-            new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 8.765, Rotation2d.fromDegrees(0.0)), "CAGE"),
-            new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 6.165, Rotation2d.fromDegrees(0.0)), "CAGE"),
-            new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 3.565, Rotation2d.fromDegrees(0.0)), "CAGE")
+                // Intake stations
+                new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION"),
+                new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0)), "INTAKE_STATION"),
+
+                // Coral reef bars
+                new POI(new Pose2d(5.9, 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
+                new POI(new Pose2d(5.3, 5.15, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
+                new POI(new Pose2d(5.0, 5.3, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
+                new POI(new Pose2d(4.0, 5.3, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
+                new POI(new Pose2d(3.7, 5.15, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
+                new POI(new Pose2d(3.1, 4.2, Rotation2d.fromDegrees(180.0)), "CORAL_REEF"),
+                new POI(new Pose2d(5.9, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
+                new POI(new Pose2d(5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
+                new POI(new Pose2d(5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
+                new POI(new Pose2d(4.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(230.0)), "CORAL_REEF"),
+                new POI(new Pose2d(3.7, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(240.0)), "CORAL_REEF"),
+                new POI(new Pose2d(3.1, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(180)), "CORAL_REEF"),
+
+                // Alga stations
+                new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), "ALGA_STATION"),
+
+                // Cages
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 8.765, Rotation2d.fromDegrees(0.0)), "CAGE"),
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 6.165, Rotation2d.fromDegrees(0.0)), "CAGE"),
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 3.565, Rotation2d.fromDegrees(0.0)), "CAGE")
         };
-        
-        /** Legacy POI lists for backward compatibility - reference the consolidated list by tag */
+
+        /**
+         * Legacy POI lists for backward compatibility - reference the consolidated list
+         * by tag
+         */
         public static final POI[] INTAKE_STATIONS = filterPoisByTag(ALL_POIS, "INTAKE_STATION");
         public static final POI[] CORAL_REEF_BARS = filterPoisByTag(ALL_POIS, "CORAL_REEF");
         public static final POI[] ALGA_STATIONS = filterPoisByTag(ALL_POIS, "ALGA_STATION");
         public static final POI[] CAGES = filterPoisByTag(ALL_POIS, "CAGE");
-        
+
         /**
          * Filters the master POI list by tag
+         * 
          * @param pois The array of POIs to filter
-         * @param tag The tag to match
+         * @param tag  The tag to match
          * @return Array of POIs with the matching tag
          */
         private static POI[] filterPoisByTag(POI[] pois, String tag) {
             return java.util.Arrays.stream(pois)
-                .filter(poi -> poi.getTag().equals(tag))
-                .toArray(POI[]::new);
+                    .filter(poi -> poi.getTag().equals(tag))
+                    .toArray(POI[]::new);
         }
     }
 }
