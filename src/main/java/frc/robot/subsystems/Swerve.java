@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Radian;
 
 import java.io.File;
 import java.util.function.Supplier;
@@ -17,7 +19,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -296,15 +297,35 @@ public class Swerve extends SubsystemBase {
      * @param pose the target Pose2d to drive to
      * @return a Command that will drive the robot to the specified pose
      */
-    public Command driveToPose(Pose2d pose) {
+    public Command driveToPose(Pose2d targetPose) {
+        // Use conservative constraints for accurate trajectory following
         PathConstraints constraints = new PathConstraints(
-                drivebase.getMaximumChassisVelocity(), 4.0,
-                drivebase.getMaximumChassisAngularVelocity(), Units.degreesToRadians(720));
-
-        return AutoBuilder.pathfindToPose(
-                pose,
-                constraints,
-                edu.wpi.first.units.Units.MetersPerSecond.of(0));
+            4.0,  // max velocity (m/s)
+            1.0,  // max acceleration (m/s²)
+            1.0,  // max angular velocity (rad/s)
+            Degree.of(90).in(Radian) // max angular acceleration (rad/s²)
+        );
+        // Build the path following command with pathplanner's AutoBuilder
+        Command pathCommand = AutoBuilder.pathfindToPose(
+            targetPose,
+            constraints,
+            MetersPerSecond.of(0)
+        );
+        // After path following, hold the position indefinitely using simple P controllers
+        final double kPx = -1.0;
+        final double kPy = -1.0;
+        final double kPTheta = 1.0;
+        Command holdCommand = run(() -> {
+            Pose2d current = getPose();
+            double errorX = targetPose.getX() - current.getX();
+            double errorY = targetPose.getY() - current.getY();
+            double errorTheta = targetPose.getRotation().getRadians() - current.getRotation().getRadians();
+            double vx = kPx * errorX;
+            double vy = kPy * errorY;
+            double omega = kPTheta * errorTheta;
+            drivebase.setChassisSpeeds(new ChassisSpeeds(vx, vy, omega));
+        });
+        return pathCommand.andThen(holdCommand);  // This command never finishes on its own
     }
     
     /**
