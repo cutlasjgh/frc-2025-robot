@@ -300,9 +300,9 @@ public class Swerve extends SubsystemBase {
     public Command driveToPose(Pose2d targetPose) {
         // Use conservative constraints for accurate trajectory following
         PathConstraints constraints = new PathConstraints(
-            4.0,  // max velocity (m/s)
-            1.0,  // max acceleration (m/s²)
-            1.0,  // max angular velocity (rad/s)
+            5.0,  // max velocity (m/s)
+            2.0,  // max acceleration (m/s²)
+            2.0,  // max angular velocity (rad/s)
             Degree.of(90).in(Radian) // max angular acceleration (rad/s²)
         );
         // Build the path following command with pathplanner's AutoBuilder
@@ -311,19 +311,29 @@ public class Swerve extends SubsystemBase {
             constraints,
             MetersPerSecond.of(0)
         );
+        
         // After path following, hold the position indefinitely using simple P controllers
-        final double kPx = -1.0;
-        final double kPy = -1.0;
+        final double kPx = 7.5;
+        final double kPy = 7.5;
         final double kPTheta = 1.0;
         Command holdCommand = run(() -> {
             Pose2d current = getPose();
             double errorX = targetPose.getX() - current.getX();
             double errorY = targetPose.getY() - current.getY();
-            double errorTheta = targetPose.getRotation().getRadians() - current.getRotation().getRadians();
+            double errorTheta = targetPose.getRotation().minus(current.getRotation()).getRadians();
+            
+            // Calculate velocities with P controller
             double vx = kPx * errorX;
             double vy = kPy * errorY;
             double omega = kPTheta * errorTheta;
-            drivebase.setChassisSpeeds(new ChassisSpeeds(vx, vy, omega));
+            
+            // Clamp x and y velocities between -1 and 1 m/s
+            vx = Math.max(-1.0, Math.min(1.0, vx));
+            vy = Math.max(-1.0, Math.min(1.0, vy));
+            
+            ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds(vx, vy, omega);
+            ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds, current.getRotation());
+            drivebase.setChassisSpeeds(robotRelativeSpeeds);
         });
         return pathCommand.andThen(holdCommand);  // This command never finishes on its own
     }

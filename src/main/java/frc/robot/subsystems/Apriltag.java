@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ApriltagConstants;
+import frc.robot.Constants.ApriltagConstants.ApriltagCameraConfig;
 import swervelib.SwerveDrive;
 
 /**
@@ -237,9 +238,6 @@ public final class Apriltag extends SubsystemBase {
 
         /** Results cache to avoid unnecessary queries */
         public List<PhotonPipelineResult> resultsList = new ArrayList<>();
-        
-        /** Maximum number of results to keep in memory */
-        private static final int MAX_RESULTS_CACHE_SIZE = 5;
 
         /** Last timestamp when camera was read */
         private double lastReadTimestamp = 0;
@@ -340,7 +338,7 @@ public final class Apriltag extends SubsystemBase {
                         Double.compare(b.getTimestampSeconds(), a.getTimestampSeconds()));
                         
                     // Trim the list if it exceeds the maximum cache size
-                    while (resultsList.size() > MAX_RESULTS_CACHE_SIZE) {
+                    while (resultsList.size() > ApriltagConstants.MAX_CAMERA_RESULTS) {
                         resultsList.remove(resultsList.size() - 1);
                     }
                 }

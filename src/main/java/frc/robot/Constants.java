@@ -182,9 +182,8 @@ public final class Constants {
                 "ZERO", new ArmState(ELBOW_FRONT_ANGLE, ELEVATOR_MIN_POSITION),
                 "INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)),
                 "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
-                "MID", new ArmState(Degree.of(-35), Inch.of(0.0)),
-                "HIGH", new ArmState(Degree.of(-30), Inch.of(14.0)),
-                "CLIMB", new ArmState(Degree.of(-25), Inch.of(15.0)));
+                "MID", new ArmState(Degree.of(-30), Inch.of(0.0)),
+                "HIGH", new ArmState(Degree.of(-30), Inch.of(15.0)));
     }
 
     /**
@@ -287,7 +286,7 @@ public final class Constants {
                                 new Rotation3d(
                                         0.0,
                                         0.0,
-                                        Degree.of(135).in(Radian))),
+                                        Degree.of(196.38).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
         };
 
@@ -298,16 +297,16 @@ public final class Constants {
         public static final double MAXIMUM_AMBIGUITY = 0.25;
 
         /** Standard deviations for single tag pose estimation */
-        public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(4, 4, 8);
+        public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(6, 6, 12);
 
         /** Standard deviations for multi-tag pose estimation */
-        public static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 1);
+        public static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(1, 1, 2);
 
         /** Debounce time for camera reads in seconds */
-        public static final double CAMERA_DEBOUNCE_TIME = 0.100; // Increased to 100ms to reduce processing frequency
+        public static final double CAMERA_DEBOUNCE_TIME = 0.150;
 
         /** Maximum number of camera results to keep in memory */
-        public static final int MAX_CAMERA_RESULTS = 1; // Only keep the latest result
+        public static final int MAX_CAMERA_RESULTS = 5;
     }
 
     /**
@@ -318,8 +317,8 @@ public final class Constants {
         }
 
         /** Field dimensions for 2025 Reefscape */
-        public static final double FIELD_LENGTH_METERS = 16.54;
-        public static final double FIELD_WIDTH_METERS = 8.21;
+        public static final double FIELD_LENGTH_METERS = 17.548;
+        public static final double FIELD_WIDTH_METERS = 8.052;
 
         /**
          * Point of Interest on the field
@@ -359,7 +358,7 @@ public final class Constants {
         public static final POI[] ALL_POIS = {
                 // Intake stations
                 new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION"),
-                new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(-126.0)), "INTAKE_STATION"),
+                new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(234.0)), "INTAKE_STATION"),
 
                 // Coral reef bars
                 new POI(new Pose2d(5.9, 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
@@ -379,9 +378,9 @@ public final class Constants {
                 new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), "ALGA_STATION"),
 
                 // Cages
-                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 8.765, Rotation2d.fromDegrees(0.0)), "CAGE"),
-                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 6.165, Rotation2d.fromDegrees(0.0)), "CAGE"),
-                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 3.565, Rotation2d.fromDegrees(0.0)), "CAGE")
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 7.265, Rotation2d.fromDegrees(0.0)), "CAGE"),
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 6.175, Rotation2d.fromDegrees(0.0)), "CAGE"),
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 5.1, Rotation2d.fromDegrees(0.0)), "CAGE")
         };
 
         /**
