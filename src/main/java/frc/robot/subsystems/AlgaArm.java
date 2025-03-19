@@ -74,6 +74,10 @@ public class AlgaArm extends SubsystemBase {
         return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).onlyWhile(hasAlga).withName("algaDrop");
     }
 
+    public Command release() {
+        return drop().withTimeout(0.1);
+    }
+
     public Command stop() {
         return run(() -> algaMotor.set(0)).withName("algaStop");
     }
