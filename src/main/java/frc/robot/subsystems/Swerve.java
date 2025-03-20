@@ -301,7 +301,7 @@ public class Swerve extends SubsystemBase {
         // Use conservative constraints for accurate trajectory following
         PathConstraints constraints = new PathConstraints(
             5.0,  // max velocity (m/s)
-            2.0,  // max acceleration (m/s²)
+            1.0,  // max acceleration (m/s²)
             2.0,  // max angular velocity (rad/s)
             Degree.of(90).in(Radian) // max angular acceleration (rad/s²)
         );
