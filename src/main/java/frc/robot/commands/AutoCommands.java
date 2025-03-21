@@ -49,16 +49,17 @@ public class AutoCommands {
         CoralArm coralArm = CoralArm.getInstance();
         AlgaArm algaArm = AlgaArm.getInstance();
         CoralManipulator coralManipulator = CoralManipulator.getInstance();
-        Alliance alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
-
-        Pose2d firstPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "i").get(alliance);
-        Pose2d intakePose = FieldConstants.getPoiByTagAndAddress("INTAKE_STATION", "left").get(alliance);
-        Pose2d secondPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "j").get(alliance);
 
         return Commands.sequence(
+                // First get the alliance when the command starts executing
+                Commands.runOnce(() -> {}),
                 // Run swerve.driveToPose once (scheduling the command) along with other actions
                 Commands.parallel(
-                        Commands.runOnce(() -> swerve.driveToPose(firstPose).schedule()),
+                        Commands.runOnce(() -> {
+                            Alliance alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
+                            Pose2d firstPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "i").get(alliance);
+                            swerve.driveToPose(firstPose).schedule();
+                        }),
                         coralArm.setMid(),
                         algaArm.release()),
                 // Wait until robot velocity is low
@@ -72,12 +73,20 @@ public class AutoCommands {
                 coralManipulator.drop().withTimeout(1.5),
                 // Intake new coral
                 Commands.parallel(
-                        Commands.runOnce(() -> swerve.driveToPose(intakePose).schedule()),
+                        Commands.runOnce(() -> {
+                            Alliance alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
+                            Pose2d intakePose = FieldConstants.getPoiByTagAndAddress("INTAKE_STATION", "left").get(alliance);
+                            swerve.driveToPose(intakePose).schedule();
+                        }),
                         Commands.waitSeconds(1.0).andThen(coralArm.setIntake()),
                         coralManipulator.intake()),
                 // Drive back
                 Commands.parallel(
-                        Commands.runOnce(() -> swerve.driveToPose(secondPose).schedule()),
+                        Commands.runOnce(() -> {
+                            Alliance alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
+                            Pose2d secondPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "j").get(alliance);
+                            swerve.driveToPose(secondPose).schedule();
+                        }),
                         coralArm.setMid(),
                         algaArm.release()),
                 // Wait until robot velocity is low
@@ -97,16 +106,15 @@ public class AutoCommands {
         CoralArm coralArm = CoralArm.getInstance();
         AlgaArm algaArm = AlgaArm.getInstance();
         CoralManipulator coralManipulator = CoralManipulator.getInstance();
-        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-
-        Pose2d firstPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "f").get(alliance);
-        Pose2d intakePose = FieldConstants.getPoiByTagAndAddress("INTAKE_STATION", "right").get(alliance);
-        Pose2d secondPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "e").get(alliance);
 
         return Commands.sequence(
                 // Run swerve.driveToPose once (scheduling the command) along with other actions
                 Commands.parallel(
-                        Commands.runOnce(() -> swerve.driveToPose(firstPose).schedule()),
+                        Commands.runOnce(() -> {
+                            Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+                            Pose2d firstPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "f").get(alliance);
+                            swerve.driveToPose(firstPose).schedule();
+                        }),
                         coralArm.setMid(),
                         algaArm.release()),
                 // Wait until robot velocity is low
@@ -120,12 +128,20 @@ public class AutoCommands {
                 coralManipulator.drop().withTimeout(1.5),
                 // Intake new coral
                 Commands.parallel(
-                        Commands.runOnce(() -> swerve.driveToPose(intakePose).schedule()),
+                        Commands.runOnce(() -> {
+                            Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+                            Pose2d intakePose = FieldConstants.getPoiByTagAndAddress("INTAKE_STATION", "right").get(alliance);
+                            swerve.driveToPose(intakePose).schedule();
+                        }),
                         Commands.waitSeconds(1.0).andThen(coralArm.setIntake()),
                         coralManipulator.intake()),
                 // Drive back
                 Commands.parallel(
-                        Commands.runOnce(() -> swerve.driveToPose(secondPose).schedule()),
+                        Commands.runOnce(() -> {
+                            Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+                            Pose2d secondPose = FieldConstants.getPoiByTagAndAddress("CORAL_REEF", "e").get(alliance);
+                            swerve.driveToPose(secondPose).schedule();
+                        }),
                         coralArm.setMid(),
                         algaArm.release()),
                 // Wait until robot velocity is low
