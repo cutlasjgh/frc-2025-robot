@@ -884,11 +884,8 @@ public class CustomSwerveInput implements Supplier<ChassisSpeeds> {
             }
             case HEADING -> {
                 if (headingSupplier.isPresent()) {
-                    // Use direct heading supplier
-                    Rotation2d targetHeading = applyHeadingOffset(
-                            applyAllianceAwareRotation(
-                                    headingSupplier.get().get()));
-
+                    // Use direct heading supplier without alliance flipping (raw field relative)
+                    Rotation2d targetHeading = applyHeadingOffset(headingSupplier.get().get());
                     omegaRadiansPerSecond = swerveController.headingCalculate(
                             swerveDrive.getOdometryHeading().getRadians(),
                             targetHeading.getRadians());
@@ -900,10 +897,8 @@ public class CustomSwerveInput implements Supplier<ChassisSpeeds> {
                                     applyAllianceAwareRotation(
                                             Rotation2d.fromRadians(
                                                     swerveController.getJoystickAngle(
-                                                            controllerHeadingX.get()
-                                                                    .getAsDouble(),
-                                                            controllerHeadingY.get()
-                                                                    .getAsDouble()))))
+                                                            controllerHeadingX.get().getAsDouble(),
+                                                            controllerHeadingY.get().getAsDouble()))))
                                     .getRadians());
 
                     // Prevent rotation if controller heading inputs are not past axisDeadband

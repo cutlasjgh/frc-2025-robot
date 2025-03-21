@@ -130,7 +130,6 @@ public class RobotContainer {
     // DEFAULT COMMAND - Field-oriented drive with automatic heading
     Command driveFieldOrientedDirectAngle = swerveDrive.driveFieldOriented(driveInputStream.copy()
         .withHeading(swerveDrive.createPointToClosestSupplier(Constants.FieldConstants.ALL_POIS))
-        .allianceRelativeControl(false)
         .headingWhile(true));
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
