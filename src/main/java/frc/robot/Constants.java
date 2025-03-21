@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
+import com.pathplanner.lib.util.FlippingUtil;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.units.measure.Angle;
@@ -256,9 +258,9 @@ public final class Constants {
                         "Front Left",
                         new Transform3d(
                                 new Translation3d(
-                                        0.2794,
-                                        0.2794,
-                                        0.264),
+                                        0.27305,
+                                        0.28448,
+                                        0.2921),
                                 new Rotation3d(
                                         0,
                                         Degree.of(-20.0).in(Radian),
@@ -269,8 +271,8 @@ public final class Constants {
                         new Transform3d(
                                 new Translation3d(
                                         -0.2794,
-                                        -0.2794,
-                                        0.264),
+                                        -0.3175,
+                                        0.2921),
                                 new Rotation3d(
                                         0,
                                         Degree.of(-20.0).in(Radian),
@@ -280,9 +282,9 @@ public final class Constants {
                         "Back Left",
                         new Transform3d(
                                 new Translation3d(
-                                        -0.2794,
-                                        0.2794,
-                                        0.264),
+                                        -0.28194,
+                                        0.3048,
+                                        0.2667),
                                 new Rotation3d(
                                         0.0,
                                         0.0,
@@ -327,20 +329,19 @@ public final class Constants {
         public static final class POI {
             private final Pose2d pose;
             private final String tag;
+            private final String addr;
 
-            public POI(Pose2d pose, String tag) {
+            public POI(Pose2d pose, String tag, String addr) {
                 this.pose = pose;
                 this.tag = tag;
+                this.addr = addr;
             }
 
             public Pose2d get(Alliance alliance) {
                 if (alliance == Alliance.Blue) {
                     return pose;
                 } else {
-                    return new Pose2d(
-                            FIELD_LENGTH_METERS - pose.getTranslation().getX(),
-                            FIELD_WIDTH_METERS - pose.getTranslation().getY(),
-                            pose.getRotation().rotateBy(Rotation2d.fromDegrees(180.0)));
+                    return FlippingUtil.flipFieldPose(pose);
                 }
             }
 
@@ -352,35 +353,45 @@ public final class Constants {
             public String getTag() {
                 return tag;
             }
+
+            /**
+             * Gets the addr for the POI
+             * 
+             * @return The addr string
+             */
+            public String getAddr() {
+                return addr;
+            }
         }
 
         /** All consolidated points of interest on the field */
         public static final POI[] ALL_POIS = {
                 // Intake stations
-                new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION"),
-                new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(234.0)), "INTAKE_STATION"),
+                new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
+                new POI(new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(234.0)), "INTAKE_STATION",
+                        "right"),
 
                 // Coral reef bars
-                new POI(new Pose2d(5.9, 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
-                new POI(new Pose2d(5.3, 5.15, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
-                new POI(new Pose2d(5.0, 5.3, Rotation2d.fromDegrees(60.0)), "CORAL_REEF"),
-                new POI(new Pose2d(4.0, 5.3, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
-                new POI(new Pose2d(3.7, 5.15, Rotation2d.fromDegrees(120.0)), "CORAL_REEF"),
-                new POI(new Pose2d(3.1, 4.2, Rotation2d.fromDegrees(180.0)), "CORAL_REEF"),
-                new POI(new Pose2d(5.9, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF"),
-                new POI(new Pose2d(5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
-                new POI(new Pose2d(5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(300.0)), "CORAL_REEF"),
-                new POI(new Pose2d(4.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(230.0)), "CORAL_REEF"),
-                new POI(new Pose2d(3.7, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(240.0)), "CORAL_REEF"),
-                new POI(new Pose2d(3.1, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(180)), "CORAL_REEF"),
+                new POI(new Pose2d(5.9, 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF", "h"),
+                new POI(new Pose2d(5.3, 5.15, Rotation2d.fromDegrees(60.0)), "CORAL_REEF", "i"),
+                new POI(new Pose2d(5.0, 5.3, Rotation2d.fromDegrees(60.0)), "CORAL_REEF", "j"),
+                new POI(new Pose2d(4.0, 5.3, Rotation2d.fromDegrees(120.0)), "CORAL_REEF", "k"),
+                new POI(new Pose2d(3.7, 5.15, Rotation2d.fromDegrees(120.0)), "CORAL_REEF", "l"),
+                new POI(new Pose2d(3.1, 4.2, Rotation2d.fromDegrees(180.0)), "CORAL_REEF", "a"),
+                new POI(new Pose2d(5.9, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(0)), "CORAL_REEF", "g"),
+                new POI(new Pose2d(5.3, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(300.0)), "CORAL_REEF", "f"),
+                new POI(new Pose2d(5.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(300.0)), "CORAL_REEF", "e"),
+                new POI(new Pose2d(4.0, FIELD_WIDTH_METERS - 5.3, Rotation2d.fromDegrees(230.0)), "CORAL_REEF", "d"),
+                new POI(new Pose2d(3.7, FIELD_WIDTH_METERS - 5.15, Rotation2d.fromDegrees(240.0)), "CORAL_REEF", "c"),
+                new POI(new Pose2d(3.1, FIELD_WIDTH_METERS - 4.2, Rotation2d.fromDegrees(180)), "CORAL_REEF", "b"),
 
                 // Alga stations
-                new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), "ALGA_STATION"),
+                new POI(new Pose2d(6.0, 0.75, Rotation2d.fromDegrees(180.0)), "ALGA_STATION", "default"),
 
                 // Cages
-                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 7.265, Rotation2d.fromDegrees(0.0)), "CAGE"),
-                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 6.175, Rotation2d.fromDegrees(0.0)), "CAGE"),
-                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 5.1, Rotation2d.fromDegrees(0.0)), "CAGE")
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 7.265, Rotation2d.fromDegrees(0.0)), "CAGE", "left"),
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 6.175, Rotation2d.fromDegrees(0.0)), "CAGE", "middle"),
+                new POI(new Pose2d(FIELD_LENGTH_METERS / 2, 5.1, Rotation2d.fromDegrees(0.0)), "CAGE", "right")
         };
 
         /**
@@ -403,6 +414,20 @@ public final class Constants {
             return java.util.Arrays.stream(pois)
                     .filter(poi -> poi.getTag().equals(tag))
                     .toArray(POI[]::new);
+        }
+
+        /**
+         * Finds a specific POI by its tag and address
+         * 
+         * @param tag     The tag to match
+         * @param address The address value to match
+         * @return The matching POI or null if not found
+         */
+        public static POI getPoiByTagAndAddress(String tag, String address) {
+            return java.util.Arrays.stream(ALL_POIS)
+                    .filter(poi -> poi.getTag().equals(tag) && poi.getAddr() == address)
+                    .findFirst()
+                    .orElse(null);
         }
     }
 }

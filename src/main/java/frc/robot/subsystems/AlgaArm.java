@@ -75,7 +75,9 @@ public class AlgaArm extends SubsystemBase {
     }
 
     public Command release() {
-        return drop().withTimeout(0.1);
+        return drop().withTimeout(0.1).andThen(run(() -> {
+            algaMotor.set(0.0);
+        }).withTimeout(0.1));
     }
 
     public Command stop() {
