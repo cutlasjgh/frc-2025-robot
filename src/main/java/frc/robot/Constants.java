@@ -275,7 +275,7 @@ public final class Constants {
                                         0.2667),
                                 new Rotation3d(
                                         0.0,
-                                        0.0,
+                                        Degree.of(-10.0).in(Radian),
                                         Degree.of(196.38).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
         };
@@ -286,10 +286,10 @@ public final class Constants {
         public static final double MAXIMUM_AMBIGUITY = 0.25;
 
         /** Standard deviations for single tag pose estimation */
-        public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(6, 6, 12);
+        public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(4, 4, 8);
 
         /** Standard deviations for multi-tag pose estimation */
-        public static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(1, 1, 2);
+        public static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 1);
 
         /** Debounce time for camera reads in seconds */
         public static final double CAMERA_DEBOUNCE_TIME = 0.150;
