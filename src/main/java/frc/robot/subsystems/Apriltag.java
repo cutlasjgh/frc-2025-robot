@@ -42,12 +42,12 @@ public final class Apriltag extends SubsystemBase {
      * The singleton instance of the {@link Apriltag} subsystem.
      */
     private static Apriltag instance = null;
-    
+
     /**
      * Collection of all cameras on the robot.
      */
     private final Map<String, Camera> cameras = new HashMap<>();
-    
+
     /**
      * NetworkTable for publishing apriltag detection state.
      */
@@ -72,24 +72,23 @@ public final class Apriltag extends SubsystemBase {
         // Initialize cameras from Constants
         for (ApriltagConstants.ApriltagCameraConfig cameraConfig : ApriltagConstants.PHOTON_CAMERAS) {
             Camera camera = new Camera(
-                cameraConfig.getName(),
-                cameraConfig.getTransform(),
-                cameraConfig.getStrategy(),
-                ApriltagConstants.SINGLE_TAG_STD_DEVS,
-                ApriltagConstants.MULTI_TAG_STD_DEVS
-            );
-            
+                    cameraConfig.getName(),
+                    cameraConfig.getTransform(),
+                    cameraConfig.getStrategy(),
+                    ApriltagConstants.SINGLE_TAG_STD_DEVS,
+                    ApriltagConstants.MULTI_TAG_STD_DEVS);
+
             cameras.put(camera.getName(), camera);
-            
+
             if (!camera.camera.isConnected()) {
                 DriverStation.reportWarning(
-                    "PhotonCamera " + camera.getName() + " is not connected!",
-                    false);
+                        "PhotonCamera " + camera.getName() + " is not connected!",
+                        false);
             }
-            
+
             SmartDashboard.putBoolean(
-                camera.getName() + " Connected", 
-                camera.camera.isConnected());
+                    camera.getName() + " Connected",
+                    camera.camera.isConnected());
         }
     }
 
@@ -100,7 +99,7 @@ public final class Apriltag extends SubsystemBase {
     public void periodic() {
         SwerveDrive swerveDrive = Swerve.getInstance().getSwerveDrive();
         Pose2d currentPose = Swerve.getInstance().getPose();
-        
+
         // Track camera information for NetworkTables
         int totalTagsDetected = 0;
         boolean anyPoseUpdated = false;
@@ -108,14 +107,15 @@ public final class Apriltag extends SubsystemBase {
         // Process all cameras
         for (Camera camera : cameras.values()) {
             SmartDashboard.putBoolean(
-                camera.getName() + " Connected", 
-                camera.camera.isConnected());
-            
-            if (!camera.camera.isConnected()) continue;
+                    camera.getName() + " Connected",
+                    camera.camera.isConnected());
+
+            if (!camera.camera.isConnected())
+                continue;
 
             // Get and process vision measurements
             Optional<EstimatedRobotPose> estimatedPose = camera.getEstimatedGlobalPose(currentPose);
-            
+
             // Check how many tags this camera sees
             int cameraTagCount = 0;
             for (PhotonPipelineResult result : camera.resultsList) {
@@ -124,24 +124,35 @@ public final class Apriltag extends SubsystemBase {
                 }
             }
             totalTagsDetected += cameraTagCount;
-            
+
             // Publish camera-specific data
             NetworkTable cameraTable = table.getSubTable(camera.getName());
             cameraTable.getEntry("tagsDetected").setInteger(cameraTagCount);
             cameraTable.getEntry("isConnected").setBoolean(camera.camera.isConnected());
-            
+
             if (estimatedPose.isPresent()) {
                 anyPoseUpdated = true;
                 EstimatedRobotPose pose = estimatedPose.get();
+
+                // Extract targets from the most recent result
+                List<PhotonTrackedTarget> targets = new ArrayList<>();
+                if (!camera.resultsList.isEmpty()) {
+                    PhotonPipelineResult latestResult = camera.resultsList.get(0);
+                    if (latestResult.hasTargets()) {
+                        targets = latestResult.getTargets();
+                    }
+                }
+
+                // Add vision measurement to swerve drive
                 swerveDrive.addVisionMeasurement(
-                    pose.estimatedPose.toPose2d(),
-                    pose.timestampSeconds,
-                    camera.curStdDevs);
-                
+                        pose.estimatedPose.toPose2d(),
+                        pose.timestampSeconds,
+                        getEstimationStdDevs(pose.estimatedPose.toPose2d(), targets));
+
                 cameraTable.getEntry("lastPoseTimestamp").setDouble(pose.timestampSeconds);
             }
         }
-        
+
         // Update global vision status
         table.getEntry("totalTagsDetected").setInteger(totalTagsDetected);
         table.getEntry("visionUpdatingPose").setBoolean(anyPoseUpdated);
@@ -151,7 +162,8 @@ public final class Apriltag extends SubsystemBase {
      * Calculate a target pose relative to an AprilTag on the field.
      *
      * @param aprilTag    The ID of the AprilTag
-     * @param robotOffset The offset to apply to the pose for proper robot positioning
+     * @param robotOffset The offset to apply to the pose for proper robot
+     *                    positioning
      * @return The target pose for the robot relative to the AprilTag
      */
     public Pose2d getAprilTagPose(int aprilTag, Transform2d robotOffset) {
@@ -178,14 +190,15 @@ public final class Apriltag extends SubsystemBase {
     /**
      * Get tracked target from a camera for a specific AprilTag ID.
      *
-     * @param id     AprilTag ID
+     * @param id         AprilTag ID
      * @param cameraName Name of the camera to check
      * @return Tracked target, or null if not found
      */
     public PhotonTrackedTarget getTargetFromId(int id, String cameraName) {
         Camera camera = cameras.get(cameraName);
-        if (camera == null) return null;
-        
+        if (camera == null)
+            return null;
+
         for (PhotonPipelineResult result : camera.resultsList) {
             if (result.hasTargets()) {
                 for (PhotonTrackedTarget target : result.getTargets()) {
@@ -240,21 +253,21 @@ public final class Apriltag extends SubsystemBase {
 
         /** Last timestamp when camera was read */
         private double lastReadTimestamp = 0;
-        
+
         /** Count of times that the odometry thinks we're far from the April Tag. */
         private int longDistancePoseEstimationCount = 0;
 
         /**
          * Constructs a camera configuration.
          *
-         * @param name Camera name in PhotonVision
-         * @param transform Camera transform relative to robot
-         * @param strategy Pose estimation strategy
+         * @param name             Camera name in PhotonVision
+         * @param transform        Camera transform relative to robot
+         * @param strategy         Pose estimation strategy
          * @param singleTagStdDevs Standard deviations for single tag detection
-         * @param multiTagStdDevs Standard deviations for multi-tag detection
+         * @param multiTagStdDevs  Standard deviations for multi-tag detection
          */
-        public Camera(String name, Transform3d transform, PoseStrategy strategy, 
-               Matrix<N3, N1> singleTagStdDevs, Matrix<N3, N1> multiTagStdDevs) {
+        public Camera(String name, Transform3d transform, PoseStrategy strategy,
+                Matrix<N3, N1> singleTagStdDevs, Matrix<N3, N1> multiTagStdDevs) {
             this.latencyAlert = new Alert("'" + name + "' Camera is experiencing high latency.", AlertType.kWarning);
             this.camera = new PhotonCamera(name);
             this.robotToCamTransform = transform;
@@ -263,9 +276,9 @@ public final class Apriltag extends SubsystemBase {
             this.curStdDevs = singleTagStdDevs;
 
             this.poseEstimator = new PhotonPoseEstimator(
-                ApriltagConstants.FIELD_LAYOUT,
-                strategy,
-                robotToCamTransform);
+                    ApriltagConstants.FIELD_LAYOUT,
+                    strategy,
+                    robotToCamTransform);
             this.poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
         }
 
@@ -286,13 +299,13 @@ public final class Apriltag extends SubsystemBase {
          */
         public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d currentPose) {
             updateUnreadResults();
-            
+
             if (estimatedRobotPose.isPresent()) {
                 // Filter poses that are too far from current position
                 double distance = PhotonUtils.getDistanceToPose(
-                    currentPose, 
-                    estimatedRobotPose.get().estimatedPose.toPose2d());
-                    
+                        currentPose,
+                        estimatedRobotPose.get().estimatedPose.toPose2d());
+
                 if (distance > 1.0) {
                     longDistancePoseEstimationCount++;
                     if (longDistancePoseEstimationCount < 10) {
@@ -302,7 +315,7 @@ public final class Apriltag extends SubsystemBase {
                     longDistancePoseEstimationCount = 0;
                 }
             }
-            
+
             return estimatedRobotPose;
         }
 
@@ -313,37 +326,36 @@ public final class Apriltag extends SubsystemBase {
             double mostRecentTimestamp = resultsList.isEmpty() ? 0.0 : resultsList.get(0).getTimestampSeconds();
             double currentTimestamp = NetworkTablesJNI.now() / 1000000.0;
             double debounceTime = ApriltagConstants.CAMERA_DEBOUNCE_TIME;
-            
+
             for (PhotonPipelineResult result : resultsList) {
                 mostRecentTimestamp = Math.max(mostRecentTimestamp, result.getTimestampSeconds());
             }
-            
+
             if ((resultsList.isEmpty() || (currentTimestamp - mostRecentTimestamp >= debounceTime)) &&
-                (currentTimestamp - lastReadTimestamp) >= debounceTime) {
-                
+                    (currentTimestamp - lastReadTimestamp) >= debounceTime) {
+
                 // Get all unread results
                 List<PhotonPipelineResult> newResults = camera.getAllUnreadResults();
-                
+
                 // Filter results that have targets and add them to the list
                 for (PhotonPipelineResult result : newResults) {
                     if (result.hasTargets()) {
                         resultsList.add(result);
                     }
                 }
-                
+
                 // Sort results by timestamp (newest first)
                 if (!resultsList.isEmpty()) {
-                    resultsList.sort((a, b) -> 
-                        Double.compare(b.getTimestampSeconds(), a.getTimestampSeconds()));
-                        
+                    resultsList.sort((a, b) -> Double.compare(b.getTimestampSeconds(), a.getTimestampSeconds()));
+
                     // Trim the list if it exceeds the maximum cache size
                     while (resultsList.size() > ApriltagConstants.MAX_CAMERA_RESULTS) {
                         resultsList.remove(resultsList.size() - 1);
                     }
                 }
-                
+
                 lastReadTimestamp = currentTimestamp;
-                    
+
                 if (!resultsList.isEmpty()) {
                     updateEstimatedGlobalPose();
                 }
@@ -355,7 +367,7 @@ public final class Apriltag extends SubsystemBase {
          */
         private void updateEstimatedGlobalPose() {
             Optional<EstimatedRobotPose> visionEst = Optional.empty();
-            
+
             for (var result : resultsList) {
                 // Filter by ambiguity if needed
                 if (result.hasTargets()) {
@@ -366,21 +378,21 @@ public final class Apriltag extends SubsystemBase {
                             bestAmbiguity = ambiguity;
                         }
                     }
-                    
+
                     // Skip if ambiguity is too high
                     if (bestAmbiguity > ApriltagConstants.MAXIMUM_AMBIGUITY) {
                         continue;
                     }
                 }
-                
+
                 visionEst = poseEstimator.update(result);
-                
+
                 if (visionEst.isPresent()) {
                     updateEstimationStdDevs(visionEst, result.getTargets());
                     break; // Use first good result
                 }
             }
-            
+
             estimatedRobotPose = visionEst;
         }
 
@@ -388,18 +400,18 @@ public final class Apriltag extends SubsystemBase {
          * Update standard deviations based on vision results.
          * 
          * @param estimatedPose Estimated pose
-         * @param targets Detected targets
+         * @param targets       Detected targets
          */
         private void updateEstimationStdDevs(
-            Optional<EstimatedRobotPose> estimatedPose, 
-            List<PhotonTrackedTarget> targets) {
-                
+                Optional<EstimatedRobotPose> estimatedPose,
+                List<PhotonTrackedTarget> targets) {
+
             if (estimatedPose.isEmpty()) {
                 // No pose input. Default to single-tag std devs
                 curStdDevs = singleTagStdDevs;
                 return;
             }
-            
+
             // Start heuristic calculation
             var estStdDevs = singleTagStdDevs;
             int numTags = 0;
@@ -413,7 +425,7 @@ public final class Apriltag extends SubsystemBase {
                 }
                 numTags++;
                 avgDist += tagPose.get().toPose2d().getTranslation()
-                    .getDistance(estimatedPose.get().estimatedPose.toPose2d().getTranslation());
+                        .getDistance(estimatedPose.get().estimatedPose.toPose2d().getTranslation());
             }
 
             if (numTags == 0) {
@@ -422,21 +434,71 @@ public final class Apriltag extends SubsystemBase {
             } else {
                 // One or more tags visible
                 avgDist /= numTags;
-                
+
                 // Use multi-tag std devs if multiple targets are visible
                 if (numTags > 1) {
                     estStdDevs = multiTagStdDevs;
                 }
-                
+
                 // Increase std devs based on distance
                 if (numTags == 1 && avgDist > 4) {
                     estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
                 } else {
                     estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
                 }
-                
+
                 curStdDevs = estStdDevs;
             }
         }
+    }
+
+    /**
+     * The standard deviations of the estimated pose from
+     * {@link #getEstimatedGlobalPose()}, for use
+     * with {@link edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
+     * SwerveDrivePoseEstimator}.
+     * This should only be used when there are targets visible.
+     *
+     * @param estimatedPose The estimated pose to guess standard deviations for.
+     * @param targets       The targets used in the calc for the pose.
+     * @return The calculated standard deviations. Or empty if not suitable for
+     *         estimation.
+     * @apiNote Calc is short for calculator by the way.
+     * @apiNote I'm just using slang guys.
+     */
+    public static Matrix<N3, N1> getEstimationStdDevs(
+            Pose2d estimatedPose, List<PhotonTrackedTarget> targets) {
+        int numTags = 0;
+        double avgDistance = 0;
+        for (PhotonTrackedTarget target : targets) {
+            var tagPose = ApriltagConstants.FIELD_LAYOUT.getTagPose(target.getFiducialId());
+            if (tagPose.isEmpty())
+                continue;
+
+            numTags++;
+            avgDistance += tagPose.get().toPose2d().getTranslation().getDistance(estimatedPose.getTranslation());
+        }
+
+        Matrix<N3, N1> stdDevs = ApriltagConstants.SINGLE_TAG_STD_DEVS;
+        if (numTags == 0) {
+            return stdDevs;
+        }
+
+        avgDistance /= numTags;
+
+        // Decrease std devs if multiple targets are visible
+        if (numTags > 1) {
+            stdDevs = ApriltagConstants.MULTI_TAG_STD_DEVS;
+        }
+
+        // Increase std devs based on average distance
+        if (numTags == 1 && avgDistance > ApriltagConstants.SINGLE_TAG_CUTOFF_METER) {
+            // Too far for only one tag, throw away
+            stdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+        } else {
+            stdDevs = stdDevs.times(1 + (avgDistance * avgDistance / 30.0));
+        }
+
+        return stdDevs;
     }
 }

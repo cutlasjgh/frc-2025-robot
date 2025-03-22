@@ -182,7 +182,7 @@ public final class Constants {
          */
         public static final Map<String, ArmState> ARM_SETPOINTS = Map.of(
                 "ZERO", new ArmState(ELBOW_FRONT_ANGLE, ELEVATOR_MIN_POSITION),
-                "INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)),
+                "INTAKE", new ArmState(Degree.of(70), Inch.of(1.25)),
                 "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
                 "MID", new ArmState(Degree.of(-30), Inch.of(0.0)),
                 "HIGH", new ArmState(Degree.of(-30), Inch.of(15.0)));
@@ -242,18 +242,6 @@ public final class Constants {
         }
 
         public static final ApriltagCameraConfig[] PHOTON_CAMERAS = {
-                // new ApriltagCameraConfig(
-                // "Front Right",
-                // new Transform3d(
-                // new Translation3d(
-                // 0.2794,
-                // 0.2794,
-                // 0.264),
-                // new Rotation3d(
-                // 0,
-                // 0,
-                // Degree.of(-45).in(Radian))),
-                // PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Front Left",
                         new Transform3d(
@@ -276,7 +264,7 @@ public final class Constants {
                                 new Rotation3d(
                                         0,
                                         Degree.of(-20.0).in(Radian),
-                                        Degree.of(163.62).in(Radian))),
+                                        Degree.of(-196.38).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Back Left",
@@ -292,8 +280,7 @@ public final class Constants {
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
         };
 
-        public static final AprilTagFieldLayout FIELD_LAYOUT = AprilTagFields.k2025ReefscapeWelded
-                .loadAprilTagLayoutField();
+        public static final AprilTagFieldLayout FIELD_LAYOUT = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
         /** Maximum allowed ambiguity for pose estimation (0-1, lower is better) */
         public static final double MAXIMUM_AMBIGUITY = 0.25;
@@ -306,6 +293,9 @@ public final class Constants {
 
         /** Debounce time for camera reads in seconds */
         public static final double CAMERA_DEBOUNCE_TIME = 0.150;
+
+        /** BULLSHIT */
+        public static final double SINGLE_TAG_CUTOFF_METER = 4;
 
         /** Maximum number of camera results to keep in memory */
         public static final int MAX_CAMERA_RESULTS = 5;
