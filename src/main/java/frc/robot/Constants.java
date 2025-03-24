@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Radian;
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
@@ -401,7 +402,7 @@ public final class Constants {
          * @return Array of POIs with the matching tag
          */
         private static POI[] filterPoisByTag(POI[] pois, String tag) {
-            return java.util.Arrays.stream(pois)
+            return Arrays.stream(pois)
                     .filter(poi -> poi.getTag().equals(tag))
                     .toArray(POI[]::new);
         }
@@ -414,7 +415,7 @@ public final class Constants {
          * @return The matching POI or null if not found
          */
         public static POI getPoiByTagAndAddress(String tag, String address) {
-            return java.util.Arrays.stream(ALL_POIS)
+            return Arrays.stream(ALL_POIS)
                     .filter(poi -> poi.getTag().equals(tag) && poi.getAddr() == address)
                     .findFirst()
                     .orElse(null);

@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -106,7 +107,7 @@ public class Swerve extends SubsystemBase {
      */
     private Rotation2d getAllianceRotation() {
         var alliance = DriverStation.getAlliance();
-        if (alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red) {
+        if (alliance.isPresent() && alliance.get() == Alliance.Red) {
             return Rotation2d.fromDegrees(180);
         }
         return Rotation2d.fromDegrees(0);
@@ -146,7 +147,7 @@ public class Swerve extends SubsystemBase {
                     () -> {
                         var alliance = DriverStation.getAlliance();
                         if (alliance.isPresent()) {
-                            return alliance.get() == DriverStation.Alliance.Red;
+                            return alliance.get() == Alliance.Red;
                         }
                         return false;
                     },
@@ -381,7 +382,7 @@ public class Swerve extends SubsystemBase {
             return null;
         }
         
-        var alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
+        var alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
         Pose2d currentPose = getPose();
         double minDistSq = Double.MAX_VALUE;
         int closestIndex = -1;
@@ -420,7 +421,7 @@ public class Swerve extends SubsystemBase {
             return null;
         }
         
-        var alliance = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue);
+        var alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
         Pose2d currentPose = getPose();
         double minDistSq = Double.MAX_VALUE;
         int closestIndex = -1;
