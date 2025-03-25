@@ -20,8 +20,9 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.RobotConstants;
+import frc.robot.helpers.POI;
+
 import java.io.File;
 import java.util.function.Supplier;
 import swervelib.SwerveDrive;
@@ -355,7 +356,7 @@ public class Swerve extends SubsystemBase {
    * @param points Array of POI objects to check
    * @return The Pose2d of the closest POI, or null if the array is empty
    */
-  public Pose2d getClosestPOI(FieldConstants.POI[] points) {
+  public Pose2d getClosestPOI(POI[] points) {
     if (points == null || points.length == 0) {
       return null;
     }
@@ -394,7 +395,7 @@ public class Swerve extends SubsystemBase {
    * @param tag The tag to filter by, or null to check all POIs
    * @return The Pose2d of the closest matching POI, or null if none found
    */
-  public Pose2d getClosestPOIByTag(FieldConstants.POI[] points, String tag) {
+  public Pose2d getClosestPOIByTag(POI[] points, String tag) {
     if (points == null || points.length == 0) {
       return null;
     }
@@ -439,7 +440,7 @@ public class Swerve extends SubsystemBase {
    * @return A supplier that provides the rotation toward the closest matching POI when called
    */
   public Supplier<Rotation2d> createPointToClosestSupplier(
-      FieldConstants.POI[] points, String tag) {
+      POI[] points, String tag) {
     return () -> {
       Pose2d closestPose = getClosestPOIByTag(points, tag);
       if (closestPose == null) {
@@ -455,7 +456,7 @@ public class Swerve extends SubsystemBase {
    * @param points Array of POIs to target.
    * @return A supplier that provides the rotation toward the closest matching POI when called.
    */
-  public Supplier<Rotation2d> createPointToClosestSupplier(FieldConstants.POI[] points) {
+  public Supplier<Rotation2d> createPointToClosestSupplier(POI[] points) {
     return createPointToClosestSupplier(points, null);
   }
 }

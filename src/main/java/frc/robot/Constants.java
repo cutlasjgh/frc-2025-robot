@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radian;
 
-import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
@@ -20,38 +19,15 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import frc.robot.helpers.PID;
+import frc.robot.helpers.POI;
+
 import java.util.Arrays;
 import java.util.Map;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 /** Constants used throughout the robot code. */
 public final class Constants {
-  /** PID control constants container. */
-  public static class PID {
-    /** Proportional gain. */
-    public final double p;
-
-    /** Integral gain. */
-    public final double i;
-
-    /** Derivative gain. */
-    public final double d;
-
-    /**
-     * Creates new PID constants.
-     *
-     * @param p Proportional gain
-     * @param i Integral gain
-     * @param d Derivative gain
-     */
-    private PID(double p, double i, double d) {
-      this.p = p;
-      this.i = i;
-      this.d = d;
-    }
-  }
-
   private Constants() {}
 
   /** Constants for basic robot characteristics. */
@@ -369,60 +345,6 @@ public final class Constants {
 
     /** Field width in meters. */
     public static final double FIELD_WIDTH_METERS = 8.052;
-
-    /**
-     * Point of Interest on the field Contains a pose, alliance designation, and a descriptive tag
-     */
-    public static final class POI {
-      private final Pose2d pose;
-      private final String tag;
-      private final String addr;
-
-      /**
-       * Creates a new POI.
-       *
-       * @param pose The pose of the POI.
-       * @param tag The tag of the POI.
-       * @param addr The address of the POI.
-       */
-      public POI(Pose2d pose, String tag, String addr) {
-        this.pose = pose;
-        this.tag = tag;
-        this.addr = addr;
-      }
-
-      /**
-       * Gets the pose of the POI for the given alliance.
-       *
-       * @param alliance The alliance to get the pose for.
-       * @return The pose of the POI for the given alliance.
-       */
-      public Pose2d get(Alliance alliance) {
-        if (alliance == Alliance.Blue) {
-          return pose;
-        } else {
-          return FlippingUtil.flipFieldPose(pose);
-        }
-      }
-
-      /**
-       * Gets the descriptive tag for this POI
-       *
-       * @return The tag string
-       */
-      public String getTag() {
-        return tag;
-      }
-
-      /**
-       * Gets the addr for the POI
-       *
-       * @return The addr string
-       */
-      public String getAddr() {
-        return addr;
-      }
-    }
 
     /** All consolidated points of interest on the field */
     public static final POI[] ALL_POIS = {
