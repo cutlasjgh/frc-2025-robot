@@ -87,10 +87,9 @@ public class AutoCommands {
                   return Math.abs(speeds.vxMetersPerSecond) < 0.1
                       && Math.abs(speeds.vyMetersPerSecond) < 0.1;
                 }),
-            Commands.waitSeconds(2.0), // Stabilization period to ensure proper positioning
 
             // Phase 3: Release coral at the first position
-            coralManipulator.drop().withTimeout(1.5),
+            coralManipulator.drop(),
 
             // Phase 4: Navigate to intake station while preparing for intake
             Commands.parallel(
@@ -125,10 +124,9 @@ public class AutoCommands {
                   return Math.abs(speeds.vxMetersPerSecond) < 0.1
                       && Math.abs(speeds.vyMetersPerSecond) < 0.1;
                 }),
-            Commands.waitSeconds(2.0), // Stabilization period
 
             // Phase 7: Release coral at the second position
-            coralManipulator.drop().withTimeout(1.5))
+            coralManipulator.drop())
         .withName("leftToReef Auto");
   }
 
@@ -170,10 +168,8 @@ public class AutoCommands {
                   return Math.abs(speeds.vxMetersPerSecond) < 0.1
                       && Math.abs(speeds.vyMetersPerSecond) < 0.1;
                 }),
-            Commands.waitSeconds(2.0), // Stabilization period to ensure proper positioning
-
             // Phase 3: Release coral at the first position
-            coralManipulator.drop().withTimeout(1.5),
+            coralManipulator.drop(),
 
             // Phase 4: Navigate to intake station while preparing for intake
             Commands.parallel(
@@ -208,10 +204,8 @@ public class AutoCommands {
                   return Math.abs(speeds.vxMetersPerSecond) < 0.1
                       && Math.abs(speeds.vyMetersPerSecond) < 0.1;
                 }),
-            Commands.waitSeconds(2.0), // Stabilization period
-
             // Phase 7: Release coral at the second position
-            coralManipulator.drop().withTimeout(1.5))
+            coralManipulator.drop())
         .withName("rightToReef Auto");
   }
 }

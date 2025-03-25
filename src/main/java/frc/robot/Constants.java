@@ -349,9 +349,9 @@ public final class Constants {
     /** All consolidated points of interest on the field */
     public static final POI[] ALL_POIS = {
       // Intake stations
-      new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
+      new POI(new Pose2d(1.125, 6.965, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
       new POI(
-          new Pose2d(1.25, FIELD_WIDTH_METERS - 7.0, Rotation2d.fromDegrees(234.0)),
+          new Pose2d(1.125, FIELD_WIDTH_METERS - 6.965, Rotation2d.fromDegrees(234.0)),
           "INTAKE_STATION",
           "right"),
 
