@@ -33,14 +33,15 @@ public class CoralManipulator extends SubsystemBase {
     return instance;
   }
 
-  private final SparkMax coralMotor =
-      new SparkMax(CoralManipulatorConstants.CAN_ID, MotorType.kBrushless);
-  private final DigitalInput coralSensor =
-      new DigitalInput(CoralManipulatorConstants.SENSOR_CHANNEL);
-  private final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("Robot").getSubTable("CoralManipulator");
+  private SparkMax coralMotor; 
+  private DigitalInput coralSensor; 
+  private NetworkTable table; 
 
   private CoralManipulator() {
+    coralMotor = new SparkMax(CoralManipulatorConstants.CAN_ID, MotorType.kBrushless);
+    coralSensor = new DigitalInput(CoralManipulatorConstants.SENSOR_CHANNEL);
+    table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("CoralManipulator");
+
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.idleMode(IdleMode.kBrake);
     sparkMaxConfig.inverted(CoralManipulatorConstants.INVERTED);

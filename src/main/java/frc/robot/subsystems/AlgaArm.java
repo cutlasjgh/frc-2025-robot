@@ -14,9 +14,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AlgaArmConstants;
 
-// Make this into commands that keep running until they are canceled or stop instead of a blanket
-// activation
-
 /** Subsystem that controls the Alga Arm, responsible for intaking and dropping Alga game pieces. */
 public class AlgaArm extends SubsystemBase {
   /** Singleton instance of the AlgaArm subsystem. */
@@ -35,16 +32,19 @@ public class AlgaArm extends SubsystemBase {
   }
 
   /** Motor controller for the alga intake mechanism. */
-  private final SparkMax algaMotor = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
+  private SparkMax algaMotor; 
 
   /** Limit switch for detecting alga game pieces. */
-  private final DigitalInput algaSensor = new DigitalInput(AlgaArmConstants.SENSOR_CHANNEL);
+  private DigitalInput algaSensor; 
 
   /** NetworkTable for publishing alga detection state. */
-  private final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("Robot").getSubTable("AlgaArm");
+  private NetworkTable table; 
 
   private AlgaArm() {
+    algaMotor = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
+    algaSensor = new DigitalInput(AlgaArmConstants.SENSOR_CHANNEL);
+    table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("AlgaArm");
+
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.idleMode(IdleMode.kBrake);
     sparkMaxConfig.inverted(AlgaArmConstants.ALGA_INVERTED);

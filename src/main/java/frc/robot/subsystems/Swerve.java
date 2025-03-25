@@ -49,9 +49,7 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
  */
 public class Swerve extends SubsystemBase {
   private static Swerve instance;
-  private final SwerveDrive drivebase;
-
-  // private final DoubleArraySubscriber visionTranslation;
+  private SwerveDrive drivebase; 
 
   /**
    * Returns the singleton instance of the Swerve subsystem. Creates a new instance if one does not
