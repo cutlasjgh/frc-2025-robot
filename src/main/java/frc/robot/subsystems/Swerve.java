@@ -470,7 +470,9 @@ public class Swerve extends SubsystemBase {
         };
     }
     
-    // For backward compatibility
+    /**
+     * For backward compatibility
+     */
     public Supplier<Rotation2d> createPointToClosestSupplier(FieldConstants.POI[] points) {
         return createPointToClosestSupplier(points, null);
     }
