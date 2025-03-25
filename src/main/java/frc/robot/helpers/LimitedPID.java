@@ -12,7 +12,6 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
-import frc.robot.Constants.PID;
 
 /** Represents a PID-controlled subsystem with limit switches and position control. */
 public class LimitedPID {
@@ -126,7 +125,7 @@ public class LimitedPID {
     config.apply(encoderConfig);
 
     ClosedLoopConfig pidConfig = new ClosedLoopConfig();
-    pidConfig.pid(pidConstants.p, pidConstants.i, pidConstants.d);
+    pidConstants.applyToConfig(pidConfig);
     config.apply(pidConfig);
 
     motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
