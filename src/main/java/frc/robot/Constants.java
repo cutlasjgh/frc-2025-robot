@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Radian;
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
@@ -182,7 +183,7 @@ public final class Constants {
          */
         public static final Map<String, ArmState> ARM_SETPOINTS = Map.of(
                 "ZERO", new ArmState(ELBOW_FRONT_ANGLE, ELEVATOR_MIN_POSITION),
-                "INTAKE", new ArmState(Degree.of(70), Inch.of(0.0)),
+                "INTAKE", new ArmState(Degree.of(70), Inch.of(1.25)),
                 "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
                 "MID", new ArmState(Degree.of(-30), Inch.of(0.0)),
                 "HIGH", new ArmState(Degree.of(-30), Inch.of(15.0)));
@@ -242,18 +243,6 @@ public final class Constants {
         }
 
         public static final ApriltagCameraConfig[] PHOTON_CAMERAS = {
-                // new ApriltagCameraConfig(
-                // "Front Right",
-                // new Transform3d(
-                // new Translation3d(
-                // 0.2794,
-                // 0.2794,
-                // 0.264),
-                // new Rotation3d(
-                // 0,
-                // 0,
-                // Degree.of(-45).in(Radian))),
-                // PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Front Left",
                         new Transform3d(
@@ -276,7 +265,7 @@ public final class Constants {
                                 new Rotation3d(
                                         0,
                                         Degree.of(-20.0).in(Radian),
-                                        Degree.of(163.62).in(Radian))),
+                                        Degree.of(-196.38).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
                 new ApriltagCameraConfig(
                         "Back Left",
@@ -287,25 +276,27 @@ public final class Constants {
                                         0.2667),
                                 new Rotation3d(
                                         0.0,
-                                        0.0,
+                                        Degree.of(-10.0).in(Radian),
                                         Degree.of(196.38).in(Radian))),
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
         };
 
-        public static final AprilTagFieldLayout FIELD_LAYOUT = AprilTagFields.k2025ReefscapeWelded
-                .loadAprilTagLayoutField();
+        public static final AprilTagFieldLayout FIELD_LAYOUT = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
         /** Maximum allowed ambiguity for pose estimation (0-1, lower is better) */
         public static final double MAXIMUM_AMBIGUITY = 0.25;
 
         /** Standard deviations for single tag pose estimation */
-        public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(6, 6, 12);
+        public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(4, 4, 8);
 
         /** Standard deviations for multi-tag pose estimation */
-        public static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(1, 1, 2);
+        public static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 1);
 
         /** Debounce time for camera reads in seconds */
         public static final double CAMERA_DEBOUNCE_TIME = 0.150;
+
+        /** BULLSHIT */
+        public static final double SINGLE_TAG_CUTOFF_METER = 4;
 
         /** Maximum number of camera results to keep in memory */
         public static final int MAX_CAMERA_RESULTS = 5;
@@ -411,7 +402,7 @@ public final class Constants {
          * @return Array of POIs with the matching tag
          */
         private static POI[] filterPoisByTag(POI[] pois, String tag) {
-            return java.util.Arrays.stream(pois)
+            return Arrays.stream(pois)
                     .filter(poi -> poi.getTag().equals(tag))
                     .toArray(POI[]::new);
         }
@@ -424,7 +415,7 @@ public final class Constants {
          * @return The matching POI or null if not found
          */
         public static POI getPoiByTagAndAddress(String tag, String address) {
-            return java.util.Arrays.stream(ALL_POIS)
+            return Arrays.stream(ALL_POIS)
                     .filter(poi -> poi.getTag().equals(tag) && poi.getAddr() == address)
                     .findFirst()
                     .orElse(null);
