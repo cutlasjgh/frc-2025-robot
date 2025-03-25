@@ -102,3 +102,7 @@ wpi.java.configureTestTasks(test)
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
+
+javadoc {
+    options.stylesheetFile = new File(projectDir, "dracula-javadoc8.css")
+}
