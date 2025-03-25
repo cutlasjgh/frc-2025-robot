@@ -67,6 +67,9 @@ public final class Constants {
         private RobotConstants() {
         }
 
+        /**
+         * Maximum speed of the robot in meters per second.
+         */
         public static final LinearVelocity MAX_SPEED = MetersPerSecond.of(5.45);
     }
 
@@ -141,7 +144,14 @@ public final class Constants {
         private OIConstants() {
         }
 
+        /**
+         * Driver controller port.
+         */
         public static final int DRIVER_CONTROLLER_PORT = 0;
+
+        /**
+         * Deadband for driver controller input.
+         */
         public static final double DRIVER_DEADBAND = 0.002;
     }
 
@@ -531,9 +541,25 @@ public final class Constants {
          * Legacy POI lists for backward compatibility - reference the consolidated list
          * by tag
          */
+
+        /**
+         * Array of points of interest for intake stations.
+         */
         public static final POI[] INTAKE_STATIONS = filterPoisByTag(ALL_POIS, "INTAKE_STATION");
+
+        /**
+         * Array of points of interest for coral reef bars.
+         */
         public static final POI[] CORAL_REEF_BARS = filterPoisByTag(ALL_POIS, "CORAL_REEF");
+
+        /**
+         * Array of points of interest for alga stations.
+         */
         public static final POI[] ALGA_STATIONS = filterPoisByTag(ALL_POIS, "ALGA_STATION");
+
+        /**
+         * Array of points of interest for cages.
+         */
         public static final POI[] CAGES = filterPoisByTag(ALL_POIS, "CAGE");
 
         /**

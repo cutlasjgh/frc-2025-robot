@@ -454,7 +454,7 @@ public final class Apriltag extends SubsystemBase {
 
     /**
      * The standard deviations of the estimated pose from
-     * {@link #getEstimatedGlobalPose()}, for use
+     * {@link Camera#getEstimatedGlobalPose(Pose2d)}, for use
      * with {@link edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
      * SwerveDrivePoseEstimator}.
      * This should only be used when there are targets visible.

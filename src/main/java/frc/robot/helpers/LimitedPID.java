@@ -46,7 +46,10 @@ public class LimitedPID {
 
     /** State of position knowledge for a subsystem. */
     public enum SubsystemState {
-        KNOWN, UNKNOWN
+        /** The subsystem's position is known. */
+        KNOWN,
+        /** The subsystem's position is unknown. */
+        UNKNOWN
     }
 
     /**
@@ -157,6 +160,8 @@ public class LimitedPID {
 
     /**
      * Gets the current state of the subsystem.
+     *
+     * @return The current state of the subsystem.
      */
     public SubsystemState getState() {
         return state;
