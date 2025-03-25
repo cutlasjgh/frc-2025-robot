@@ -14,9 +14,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AlgaArmConstants;
 
-// Make this into commands that keep running until they are canceled or stop instead of a blanket
-// activation
-
 /** Subsystem that controls the Alga Arm, responsible for intaking and dropping Alga game pieces. */
 public class AlgaArm extends SubsystemBase {
   /** Singleton instance of the AlgaArm subsystem. */
