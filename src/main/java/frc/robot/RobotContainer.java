@@ -56,8 +56,8 @@ public class RobotContainer {
       () -> driverController.getLeftY() * -1,
       () -> driverController.getLeftX() * -1)
       .cubeTranslationControllerAxis(true)
-      .scaleTranslation(0.75) // default scale
-      .scaleTranslation(() -> driverController.rightBumper().getAsBoolean(), 0.5) // when right bumper held, scale becomes 0.25
+      .scaleTranslation(0.75)
+      .scaleTranslation(() -> driverController.rightBumper().getAsBoolean(), 0.5)
       .withControllerHeadingAxis(() -> driverController.getRightX() * -1, () -> driverController.getRightY() * -1)
       .cubeRotationControllerAxis(true)
       .deadband(OIConstants.DRIVER_DEADBAND)
@@ -88,6 +88,7 @@ public class RobotContainer {
   private final Climb climb = Climb.getInstance();
 
   /** Apriltag subsystem for handling apriltags */
+  @SuppressWarnings("unused")
   private final Apriltag apriltag = Apriltag.getInstance();
 
   // Add the SendableChooser for autonomous
@@ -134,13 +135,13 @@ public class RobotContainer {
     swerveDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
 
     // AUTONOMOUS ASSIST - Drive to closest point when holding A
-    driverController.a().whileTrue(
+    driverController.a().onTrue(
         Commands.runOnce(() -> {
           Pose2d targetPose = swerveDrive.getClosestPOI(Constants.FieldConstants.ALL_POIS);
           if (targetPose != null) {
             swerveDrive.driveToPose(targetPose).schedule();
           }
-        }).andThen(Commands.waitUntil(() -> false)));
+        }));
 
     // MANUAL OVERRIDE - Use raw input without auto heading when holding left bumper
     driverController.leftBumper()

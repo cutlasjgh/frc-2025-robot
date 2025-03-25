@@ -90,10 +90,11 @@ public class Swerve extends SubsystemBase {
             throw new RuntimeException("Failed to create swerve drive", e);
         }
 
-        // drivebase.setHeadingCorrection(true);
+        drivebase.setHeadingCorrection(true);
         drivebase.setAngularVelocityCompensation(true, true, 0.1);
         drivebase.setCosineCompensator(!SwerveDriveTelemetry.isSimulation);
         drivebase.setModuleEncoderAutoSynchronize(true, 1);
+        drivebase.setChassisDiscretization(true, true, 0.02);
         drivebase.useExternalFeedbackSensor();
 
         setupPathPlanner();
