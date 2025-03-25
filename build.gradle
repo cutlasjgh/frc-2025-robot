@@ -104,5 +104,5 @@ tasks.withType(JavaCompile) {
 }
 
 javadoc {
-    options.stylesheetFile = new File(projectDir, "dracula-javadoc8.css")
+    options.stylesheetFile = new File(projectDir, "style.css")
 }
