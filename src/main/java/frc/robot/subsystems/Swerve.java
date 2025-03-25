@@ -471,7 +471,10 @@ public class Swerve extends SubsystemBase {
     }
     
     /**
-     * For backward compatibility
+     * For backward compatibility.
+     *
+     * @param points Array of POIs to target.
+     * @return A supplier that provides the rotation toward the closest matching POI when called.
      */
     public Supplier<Rotation2d> createPointToClosestSupplier(FieldConstants.POI[] points) {
         return createPointToClosestSupplier(points, null);

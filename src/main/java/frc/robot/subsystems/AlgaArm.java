@@ -17,10 +17,19 @@ import frc.robot.Constants.AlgaArmConstants;
 
 // Make this into commands that keep running until they are canceled or stop instead of a blanket activation
 
+/**
+ * Subsystem that controls the Alga Arm, responsible for intaking and dropping
+ * Alga game pieces.
+ */
 public class AlgaArm extends SubsystemBase {
     /** Singleton instance of the AlgaArm subsystem. */
     private static AlgaArm instance;
 
+    /**
+     * Gets the singleton instance of the AlgaArm subsystem.
+     *
+     * @return The singleton instance.
+     */
     public static AlgaArm getInstance() {
         if (instance == null) {
             instance = new AlgaArm();
@@ -47,43 +56,87 @@ public class AlgaArm extends SubsystemBase {
         setDefaultCommand(stop());
     }
 
+    /**
+     * Trigger that is active when the Alga Arm does not have an Alga.
+     */
     public final Trigger doesntHaveAlga = new Trigger(
             () -> !algaSensor.get()).debounce(0.25);
 
+    /**
+     * Trigger that is active when the Alga Arm has an Alga.
+     */
     public final Trigger hasAlga = new Trigger(
             () -> algaSensor.get());
 
+    /**
+     * Trigger that is active when the Alga Arm is running.
+     */
     public final Trigger running = new Trigger(
             () -> {
                 return algaMotor.get() != 0;
             });
 
+    /**
+     * Runs the intake at a constant power.
+     *
+     * @return A command that runs the intake.
+     */
     public Command runIntake() {
         return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER)).withName("algaRunIntake");
     }
 
+    /**
+     * Intakes an alga until the sensor detects it.
+     *
+     * @return A command that intakes an alga.
+     */
     public Command intake() {
         return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER)).onlyWhile(doesntHaveAlga).withName("algaIntake");
     }
 
+    /**
+     * Runs the drop at a constant power.
+     *
+     * @return A command that runs the drop.
+     */
     public Command runDrop() {
         return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).withName("algaRunDrop");
     }
 
+    /**
+     * Drops an alga until the sensor no longer detects it.
+     *
+     * @return A command that drops an alga.
+     */
     public Command drop() {
         return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).onlyWhile(hasAlga).withName("algaDrop");
     }
 
+    /**
+     * Releases the alga with a short drop.
+     *
+     * @return A command that releases the alga.
+     */
     public Command release() {
         return drop().withTimeout(0.1).andThen(run(() -> {
             algaMotor.set(0.0);
         }).withTimeout(0.1));
     }
 
+    /**
+     * Stops the alga arm.
+     *
+     * @return A command that stops the alga arm.
+     */
     public Command stop() {
         return run(() -> algaMotor.set(0)).withName("algaStop");
     }
 
+    /**
+     * Toggles between intake and drop based on the current state.
+     *
+     * @return A command that toggles the alga arm.
+     */
     public Command toggle() {
         return runOnce(() -> {
             if (running.getAsBoolean()) {
