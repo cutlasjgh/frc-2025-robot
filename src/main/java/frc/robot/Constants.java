@@ -74,13 +74,31 @@ public final class Constants {
      * Constants for the alga arm mechanism.
      */
     public static final class AlgaArmConstants {
+        /**
+         * Private constructor to prevent instantiation.
+         */
         private AlgaArmConstants() {
         }
 
+        /**
+         * CAN ID for the alga motor.
+         */
         public static final int CAN_ID = 19;
+        /**
+         * Sensor channel for the alga sensor.
+         */
         public static final int SENSOR_CHANNEL = 7;
+        /**
+         * Intake power for the alga arm.
+         */
         public static final double INTAKE_POWER = 1.0;
+        /**
+         * Drop power for the alga arm.
+         */
         public static final double DROP_POWER = -1.0;
+        /**
+         * Whether the alga arm is inverted.
+         */
         public static final boolean ALGA_INVERTED = false;
     }
 
@@ -88,13 +106,31 @@ public final class Constants {
      * Constants for the climbing mechanism.
      */
     public static final class ClimbConstants {
+        /**
+         * Private constructor to prevent instantiation.
+         */
         private ClimbConstants() {
         }
 
+        /**
+         * CAN ID for the climb motor.
+         */
         public static final int CAN_ID = 14;
+        /**
+         * Bottom limit channel for the climb.
+         */
         public static final int BOTTOM_LIMIT_CHANNEL = 9;
+        /**
+         * Top limit channel for the climb.
+         */
         public static final int TOP_LIMIT_CHANNEL = 8;
+        /**
+         * Climb power for the climb.
+         */
         public static final double CLIMB_POWER = -0.7;
+        /**
+         * Whether the climb is inverted.
+         */
         public static final boolean IS_INVERTED = false;
     }
 
@@ -214,12 +250,34 @@ public final class Constants {
         public static final double RAMP_RATE = 0.1;
     }
 
+    /**
+     * Constants for apriltag vision.
+     */
     public static final class ApriltagConstants {
+        /**
+         * Apriltag camera configuration.
+         */
         public static final class ApriltagCameraConfig {
+            /**
+             * Name of the camera.
+             */
             private String name;
+            /**
+             * Transform of the camera.
+             */
             private Transform3d transform;
+            /**
+             * Strategy of the camera.
+             */
             private PoseStrategy strategy;
 
+            /**
+             * Apriltag camera configuration.
+             *
+             * @param name      Name of the camera
+             * @param transform Transform of the camera
+             * @param strategy  Strategy of the camera
+             */
             public ApriltagCameraConfig(
                     String name,
                     Transform3d transform,
@@ -229,19 +287,37 @@ public final class Constants {
                 this.strategy = strategy;
             }
 
+            /**
+             * Gets the name of the camera.
+             *
+             * @return Name of the camera
+             */
             public String getName() {
                 return name;
             }
 
+            /**
+             * Gets the transform of the camera.
+             *
+             * @return Transform of the camera
+             */
             public Transform3d getTransform() {
                 return transform;
             }
 
+            /**
+             * Gets the strategy of the camera.
+             *
+             * @return Strategy of the camera
+             */
             public PoseStrategy getStrategy() {
                 return strategy;
             }
         }
 
+        /**
+         * Photon cameras.
+         */
         public static final ApriltagCameraConfig[] PHOTON_CAMERAS = {
                 new ApriltagCameraConfig(
                         "Front Left",
@@ -281,6 +357,9 @@ public final class Constants {
                         PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR),
         };
 
+        /**
+         * Field layout for apriltags.
+         */
         public static final AprilTagFieldLayout FIELD_LAYOUT = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
         /** Maximum allowed ambiguity for pose estimation (0-1, lower is better) */

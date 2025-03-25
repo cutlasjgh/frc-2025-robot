@@ -23,6 +23,11 @@ import frc.robot.Constants.CoralManipulatorConstants;
 public class CoralManipulator extends SubsystemBase {
     private static CoralManipulator instance;
 
+    /**
+     * Gets the singleton instance of the CoralManipulator subsystem.
+     *
+     * @return The singleton instance.
+     */
     public static CoralManipulator getInstance() {
         if (instance == null) {
             instance = new CoralManipulator();
@@ -45,15 +50,29 @@ public class CoralManipulator extends SubsystemBase {
         setDefaultCommand(stop());
     }
 
+    /**
+     * Trigger that is active when the Coral Manipulator is running.
+     */
     public final Trigger running = new Trigger(
             () -> coralMotor.get() != 0);
 
+    /**
+     * Trigger that is active when the Coral Manipulator does not have a coral.
+     */
     public final Trigger doesntHaveCoral = new Trigger(
             () -> coralSensor.get()).debounce(0.25);
 
+    /**
+     * Trigger that is active when the Coral Manipulator has a coral.
+     */
     public final Trigger hasCoral = new Trigger(
             () -> !coralSensor.get());
 
+    /**
+     * Intakes a coral until the sensor detects it.
+     *
+     * @return A command that intakes a coral.
+     */
     public Command intake() {
         return run(() -> coralMotor.set(CoralManipulatorConstants.INTAKE_POWER)).onlyWhile(doesntHaveCoral)
                 .andThen(run(() -> {
@@ -61,6 +80,11 @@ public class CoralManipulator extends SubsystemBase {
                 }).withTimeout(0.5));
     }
 
+    /**
+     * Drops a coral until the sensor no longer detects it.
+     *
+     * @return A command that drops a coral.
+     */
     public Command drop() {
         return run(() -> coralMotor.set(CoralManipulatorConstants.DROP_POWER)).onlyWhile(hasCoral)
                 .andThen(run(() -> {
@@ -68,14 +92,29 @@ public class CoralManipulator extends SubsystemBase {
                 }).withTimeout(0.5));
     }
 
+    /**
+     * Ejects a coral.
+     *
+     * @return A command that ejects a coral.
+     */
     public Command eject() {
         return run(() -> coralMotor.set(CoralManipulatorConstants.EJECT_POWER));
     }
 
+    /**
+     * Stops the coral manipulator.
+     *
+     * @return A command that stops the coral manipulator.
+     */
     public Command stop() {
         return run(() -> stopMotor());
     }
 
+    /**
+     * Instantly stops the coral manipulator.
+     *
+     * @return A command that instantly stops the coral manipulator.
+     */
     public Command instantStop() {
         return runOnce(() -> stopMotor());
     }
