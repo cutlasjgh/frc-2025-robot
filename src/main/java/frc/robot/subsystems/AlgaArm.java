@@ -35,16 +35,19 @@ public class AlgaArm extends SubsystemBase {
   }
 
   /** Motor controller for the alga intake mechanism. */
-  private final SparkMax algaMotor = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
+  private SparkMax algaMotor; 
 
   /** Limit switch for detecting alga game pieces. */
-  private final DigitalInput algaSensor = new DigitalInput(AlgaArmConstants.SENSOR_CHANNEL);
+  private DigitalInput algaSensor; 
 
   /** NetworkTable for publishing alga detection state. */
-  private final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("Robot").getSubTable("AlgaArm");
+  private NetworkTable table; 
 
   private AlgaArm() {
+    algaMotor = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
+    algaSensor = new DigitalInput(AlgaArmConstants.SENSOR_CHANNEL);
+    table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("AlgaArm");
+
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.idleMode(IdleMode.kBrake);
     sparkMaxConfig.inverted(AlgaArmConstants.ALGA_INVERTED);

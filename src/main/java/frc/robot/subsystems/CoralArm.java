@@ -32,38 +32,39 @@ public class CoralArm extends SubsystemBase {
     return instance;
   }
 
-  private final LimitedPID elevatorController =
-      new LimitedPID(
-          CoralArmConstants.ELEVATOR_CAN_ID, // CAN ID
-          CoralArmConstants.ELEVATOR_DISTANCE_PER_ROTATION.in(Inch), // Conversion factor
-          CoralArmConstants.ELEVATOR_MIN_POSITION.in(Inch), // Min position
-          CoralArmConstants.ELEVATOR_MAX_POSITION.in(Inch), // Max position
-          CoralArmConstants.ELEVATOR_PID, // PID constants
-          CoralArmConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL, // Min limit channel
-          CoralArmConstants.ELEVATOR_TOP_LIMIT_CHANNEL, // Max limit channel
-          CoralArmConstants.POSITION_TOLERANCE, // Tolerance
-          CoralArmConstants.ELEVATOR_INVERTED, // Inverted
-          CoralArmConstants.ELEVATOR_RAMP_RATE, // Ramp rate
-          CoralArmConstants.ELEVATOR_CURRENT_LIMIT // Current limit
-          );
-  private final LimitedPID elbowController =
-      new LimitedPID(
-          CoralArmConstants.ELBOW_CAN_ID, // CAN ID
-          CoralArmConstants.ELBOW_ANGLE_PER_ROTATION.in(Degree), // Conversion factor
-          CoralArmConstants.ELBOW_BACK_ANGLE.in(Degree), // Min position
-          CoralArmConstants.ELBOW_FRONT_ANGLE.in(Degree), // Max position
-          CoralArmConstants.ELBOW_PID, // PID constants
-          CoralArmConstants.ELBOW_BACK_LIMIT_CHANNEL, // Min limit channel
-          CoralArmConstants.ELBOW_FRONT_LIMIT_CHANNEL, // Max limit channel
-          CoralArmConstants.POSITION_TOLERANCE, // Tolerance
-          CoralArmConstants.ELBOW_INVERTED, // Inverted
-          CoralArmConstants.ELBOW_RAMP_RATE, // Ramp rate
-          CoralArmConstants.ELBOW_CURRENT_LIMIT // Current limit
-          );
-  private final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("Robot").getSubTable("CoralArm");
+  private LimitedPID elevatorController; 
+  private LimitedPID elbowController; 
+  private NetworkTable table; 
 
   private CoralArm() {
+    elevatorController =
+        new LimitedPID(
+            CoralArmConstants.ELEVATOR_CAN_ID,
+            CoralArmConstants.ELEVATOR_DISTANCE_PER_ROTATION.in(Inch),
+            CoralArmConstants.ELEVATOR_MIN_POSITION.in(Inch),
+            CoralArmConstants.ELEVATOR_MAX_POSITION.in(Inch),
+            CoralArmConstants.ELEVATOR_PID,
+            CoralArmConstants.ELEVATOR_BOTTOM_LIMIT_CHANNEL,
+            CoralArmConstants.ELEVATOR_TOP_LIMIT_CHANNEL,
+            CoralArmConstants.POSITION_TOLERANCE,
+            CoralArmConstants.ELEVATOR_INVERTED,
+            CoralArmConstants.ELEVATOR_RAMP_RATE,
+            CoralArmConstants.ELEVATOR_CURRENT_LIMIT);
+    elbowController =
+        new LimitedPID(
+            CoralArmConstants.ELBOW_CAN_ID,
+            CoralArmConstants.ELBOW_ANGLE_PER_ROTATION.in(Degree),
+            CoralArmConstants.ELBOW_BACK_ANGLE.in(Degree),
+            CoralArmConstants.ELBOW_FRONT_ANGLE.in(Degree),
+            CoralArmConstants.ELBOW_PID,
+            CoralArmConstants.ELBOW_BACK_LIMIT_CHANNEL,
+            CoralArmConstants.ELBOW_FRONT_LIMIT_CHANNEL,
+            CoralArmConstants.POSITION_TOLERANCE,
+            CoralArmConstants.ELBOW_INVERTED,
+            CoralArmConstants.ELBOW_RAMP_RATE,
+            CoralArmConstants.ELBOW_CURRENT_LIMIT);
+    table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("CoralArm");
+
     // Initialize networktable entries
     table.getEntry("targetElbowAngle").setDouble(0.0);
     table.getEntry("targetElevatorHeight").setDouble(0.0);

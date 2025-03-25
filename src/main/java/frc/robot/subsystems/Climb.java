@@ -31,13 +31,17 @@ public class Climb extends SubsystemBase {
     return instance;
   }
 
-  private final SparkMax climbMotor = new SparkMax(ClimbConstants.CAN_ID, MotorType.kBrushless);
-  private final DigitalInput topLimit = new DigitalInput(ClimbConstants.TOP_LIMIT_CHANNEL);
-  private final DigitalInput bottomLimit = new DigitalInput(ClimbConstants.BOTTOM_LIMIT_CHANNEL);
-  private final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("Robot").getSubTable("Climb");
+  private SparkMax climbMotor; // Removed final
+  private DigitalInput topLimit; // Removed final
+  private DigitalInput bottomLimit; // Removed final
+  private NetworkTable table; // Removed final
 
   private Climb() {
+    climbMotor = new SparkMax(ClimbConstants.CAN_ID, MotorType.kBrushless);
+    topLimit = new DigitalInput(ClimbConstants.TOP_LIMIT_CHANNEL);
+    bottomLimit = new DigitalInput(ClimbConstants.BOTTOM_LIMIT_CHANNEL);
+    table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("Climb");
+
     SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
     sparkMaxConfig.idleMode(IdleMode.kCoast);
     sparkMaxConfig.inverted(ClimbConstants.IS_INVERTED);
