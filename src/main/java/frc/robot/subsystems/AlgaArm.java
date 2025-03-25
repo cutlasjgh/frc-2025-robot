@@ -6,7 +6,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -15,145 +14,150 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AlgaArmConstants;
 
-// Make this into commands that keep running until they are canceled or stop instead of a blanket activation
+// Make this into commands that keep running until they are canceled or stop instead of a blanket
+// activation
 
-/**
- * Subsystem that controls the Alga Arm, responsible for intaking and dropping
- * Alga game pieces.
- */
+/** Subsystem that controls the Alga Arm, responsible for intaking and dropping Alga game pieces. */
 public class AlgaArm extends SubsystemBase {
-    /** Singleton instance of the AlgaArm subsystem. */
-    private static AlgaArm instance;
+  /** Singleton instance of the AlgaArm subsystem. */
+  private static AlgaArm instance;
 
-    /**
-     * Gets the singleton instance of the AlgaArm subsystem.
-     *
-     * @return The singleton instance.
-     */
-    public static AlgaArm getInstance() {
-        if (instance == null) {
-            instance = new AlgaArm();
-        }
-        return instance;
+  /**
+   * Gets the singleton instance of the AlgaArm subsystem.
+   *
+   * @return The singleton instance.
+   */
+  public static AlgaArm getInstance() {
+    if (instance == null) {
+      instance = new AlgaArm();
     }
+    return instance;
+  }
 
-    /** Motor controller for the alga intake mechanism. */
-    private final SparkMax algaMotor = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
-    /** Limit switch for detecting alga game pieces. */
-    private final DigitalInput algaSensor = new DigitalInput(AlgaArmConstants.SENSOR_CHANNEL);
-    /** NetworkTable for publishing alga detection state. */
-    private final NetworkTable table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("AlgaArm");
+  /** Motor controller for the alga intake mechanism. */
+  private final SparkMax algaMotor = new SparkMax(AlgaArmConstants.CAN_ID, MotorType.kBrushless);
 
-    private AlgaArm() {
-        SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
-        sparkMaxConfig.idleMode(IdleMode.kBrake);
-        sparkMaxConfig.inverted(AlgaArmConstants.ALGA_INVERTED);
-        sparkMaxConfig.smartCurrentLimit(20);
-        sparkMaxConfig.openLoopRampRate(0.1);
-        sparkMaxConfig.closedLoopRampRate(0.1);
-        algaMotor.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+  /** Limit switch for detecting alga game pieces. */
+  private final DigitalInput algaSensor = new DigitalInput(AlgaArmConstants.SENSOR_CHANNEL);
 
-        setDefaultCommand(stop());
-    }
+  /** NetworkTable for publishing alga detection state. */
+  private final NetworkTable table =
+      NetworkTableInstance.getDefault().getTable("Robot").getSubTable("AlgaArm");
 
-    /**
-     * Trigger that is active when the Alga Arm does not have an Alga.
-     */
-    public final Trigger doesntHaveAlga = new Trigger(
-            () -> !algaSensor.get()).debounce(0.25);
+  private AlgaArm() {
+    SparkMaxConfig sparkMaxConfig = new SparkMaxConfig();
+    sparkMaxConfig.idleMode(IdleMode.kBrake);
+    sparkMaxConfig.inverted(AlgaArmConstants.ALGA_INVERTED);
+    sparkMaxConfig.smartCurrentLimit(20);
+    sparkMaxConfig.openLoopRampRate(0.1);
+    sparkMaxConfig.closedLoopRampRate(0.1);
+    algaMotor.configure(
+        sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
-    /**
-     * Trigger that is active when the Alga Arm has an Alga.
-     */
-    public final Trigger hasAlga = new Trigger(
-            () -> algaSensor.get());
+    setDefaultCommand(stop());
+  }
 
-    /**
-     * Trigger that is active when the Alga Arm is running.
-     */
-    public final Trigger running = new Trigger(
+  /** Trigger that is active when the Alga Arm does not have an Alga. */
+  public final Trigger doesntHaveAlga = new Trigger(() -> !algaSensor.get()).debounce(0.25);
+
+  /** Trigger that is active when the Alga Arm has an Alga. */
+  public final Trigger hasAlga = new Trigger(() -> algaSensor.get());
+
+  /** Trigger that is active when the Alga Arm is running. */
+  public final Trigger running =
+      new Trigger(
+          () -> {
+            return algaMotor.get() != 0;
+          });
+
+  /**
+   * Runs the intake at a constant power.
+   *
+   * @return A command that runs the intake.
+   */
+  public Command runIntake() {
+    return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER)).withName("algaRunIntake");
+  }
+
+  /**
+   * Intakes an alga until the sensor detects it.
+   *
+   * @return A command that intakes an alga.
+   */
+  public Command intake() {
+    return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER))
+        .onlyWhile(doesntHaveAlga)
+        .withName("algaIntake");
+  }
+
+  /**
+   * Runs the drop at a constant power.
+   *
+   * @return A command that runs the drop.
+   */
+  public Command runDrop() {
+    return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).withName("algaRunDrop");
+  }
+
+  /**
+   * Drops an alga until the sensor no longer detects it.
+   *
+   * @return A command that drops an alga.
+   */
+  public Command drop() {
+    return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER))
+        .onlyWhile(hasAlga)
+        .withName("algaDrop");
+  }
+
+  /**
+   * Releases the alga with a short drop.
+   *
+   * @return A command that releases the alga.
+   */
+  public Command release() {
+    return drop()
+        .withTimeout(0.1)
+        .andThen(
+            run(() -> {
+                  algaMotor.set(0.0);
+                })
+                .withTimeout(0.1));
+  }
+
+  /**
+   * Stops the alga arm.
+   *
+   * @return A command that stops the alga arm.
+   */
+  public Command stop() {
+    return run(() -> algaMotor.set(0)).withName("algaStop");
+  }
+
+  /**
+   * Toggles between intake and drop based on the current state.
+   *
+   * @return A command that toggles the alga arm.
+   */
+  public Command toggle() {
+    return runOnce(
             () -> {
-                return algaMotor.get() != 0;
-            });
-
-    /**
-     * Runs the intake at a constant power.
-     *
-     * @return A command that runs the intake.
-     */
-    public Command runIntake() {
-        return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER)).withName("algaRunIntake");
-    }
-
-    /**
-     * Intakes an alga until the sensor detects it.
-     *
-     * @return A command that intakes an alga.
-     */
-    public Command intake() {
-        return run(() -> algaMotor.set(AlgaArmConstants.INTAKE_POWER)).onlyWhile(doesntHaveAlga).withName("algaIntake");
-    }
-
-    /**
-     * Runs the drop at a constant power.
-     *
-     * @return A command that runs the drop.
-     */
-    public Command runDrop() {
-        return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).withName("algaRunDrop");
-    }
-
-    /**
-     * Drops an alga until the sensor no longer detects it.
-     *
-     * @return A command that drops an alga.
-     */
-    public Command drop() {
-        return run(() -> algaMotor.set(AlgaArmConstants.DROP_POWER)).onlyWhile(hasAlga).withName("algaDrop");
-    }
-
-    /**
-     * Releases the alga with a short drop.
-     *
-     * @return A command that releases the alga.
-     */
-    public Command release() {
-        return drop().withTimeout(0.1).andThen(run(() -> {
-            algaMotor.set(0.0);
-        }).withTimeout(0.1));
-    }
-
-    /**
-     * Stops the alga arm.
-     *
-     * @return A command that stops the alga arm.
-     */
-    public Command stop() {
-        return run(() -> algaMotor.set(0)).withName("algaStop");
-    }
-
-    /**
-     * Toggles between intake and drop based on the current state.
-     *
-     * @return A command that toggles the alga arm.
-     */
-    public Command toggle() {
-        return runOnce(() -> {
-            if (running.getAsBoolean()) {
+              if (running.getAsBoolean()) {
                 stop().schedule();
-            } else {
+              } else {
                 if (hasAlga.getAsBoolean()) {
-                    drop().schedule();
+                  drop().schedule();
                 } else {
-                    intake().schedule();
+                  intake().schedule();
                 }
-            }
-        }).withName("toggle");
-    }
+              }
+            })
+        .withName("toggle");
+  }
 
-    @Override
-    public void periodic() {
-        table.getEntry("running").setBoolean(running.getAsBoolean());
-        table.getEntry("hasAlga").setBoolean(hasAlga.getAsBoolean());
-    }
+  @Override
+  public void periodic() {
+    table.getEntry("running").setBoolean(running.getAsBoolean());
+    table.getEntry("hasAlga").setBoolean(hasAlga.getAsBoolean());
+  }
 }
