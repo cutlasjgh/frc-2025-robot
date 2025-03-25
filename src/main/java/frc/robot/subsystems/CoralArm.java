@@ -25,6 +25,11 @@ import java.util.function.BooleanSupplier;
 public class CoralArm extends SubsystemBase {
     private static CoralArm instance;
 
+    /**
+     * Gets the singleton instance of the CoralArm subsystem.
+     *
+     * @return The singleton instance.
+     */
     public static CoralArm getInstance() {
         if (instance == null) {
             instance = new CoralArm();

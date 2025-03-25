@@ -179,19 +179,53 @@ public final class Constants {
         public static final int ELEVATOR_CURRENT_LIMIT = 30;
 
         // Elbow constants
+        /**
+         * CAN ID for elbow motor.
+         */
         public static final int ELBOW_CAN_ID = 16;
-        /** Angle traveled per motor rotation. */
+        /**
+         * Angle traveled per motor rotation.
+         */
         public static final Angle ELBOW_ANGLE_PER_ROTATION = Degree.of(2.25);
+        /**
+         * DIO channel for elbow front limit switch
+         */
         public static final int ELBOW_FRONT_LIMIT_CHANNEL = 4;
+        /**
+         * DIO channel for elbow back limit switch
+         */
         public static final int ELBOW_BACK_LIMIT_CHANNEL = 3;
+        /**
+         * Maximum elbow angle.
+         */
         public static final Angle ELBOW_FRONT_ANGLE = Degree.of(125.0);
+        /**
+         * Minimum elbow angle.
+         */
         public static final Angle ELBOW_BACK_ANGLE = Degree.of(-125.0);
+        /**
+         * PID constants for elbow control.
+         */
         public static final PID ELBOW_PID = new PID(0.01, 0.0, 0.0);
-        /** Arm length. */
+        /**
+         * Arm length.
+         */
         public static final Distance ARM_LENGTH = Inch.of(30);
+        /**
+         * Whether elbow motor is inverted
+         */
         public static final boolean ELBOW_INVERTED = false;
+        /**
+         * Power to use when zeroing elbow
+         */
         public static final double ELBOW_ZEROING_POWER = 0.15;
+        /**
+         * Ramp rate for elbow motor (seconds from 0 to full throttle)
+         */
         public static final double ELBOW_RAMP_RATE = 0.3;
+        /**
+         * Current limit for elbow motor in amps
+         */
         public static final int ELBOW_CURRENT_LIMIT = 20;
 
         // Shared constants
@@ -201,14 +235,27 @@ public final class Constants {
         public static final double POSITION_TOLERANCE = 1.0;
 
         // Safe transition constants
+        /**
+         * Safe elevator height.
+         */
         public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(13.5);
+        /**
+         * Intermediate elbow front angle.
+         */
         public static final double INTERMEDIATE_ELBOW_FRONT_ANGLE = 45.0; // degrees
+        /**
+         * Intermediate elbow back angle.
+         */
         public static final double INTERMEDIATE_ELBOW_BACK_ANGLE = -45.0; // degrees
 
         /**
          * Represents a specific position state of the arm
          */
         public record ArmState(Angle elbowAngle, Distance elevatorHeight) {
+            /**
+             * Checks if the arm is on the front side.
+             * @return True if the arm is on the front side, false otherwise.
+             */
             public boolean isFront() {
                 return elbowAngle.in(Degree) > 0;
             }
@@ -390,6 +437,9 @@ public final class Constants {
 
         /** Field dimensions for 2025 Reefscape */
         public static final double FIELD_LENGTH_METERS = 17.548;
+        /**
+         * Field width in meters.
+         */
         public static final double FIELD_WIDTH_METERS = 8.052;
 
         /**
@@ -401,12 +451,23 @@ public final class Constants {
             private final String tag;
             private final String addr;
 
+            /**
+             * Creates a new POI.
+             * @param pose The pose of the POI.
+             * @param tag The tag of the POI.
+             * @param addr The address of the POI.
+             */
             public POI(Pose2d pose, String tag, String addr) {
                 this.pose = pose;
                 this.tag = tag;
                 this.addr = addr;
             }
 
+            /**
+             * Gets the pose of the POI for the given alliance.
+             * @param alliance The alliance to get the pose for.
+             * @return The pose of the POI for the given alliance.
+             */
             public Pose2d get(Alliance alliance) {
                 if (alliance == Alliance.Blue) {
                     return pose;
@@ -434,7 +495,9 @@ public final class Constants {
             }
         }
 
-        /** All consolidated points of interest on the field */
+        /**
+         * All consolidated points of interest on the field
+         */
         public static final POI[] ALL_POIS = {
                 // Intake stations
                 new POI(new Pose2d(1.25, 7.0, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
