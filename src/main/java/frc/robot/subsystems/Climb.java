@@ -15,10 +15,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+/**
+ * Subsystem that controls the climbing mechanism.
+ */
 public class Climb extends SubsystemBase {
     /** Singleton instance of the AlgaArm subsystem. */
     private static Climb instance;
 
+    /**
+     * Gets the singleton instance of the Climb subsystem.
+     *
+     * @return The singleton instance.
+     */
     public static Climb getInstance() {
         if (instance == null) {
             instance = new Climb();
@@ -39,12 +47,23 @@ public class Climb extends SubsystemBase {
         climbMotor.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
+    /**
+     * Trigger that is active when the climb is at the top limit.
+     */
     public final Trigger atTop = new Trigger(
             () -> !topLimit.get());
 
+    /**
+     * Trigger that is active when the climb is at the bottom limit.
+     */
     public final Trigger atBottom = new Trigger(
             () -> !bottomLimit.get());
 
+    /**
+     * Climbs until the top limit is reached.
+     *
+     * @return A command that climbs.
+     */
     public Command climb() {
         return run(() -> {
             climbMotor.set(ClimbConstants.CLIMB_POWER);
@@ -53,6 +72,11 @@ public class Climb extends SubsystemBase {
         }).withName("climb");
     }
 
+    /**
+     * Stops the climb.
+     *
+     * @return A command that stops the climb.
+     */
     public Command stop() {
         return runOnce(() -> {
             climbMotor.set(0);

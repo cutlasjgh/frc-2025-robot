@@ -18,6 +18,10 @@ import frc.robot.helpers.LimitedPID;
 
 import java.util.function.BooleanSupplier;
 
+/**
+ * Subsystem that controls the Coral Arm, responsible for moving the arm to
+ * different positions.
+ */
 public class CoralArm extends SubsystemBase {
     private static CoralArm instance;
 
@@ -63,6 +67,9 @@ public class CoralArm extends SubsystemBase {
         table.getEntry("currentSetpoint").setString("None");
     }
 
+    /**
+     * Trigger that is active when the elbow is on the front side.
+     */
     public final Trigger onFront = new Trigger(() -> getCurrentElbowAngle().in(Degree) > 0);
 
     /**
@@ -209,6 +216,7 @@ public class CoralArm extends SubsystemBase {
 
     /**
      * Command to move the arm to the ZERO position
+     * @return Command to set the arm to the ZERO position
      */
     public Command setZero() {
         return setPosition("ZERO");
@@ -216,6 +224,7 @@ public class CoralArm extends SubsystemBase {
 
     /**
      * Command to move the arm to the INTAKE position
+     * @return Command to set the arm to the INTAKE position
      */
     public Command setIntake() {
         return setPosition("INTAKE");
@@ -223,6 +232,7 @@ public class CoralArm extends SubsystemBase {
 
     /**
      * Command to move the arm to the LOW position
+     * @return Command to set the arm to the LOW position
      */
     public Command setLow() {
         return setPosition("LOW");
@@ -230,6 +240,7 @@ public class CoralArm extends SubsystemBase {
 
     /**
      * Command to move the arm to the MID position
+     * @return Command to set the arm to the MID position
      */
     public Command setMid() {
         return setPosition("MID");
@@ -237,6 +248,7 @@ public class CoralArm extends SubsystemBase {
 
     /**
      * Command to move the arm to the HIGH position
+     * @return Command to set the arm to the HIGH position
      */
     public Command setHigh() {
         return setPosition("HIGH");
@@ -244,6 +256,7 @@ public class CoralArm extends SubsystemBase {
 
     /**
      * Command to move the arm to the CLIMB position
+     * @return Command to set the arm to the CLIMB position
      */
     public Command setClimb() {
         return setPosition("HIGH");

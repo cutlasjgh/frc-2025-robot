@@ -296,7 +296,7 @@ public class Swerve extends SubsystemBase {
      * }
      * </pre>
      * 
-     * @param pose the target Pose2d to drive to
+     * @param targetPose the target Pose2d to drive to
      * @return a Command that will drive the robot to the specified pose
      */
     public Command driveToPose(Pose2d targetPose) {

@@ -226,6 +226,11 @@ public class RobotContainer {
     return autoChooser.getSelected();
   }
 
+  /**
+   * Returns the NetworkTable used for debugging.
+   *
+   * @return the NetworkTable used for debugging
+   */
   public NetworkTable getTable() {
     return table;
   }
