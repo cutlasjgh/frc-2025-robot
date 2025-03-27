@@ -178,13 +178,13 @@ public final class Constants {
 
     // Safe transition constants
     /** Safe elevator height. */
-    public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(13.5);
+    public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(15.0);
 
-    /** Intermediate elbow front angle. */
-    public static final double INTERMEDIATE_ELBOW_FRONT_ANGLE = 45.0; // degrees
+    /** Safe angle deadzone front */
+    public static final Angle SAFE_ANGLE_DEADZONE_FRONT = Degree.of(45);
 
-    /** Intermediate elbow back angle. */
-    public static final double INTERMEDIATE_ELBOW_BACK_ANGLE = -45.0; // degrees
+    /** Safe angle deadzone back */
+    public static final Angle SAFE_ANGLE_DEADZONE_BACK = Degree.of(-35);
 
     /** Represents a specific position state of the arm */
     public record ArmState(Angle elbowAngle, Distance elevatorHeight) {

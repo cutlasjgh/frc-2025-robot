@@ -32,9 +32,9 @@ public class CoralArm extends SubsystemBase {
     return instance;
   }
 
-  private LimitedPID elevatorController; 
-  private LimitedPID elbowController; 
-  private NetworkTable table; 
+  private LimitedPID elevatorController;
+  private LimitedPID elbowController;
+  private NetworkTable table;
 
   private CoralArm() {
     elevatorController =
@@ -73,6 +73,22 @@ public class CoralArm extends SubsystemBase {
 
   /** Trigger that is active when the elbow is on the front side. */
   public final Trigger onFront = new Trigger(() -> getCurrentElbowAngle().in(Degree) > 0);
+
+  /** Trigger that is active when the elevator is at a safe height. */
+  public final Trigger aboveSafeHeight =
+      new Trigger(
+          () ->
+              getCurrentElevatorHeight().in(Inch)
+                  >= CoralArmConstants.SAFE_ELEVATOR_HEIGHT.in(Inch) - 2.5);
+
+  /** Trigger that is active when the elbow angle won't hit the elevator tower */
+  public final Trigger inSafeAngle =
+      new Trigger(
+          () -> {
+            double elbowAngle = getCurrentElbowAngle().in(Degree);
+            return (elbowAngle < CoralArmConstants.SAFE_ANGLE_DEADZONE_BACK.in(Degree) + 15)
+                || (elbowAngle > CoralArmConstants.SAFE_ANGLE_DEADZONE_FRONT.in(Degree) - 15);
+          });
 
   /**
    * Creates a command to set the arm position based on a predefined setpoint
@@ -123,75 +139,34 @@ public class CoralArm extends SubsystemBase {
             // PHASE 1: Move to safe height and first intermediate angle simultaneously
             Commands.runOnce(
                 () -> {
-                  // Get current side and set appropriate first safe angle
-                  boolean currentSideIsFront = onFront.getAsBoolean();
-                  double firstSafeAngle =
-                      currentSideIsFront
-                          ? CoralArmConstants.INTERMEDIATE_ELBOW_FRONT_ANGLE
-                          : CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
+                  double safeAngle =
+                      onFront.getAsBoolean()
+                          ? CoralArmConstants.SAFE_ANGLE_DEADZONE_FRONT.in(Degree)
+                          : CoralArmConstants.SAFE_ANGLE_DEADZONE_BACK.in(Degree);
 
                   // Set both positions simultaneously
                   elevatorController.setPosition(CoralArmConstants.SAFE_ELEVATOR_HEIGHT.in(Inch));
-                  elbowController.setPosition(firstSafeAngle);
+                  elbowController.setPosition(safeAngle);
 
                   table.getEntry("phase").setString("Moving to safe height and first safe angle");
                 }),
 
-            // Wait until BOTH elevator AND elbow reach their targets
-            Commands.waitUntil(
-                () -> {
-                  boolean currentSideIsFront = onFront.getAsBoolean();
-                  double firstSafeAngle =
-                      currentSideIsFront
-                          ? CoralArmConstants.INTERMEDIATE_ELBOW_FRONT_ANGLE
-                          : CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
+            // Wait until the elevator reaches the safe height
+            Commands.waitUntil(aboveSafeHeight),
 
-                  double elevError =
-                      Math.abs(
-                          getCurrentElevatorHeight().in(Inch)
-                              - CoralArmConstants.SAFE_ELEVATOR_HEIGHT.in(Inch));
-                  double elbowError = Math.abs(getCurrentElbowAngle().in(Degree) - firstSafeAngle);
-
-                  // Only proceed when both are within tolerance
-                  boolean elevatorReady = elevError < CoralArmConstants.POSITION_TOLERANCE;
-                  boolean elbowReady = elbowError < 5.0;
-
-                  return elevatorReady && elbowReady;
-                }),
-
-            // PHASE 2: Cross to other side by moving to the second intermediate angle
+            // PHASE 2: Set to the final angle
             Commands.runOnce(
                 () -> {
-                  // Now move ONLY the elbow to the opposite side intermediate angle
-                  boolean targetSideIsFront = targetState.isFront();
-                  double secondSafeAngle =
-                      targetSideIsFront
-                          ? CoralArmConstants.INTERMEDIATE_ELBOW_FRONT_ANGLE
-                          : CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
-
-                  elbowController.setPosition(secondSafeAngle);
-
-                  table.getEntry("phase").setString("Moving to second safe angle");
+                  elbowController.setPosition(targetState.elbowAngle().in(Degree));
                 }),
 
-            // Wait until elbow crosses to opposite side
-            Commands.waitUntil(
-                () -> {
-                  boolean targetSideIsFront = targetState.isFront();
-                  double secondSafeAngle =
-                      targetSideIsFront
-                          ? CoralArmConstants.INTERMEDIATE_ELBOW_FRONT_ANGLE
-                          : CoralArmConstants.INTERMEDIATE_ELBOW_BACK_ANGLE;
-
-                  double elbowError = Math.abs(getCurrentElbowAngle().in(Degree) - secondSafeAngle);
-
-                  return elbowError < 5.0;
-                }),
+            // Wait until elbow is in safe angle
+            Commands.waitUntil(inSafeAngle.negate()),
+            Commands.waitUntil(inSafeAngle),
 
             // PHASE 3: Now we're safe to move to final position
             Commands.runOnce(
                 () -> {
-                  elbowController.setPosition(targetState.elbowAngle().in(Degree));
                   elevatorController.setPosition(targetState.elevatorHeight().in(Inch));
 
                   table.getEntry("phase").setString("Moving to final position");
