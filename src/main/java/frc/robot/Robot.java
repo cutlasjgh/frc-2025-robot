@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
   /** The robot's container, which holds subsystems and commands. */
   private RobotContainer robotContainer;
 
-  /** If we ave left disabled mode */
+  /** If we have left disabled mode */
   private boolean hasLeftDisabled = false;
 
   // Private constructor for singleton
