@@ -41,7 +41,7 @@ public final class Apriltag extends SubsystemBase {
   private final Map<String, Camera> cameras = new HashMap<>();
 
   /** If we have gotten and applied a global measurement pose */
-  private boolean hasRecivedGlobalPose = false;
+  private boolean hasReceivedGlobalPose = false;
 
   /** NetworkTable for publishing apriltag detection state. */
   private final NetworkTable table =
@@ -87,8 +87,8 @@ public final class Apriltag extends SubsystemBase {
    * 
    * @return True if a global pose has been received, false otherwise
    */
-  public boolean hasRecivedGlobalPose() {
-    return hasRecivedGlobalPose;
+  public boolean hasReceivedGlobalPose() {
+    return hasReceivedGlobalPose;
   }
 
   /** Updates the pose estimation in the Swerve subsystem with vision measurements. */
@@ -128,8 +128,8 @@ public final class Apriltag extends SubsystemBase {
         anyPoseUpdated = true;
         EstimatedRobotPose pose = estimatedPose.get();
 
-        if (!hasRecivedGlobalPose) {
-          hasRecivedGlobalPose = true;
+        if (!hasReceivedGlobalPose) {
+          hasReceivedGlobalPose = true;
         }
 
         // Add vision measurement to swerve drive
@@ -143,7 +143,7 @@ public final class Apriltag extends SubsystemBase {
     // Update global vision status
     table.getEntry("totalTagsDetected").setInteger(totalTagsDetected);
     table.getEntry("visionUpdatingPose").setBoolean(anyPoseUpdated);
-    table.getEntry("hasRecivedGlobalPose").setBoolean(hasRecivedGlobalPose);
+    table.getEntry("hasReceivedGlobalPose").setBoolean(hasReceivedGlobalPose);
   }
 
   /**
