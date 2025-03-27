@@ -69,11 +69,7 @@ public class CoralManipulator extends SubsystemBase {
   public Command intake() {
     return run(() -> coralMotor.set(CoralManipulatorConstants.INTAKE_POWER))
         .onlyWhile(doesntHaveCoral)
-        .andThen(
-            run(() -> {
-                  coralMotor.set(0.0);
-                })
-                .withTimeout(0.5));
+        .andThen(instantStop());
   }
 
   /**
@@ -84,11 +80,7 @@ public class CoralManipulator extends SubsystemBase {
   public Command drop() {
     return run(() -> coralMotor.set(CoralManipulatorConstants.DROP_POWER))
         .onlyWhile(hasCoral)
-        .andThen(
-            run(() -> {
-                  coralMotor.set(0.0);
-                })
-                .withTimeout(0.5));
+        .andThen(instantStop());
   }
 
   /**
