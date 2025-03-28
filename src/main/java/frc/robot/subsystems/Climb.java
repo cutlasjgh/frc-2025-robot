@@ -31,10 +31,10 @@ public class Climb extends SubsystemBase {
     return instance;
   }
 
-  private SparkMax climbMotor; // Removed final
-  private DigitalInput topLimit; // Removed final
-  private DigitalInput bottomLimit; // Removed final
-  private NetworkTable table; // Removed final
+  private SparkMax climbMotor;
+  private DigitalInput topLimit;
+  private DigitalInput bottomLimit;
+  private NetworkTable table;
 
   private Climb() {
     climbMotor = new SparkMax(ClimbConstants.CAN_ID, MotorType.kBrushless);

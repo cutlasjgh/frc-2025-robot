@@ -33,9 +33,9 @@ public class CoralManipulator extends SubsystemBase {
     return instance;
   }
 
-  private SparkMax coralMotor; 
-  private DigitalInput coralSensor; 
-  private NetworkTable table; 
+  private SparkMax coralMotor;
+  private DigitalInput coralSensor;
+  private NetworkTable table;
 
   private CoralManipulator() {
     coralMotor = new SparkMax(CoralManipulatorConstants.CAN_ID, MotorType.kBrushless);

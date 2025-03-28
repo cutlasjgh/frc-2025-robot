@@ -28,7 +28,7 @@ public final class PID {
 
   /**
    * Applies the PID constants to a SparkMax configuration.
-   * 
+   *
    * @param config The SparkMax configuration to apply the constants to.
    */
   public void applyToConfig(ClosedLoopConfig config) {
