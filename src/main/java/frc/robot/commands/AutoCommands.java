@@ -102,8 +102,8 @@ public class AutoCommands {
                       swerve.driveToPose(intakePose).schedule();
                     }),
                 Commands.waitSeconds(1.0)
-                    .andThen(coralArm.setIntake()), // Position for intake after a delay
-                coralManipulator.intake()), // Activate intake mechanism
+                    .andThen(coralArm.setIntake())
+                    .andThen(coralManipulator.intake())),
 
             // Phase 5: Return to second reef position for delivery
             Commands.parallel(
@@ -182,8 +182,8 @@ public class AutoCommands {
                       swerve.driveToPose(intakePose).schedule();
                     }),
                 Commands.waitSeconds(1.0)
-                    .andThen(coralArm.setIntake()), // Position for intake after a delay
-                coralManipulator.intake()), // Activate intake mechanism
+                    .andThen(coralArm.setIntake())
+                    .andThen(coralManipulator.intake())),
 
             // Phase 5: Return to second reef position for delivery
             Commands.parallel(

@@ -127,7 +127,7 @@ public final class Constants {
     public static final double ELEVATOR_ZEROING_POWER_DOWN = -0.15;
 
     /** Ramp rate for elevator motor (seconds from 0 to full throttle) */
-    public static final double ELEVATOR_RAMP_RATE = 0.25;
+    public static final double ELEVATOR_RAMP_RATE = 0.1;
 
     /** Current limit for elevator motor in amps */
     public static final int ELEVATOR_CURRENT_LIMIT = 30;
@@ -178,7 +178,7 @@ public final class Constants {
 
     // Safe transition constants
     /** Safe elevator height. */
-    public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(15.0);
+    public static final Distance SAFE_ELEVATOR_HEIGHT = Inch.of(14.0);
 
     /** Safe angle deadzone front */
     public static final Angle SAFE_ANGLE_DEADZONE_FRONT = Degree.of(45);
@@ -349,9 +349,9 @@ public final class Constants {
     /** All consolidated points of interest on the field */
     public static final POI[] ALL_POIS = {
       // Intake stations
-      new POI(new Pose2d(1.125, 6.965, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
+      new POI(new Pose2d(1.125, 7.15, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
       new POI(
-          new Pose2d(1.125, FIELD_WIDTH_METERS - 6.965, Rotation2d.fromDegrees(234.0)),
+          new Pose2d(1.125, FIELD_WIDTH_METERS - 7.15, Rotation2d.fromDegrees(234.0)),
           "INTAKE_STATION",
           "right"),
 

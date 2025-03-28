@@ -11,6 +11,8 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
+
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -51,6 +53,10 @@ public class Swerve extends SubsystemBase {
   private static Swerve instance;
   private SwerveDrive drivebase;
 
+  private PIDController thetaPID;
+  private PIDController translationXPID;
+  private PIDController translationYPID;
+
   /**
    * Returns the singleton instance of the Swerve subsystem. Creates a new instance if one does not
    * exist.
@@ -90,6 +96,10 @@ public class Swerve extends SubsystemBase {
     drivebase.setModuleEncoderAutoSynchronize(true, 1);
     drivebase.setChassisDiscretization(true, true, 0.02);
     drivebase.useExternalFeedbackSensor();
+
+    thetaPID = new PIDController(1.0, 0.0, 0.0);
+    translationXPID = new PIDController(7.5, 0.0, 0.001);
+    translationYPID = new PIDController(7.5, 0.0, 0.001);
 
     setupPathPlanner();
   }
@@ -287,28 +297,24 @@ public class Swerve extends SubsystemBase {
         AutoBuilder.pathfindToPose(targetPose, constraints, MetersPerSecond.of(0));
 
     // After path following, hold the position indefinitely using simple P controllers
-    final double kPx = 7.5;
-    final double kPy = 7.5;
-    final double kPTheta = 1.0;
+    thetaPID.setSetpoint(targetPose.getRotation().getRadians());
+    translationXPID.setSetpoint(targetPose.getX());
+    translationYPID.setSetpoint(targetPose.getY());
+
     Command holdCommand =
         run(
             () -> {
               Pose2d current = getPose();
-              double errorX = targetPose.getX() - current.getX();
-              double errorY = targetPose.getY() - current.getY();
-              double errorTheta =
-                  targetPose.getRotation().minus(current.getRotation()).getRadians();
 
-              // Calculate velocities with P controller
-              double vx = kPx * errorX;
-              double vy = kPy * errorY;
-              double omega = kPTheta * errorTheta;
+              double vx = translationXPID.calculate(current.getX());
+              double vy = translationYPID.calculate(current.getY());
+              double theta = thetaPID.calculate(current.getRotation().getRadians());
 
               // Clamp x and y velocities between -1 and 1 m/s
               vx = Math.max(-1.0, Math.min(1.0, vx));
               vy = Math.max(-1.0, Math.min(1.0, vy));
 
-              ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds(vx, vy, omega);
+              ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds(vx, vy, theta);
               ChassisSpeeds robotRelativeSpeeds =
                   ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds, current.getRotation());
               drivebase.setChassisSpeeds(robotRelativeSpeeds);

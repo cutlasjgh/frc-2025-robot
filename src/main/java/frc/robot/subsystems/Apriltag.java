@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -84,7 +83,7 @@ public final class Apriltag extends SubsystemBase {
 
   /**
    * Whether the subsystem has received a global pose from vision.
-   * 
+   *
    * @return True if a global pose has been received, false otherwise
    */
   public boolean hasReceivedGlobalPose() {
@@ -397,19 +396,15 @@ public final class Apriltag extends SubsystemBase {
         return;
       }
 
-      // Start heuristic calculation
-      var estStdDevs = singleTagStdDevs;
+      // Updated standard deviation calculation
       int numTags = 0;
-      double avgDist = 0;
+      double totalDistance = 0;
+      for (PhotonTrackedTarget target : targets) {
+        var tagPose = ApriltagConstants.FIELD_LAYOUT.getTagPose(target.getFiducialId());
+        if (tagPose.isEmpty()) continue;
 
-      // Calculate how many tags we found and average distance
-      for (var target : targets) {
-        var tagPose = poseEstimator.getFieldTags().getTagPose(target.getFiducialId());
-        if (tagPose.isEmpty()) {
-          continue;
-        }
         numTags++;
-        avgDist +=
+        totalDistance +=
             tagPose
                 .get()
                 .toPose2d()
@@ -417,27 +412,15 @@ public final class Apriltag extends SubsystemBase {
                 .getDistance(estimatedPose.get().estimatedPose.toPose2d().getTranslation());
       }
 
-      if (numTags == 0) {
-        // No tags visible
-        curStdDevs = singleTagStdDevs;
-      } else {
-        // One or more tags visible
-        avgDist /= numTags;
+      double avgDistance = totalDistance / numTags;
 
-        // Use multi-tag std devs if multiple targets are visible
-        if (numTags > 1) {
-          estStdDevs = multiTagStdDevs;
-        }
+      // Decrease std deviations further if more than one target is available
+      Matrix<N3, N1> stdDevs = numTags == 1 ? singleTagStdDevs : multiTagStdDevs;
 
-        // Increase std devs based on distance
-        if (numTags == 1 && avgDist > 4) {
-          estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-        } else {
-          estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
-        }
+      // Increase std devs based on average distance
+      stdDevs = stdDevs.times(1 + (avgDistance * avgDistance / 30.0));
 
-        curStdDevs = estStdDevs;
-      }
+      curStdDevs = stdDevs;
     }
   }
 }

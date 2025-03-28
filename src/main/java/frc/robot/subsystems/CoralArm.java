@@ -64,11 +64,6 @@ public class CoralArm extends SubsystemBase {
             CoralArmConstants.ELBOW_RAMP_RATE,
             CoralArmConstants.ELBOW_CURRENT_LIMIT);
     table = NetworkTableInstance.getDefault().getTable("Robot").getSubTable("CoralArm");
-
-    // Initialize networktable entries
-    table.getEntry("targetElbowAngle").setDouble(0.0);
-    table.getEntry("targetElevatorHeight").setDouble(0.0);
-    table.getEntry("currentSetpoint").setString("None");
   }
 
   /** Trigger that is active when the elbow is on the front side. */
@@ -110,32 +105,11 @@ public class CoralArm extends SubsystemBase {
             () -> {
               elbowController.setPosition(targetState.elbowAngle().in(Degree));
               elevatorController.setPosition(targetState.elevatorHeight().in(Inch));
-              table
-                  .getEntry("currentSetpoint")
-                  .setString(
-                      "Direct: "
-                          + targetState.elbowAngle().in(Degree)
-                          + "°, "
-                          + targetState.elevatorHeight().in(Inch)
-                          + "\"");
             });
 
     // Safe transition command with upfront calculation of all waypoints
     Command safeTransition =
         Commands.sequence(
-            // Initialize and calculate all setpoints at the beginning
-            Commands.runOnce(
-                () -> {
-                  table
-                      .getEntry("currentSetpoint")
-                      .setString(
-                          "Safe: "
-                              + targetState.elbowAngle().in(Degree)
-                              + "°, "
-                              + targetState.elevatorHeight().in(Inch)
-                              + "\"");
-                }),
-
             // PHASE 1: Move to safe height and first intermediate angle simultaneously
             Commands.runOnce(
                 () -> {
@@ -147,8 +121,6 @@ public class CoralArm extends SubsystemBase {
                   // Set both positions simultaneously
                   elevatorController.setPosition(CoralArmConstants.SAFE_ELEVATOR_HEIGHT.in(Inch));
                   elbowController.setPosition(safeAngle);
-
-                  table.getEntry("phase").setString("Moving to safe height and first safe angle");
                 }),
 
             // Wait until the elevator reaches the safe height
@@ -156,9 +128,7 @@ public class CoralArm extends SubsystemBase {
 
             // PHASE 2: Set to the final angle
             Commands.runOnce(
-                () -> {
-                  elbowController.setPosition(targetState.elbowAngle().in(Degree));
-                }),
+                () -> elbowController.setPosition(targetState.elbowAngle().in(Degree))),
 
             // Wait until elbow is in safe angle
             Commands.waitUntil(inSafeAngle.negate()),
@@ -166,25 +136,10 @@ public class CoralArm extends SubsystemBase {
 
             // PHASE 3: Now we're safe to move to final position
             Commands.runOnce(
-                () -> {
-                  elevatorController.setPosition(targetState.elevatorHeight().in(Inch));
-
-                  table.getEntry("phase").setString("Moving to final position");
-                }));
+                () -> elevatorController.setPosition(targetState.elevatorHeight().in(Inch))));
 
     // Choose transition strategy based on whether we're switching sides
     return Commands.sequence(
-            Commands.runOnce(
-                () -> {
-                  table
-                      .getEntry("targetSetpoint")
-                      .setString(
-                          "Moving to: "
-                              + targetState.elbowAngle().in(Degree)
-                              + "°, "
-                              + targetState.elevatorHeight().in(Inch)
-                              + "\"");
-                }),
             Commands.either(safeTransition, directMove, isSwitchingSides),
             // Wait until positions are reached
             Commands.waitUntil(
@@ -198,20 +153,8 @@ public class CoralArm extends SubsystemBase {
                               - targetState.elevatorHeight().in(Inch));
 
                   boolean atPosition = elbowError < 5.0 && elevatorError < 1.0;
-                  table.getEntry("atTargetPosition").setBoolean(atPosition);
 
                   return atPosition;
-                }),
-            Commands.runOnce(
-                () -> {
-                  table
-                      .getEntry("lastCompletedSetpoint")
-                      .setString(
-                          targetState.elbowAngle().in(Degree)
-                              + "°, "
-                              + targetState.elevatorHeight().in(Inch)
-                              + "\"");
-                  table.getEntry("phase").setString("Complete");
                 }))
         .withName("setPosition"); // Removed timeout entirely
   }
