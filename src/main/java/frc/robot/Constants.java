@@ -49,7 +49,7 @@ public final class Constants {
     public static final int SENSOR_CHANNEL = 7;
 
     /** Intake power for the alga arm. */
-    public static final double INTAKE_POWER = 1.0;
+    public static final double INTAKE_POWER = 0.85;
 
     /** Drop power for the alga arm. */
     public static final double DROP_POWER = -1.0;
@@ -73,7 +73,7 @@ public final class Constants {
     public static final int TOP_LIMIT_CHANNEL = 8;
 
     /** Climb power for the climb. */
-    public static final double CLIMB_POWER = -0.7;
+    public static final double CLIMB_POWER = -0.8;
 
     /** Whether the climb is inverted. */
     public static final boolean IS_INVERTED = false;
@@ -202,7 +202,7 @@ public final class Constants {
         Map.of(
             "ZERO", new ArmState(ELBOW_FRONT_ANGLE, ELEVATOR_MIN_POSITION),
             "INTAKE", new ArmState(Degree.of(70), Inch.of(1.25)),
-            "LOW", new ArmState(Degree.of(-90), Inch.of(5.0)),
+            "LOW", new ArmState(Degree.of(-90), Inch.of(6.0)),
             "MID", new ArmState(Degree.of(-30), Inch.of(0.0)),
             "HIGH", new ArmState(Degree.of(-30), Inch.of(15.0)));
   }
@@ -317,10 +317,10 @@ public final class Constants {
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
     /** Maximum allowed ambiguity for pose estimation (0-1, lower is better) */
-    public static final double MAXIMUM_AMBIGUITY = 0.25;
+    public static final double MAXIMUM_AMBIGUITY = 0.2;
 
     /** Standard deviations for single tag pose estimation */
-    public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(4, 4, 8);
+    public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(2, 2, 4);
 
     /** Standard deviations for multi-tag pose estimation */
     public static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 1);
@@ -348,9 +348,9 @@ public final class Constants {
     /** All consolidated points of interest on the field */
     public static final POI[] ALL_POIS = {
       // Intake stations
-      new POI(new Pose2d(1.125, 7.15, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
+      new POI(new Pose2d(1.1, 7.225, Rotation2d.fromDegrees(126.0)), "INTAKE_STATION", "left"),
       new POI(
-          new Pose2d(1.125, FIELD_WIDTH_METERS - 7.15, Rotation2d.fromDegrees(234.0)),
+          new Pose2d(1.1, FIELD_WIDTH_METERS - 7.225, Rotation2d.fromDegrees(234.0)),
           "INTAKE_STATION",
           "right"),
 
