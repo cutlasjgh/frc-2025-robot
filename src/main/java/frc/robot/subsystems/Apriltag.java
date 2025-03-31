@@ -305,6 +305,9 @@ public final class Apriltag extends SubsystemBase {
      * @return Estimated robot pose if available
      */
     public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d currentPose) {
+      // Always update unread results to ensure fresh data
+      updateUnreadResults();
+      
       if (!estimatedRobotPose.isPresent()) {
         return estimatedRobotPose;
       }
