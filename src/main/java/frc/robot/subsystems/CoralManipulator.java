@@ -59,7 +59,7 @@ public class CoralManipulator extends SubsystemBase {
   public final Trigger doesntHaveCoral = new Trigger(() -> coralSensor.get()).debounce(0.25);
 
   /** Trigger that is active when the Coral Manipulator has a coral. */
-  public final Trigger hasCoral = new Trigger(() -> !coralSensor.get());
+  public final Trigger hasCoral = new Trigger(() -> !coralSensor.get()).debounce(0.1);
 
   /**
    * Intakes a coral until the sensor detects it.
@@ -84,9 +84,9 @@ public class CoralManipulator extends SubsystemBase {
   }
 
   /**
-   * Ejects a coral.
+   * Ejects a alga off the reef.
    *
-   * @return A command that ejects a coral.
+   * @return A command that ejects a alga.
    */
   public Command eject() {
     return run(() -> coralMotor.set(CoralManipulatorConstants.EJECT_POWER));

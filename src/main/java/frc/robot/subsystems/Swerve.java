@@ -97,8 +97,8 @@ public class Swerve extends SubsystemBase {
     drivebase.useExternalFeedbackSensor();
 
     thetaPID = new PIDController(1.0, 0.0, 0.0);
-    translationXPID = new PIDController(7.5, 0.0, 0.001);
-    translationYPID = new PIDController(7.5, 0.0, 0.001);
+    translationXPID = new PIDController(7.5, 0.0, 0.0015);
+    translationYPID = new PIDController(7.5, 0.0, 0.0015);
 
     setupPathPlanner();
   }
