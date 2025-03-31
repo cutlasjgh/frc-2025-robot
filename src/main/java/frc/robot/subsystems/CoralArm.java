@@ -224,7 +224,7 @@ public class CoralArm extends SubsystemBase {
    * @return Command to set the arm to the CLIMB position
    */
   public Command setClimb() {
-    return setPosition("HIGH");
+    return setPosition("CLIMB");
   }
 
   /**
