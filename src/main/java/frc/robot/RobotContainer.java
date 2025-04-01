@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.*;
 import frc.robot.helpers.CustomSwerveInput;
@@ -94,6 +95,9 @@ public class RobotContainer {
   // Add the SendableChooser for autonomous
   private final SendableChooser<Command> autoChooser = new SendableChooser<>();
 
+  // Trigger for endgame
+  public final Trigger endgame = new Trigger(() -> DriverStation.getMatchTime() <= 30);
+
   /**
    * Creates a new RobotContainer and initializes all robot subsystems and commands. Performs the
    * following setup:
@@ -118,6 +122,12 @@ public class RobotContainer {
    * organized by controller and function.
    */
   private void configureBindings() {
+    endgame.onTrue(
+        Commands.sequence(
+            Commands.runOnce(() -> driverController.setRumble(RumbleType.kLeftRumble, 1.0)),
+            Commands.waitSeconds(0.5),
+            Commands.runOnce(() -> driverController.setRumble(RumbleType.kLeftRumble, 0.0))));
+
     configureDriverControls();
     configureOperatorControls();
   }
