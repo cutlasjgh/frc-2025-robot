@@ -205,7 +205,7 @@ public final class Constants {
             "LOW", new ArmState(Degree.of(-90), Inch.of(6.0)),
             "MID", new ArmState(Degree.of(-30), Inch.of(0.0)),
             "HIGH", new ArmState(Degree.of(-30), Inch.of(15.0)),
-            "CLIMB", new ArmState(Degree.of(-30), Inch.of(15.0)));
+            "CLIMB", new ArmState(Degree.of(-30), Inch.of(13.0)));
   }
 
   /** Constants for the coral manipulator (intake/output mechanism). */
@@ -318,7 +318,7 @@ public final class Constants {
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
     /** Maximum allowed ambiguity for pose estimation (0-1, lower is better) */
-    public static final double MAXIMUM_AMBIGUITY = 0.2;
+    public static final double MAXIMUM_AMBIGUITY = 0.1;
 
     /** Standard deviations for single tag pose estimation */
     public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(2, 2, 4);
@@ -330,7 +330,7 @@ public final class Constants {
     public static final double CAMERA_DEBOUNCE_TIME = 0.150;
 
     /** BULLSHIT */
-    public static final double SINGLE_TAG_CUTOFF_METER = 4;
+    public static final double SINGLE_TAG_CUTOFF_METER = 3;
 
     /** Maximum number of camera results to keep in memory */
     public static final int MAX_CAMERA_RESULTS = 5;

@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -11,6 +13,7 @@ import frc.robot.subsystems.AlgaArm;
 import frc.robot.subsystems.CoralArm;
 import frc.robot.subsystems.CoralManipulator;
 import frc.robot.subsystems.Swerve;
+import java.io.IOException;
 
 /**
  * Container for autonomous command sequences used during the autonomous period. This class provides
@@ -207,5 +210,33 @@ public class AutoCommands {
             // Phase 7: Release coral at the second position
             coralManipulator.drop())
         .withName("rightToReef Auto");
+  }
+
+  /**
+   * Creates a command that follows the PathPlanner path "Victory Lap".
+   * This autonomous routine makes the robot drive in a predetermined path around the field.
+   *
+   * @return A command that follows the Victory Lap path, or a simple backup command if the path cannot be loaded
+   */
+  public static Command victoryLap() {
+    try {
+      // Load the path from PathPlanner and create a command to follow it
+      PathPlannerPath path = PathPlannerPath.fromPathFile("Victory Lap");
+      return AutoBuilder.followPath(path);
+    } catch (IOException e) {
+      // Handle file not found or IO error
+      DriverStation.reportError("Failed to load Victory Lap path file: " + e.getMessage(), e.getStackTrace());
+      return Commands.sequence(
+          Commands.print("ERROR: Could not load Victory Lap path file"),
+          simpleBackwardDrive() // Fall back to a simple autonomous routine
+      );
+    } catch (Exception e) {
+      // Handle any other exceptions (like parse errors)
+      DriverStation.reportError("Error processing Victory Lap path: " + e.getMessage(), e.getStackTrace());
+      return Commands.sequence(
+          Commands.print("ERROR: Could not process Victory Lap path"),
+          simpleBackwardDrive() // Fall back to a simple autonomous routine
+      );
+    }
   }
 }
