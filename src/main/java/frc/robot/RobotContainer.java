@@ -241,6 +241,7 @@ public class RobotContainer {
     autoChooser.addOption("Simple Backward Drive", AutoCommands.simpleBackwardDrive());
     autoChooser.addOption("Left to Reef", AutoCommands.leftToReef());
     autoChooser.addOption("Right to Reef", AutoCommands.rightToReef());
+    autoChooser.addOption("Victory Lap", AutoCommands.victoryLap());
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
