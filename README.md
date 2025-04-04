@@ -7,6 +7,16 @@ Welcome to the official repository for **FRC Team 4533 Phoenix's 2025 Robot Code
 
 ## Documentation
 
+
+NOTE THIS VERSION uses static IMU and SWERVELIB dirs, and can't be updated easily.
+Please use it for testing and as an example
+Purpose for this version is to try to deal with the NAVX imu that somtimes (about 1 in 10) seems to not initialize correctly.
+this version tries to do a 50hz refresh rate of imu and do a reset of some form, that studica decides to not do.
+This version also introduces a SPI bus reset for the NAVX see the article
+https://www.chiefdelphi.com/t/navx2-disconnecting-reconnecting-intermittently-not-browning-out/425487/39?page=2
+
+
+
 Comprehensive documentation for this project is available at [FRC 2025 Robot Docs](https://4533-phoenix.github.io/frc-2025-robot/).
 
 ## Team Website
